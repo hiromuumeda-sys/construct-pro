@@ -89,6 +89,25 @@ function initDB() {
     );
   `);
 
+  // Add missing columns to existing tables
+  const checkAndAddColumn = (tableName, columnName, columnDef) => {
+    try {
+      const result = db.prepare(`PRAGMA table_info(${tableName})`).all();
+      const exists = result.some(col => col.name === columnName);
+      if (!exists) {
+        db.prepare(`ALTER TABLE ${tableName} ADD COLUMN ${columnDef}`).run();
+        console.log(`Added column ${columnName} to ${tableName}`);
+      }
+    } catch (e) {
+      console.log(`Column ${columnName} already exists or error: ${e.message}`);
+    }
+  };
+
+  checkAndAddColumn('orders', 'paymentStatus', 'paymentStatus TEXT DEFAULT "未払い"');
+  checkAndAddColumn('orders', 'paymentMethod', 'paymentMethod TEXT');
+  checkAndAddColumn('orders', 'paymentDate', 'paymentDate TEXT');
+  checkAndAddColumn('orders', 'paymentNotes', 'paymentNotes TEXT');
+
   // Check if data exists
   const projectCount = db.prepare('SELECT COUNT(*) as cnt FROM projects').get().cnt;
   const customerCount = db.prepare('SELECT COUNT(*) as cnt FROM customers').get().cnt;
