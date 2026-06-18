@@ -121,7 +121,15 @@ fetch('/header.html')
 </div>
 </div>
 
-<!-- サマリーカード（2x2） -->
+<!-- メインエリア -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+<!-- 左側：グラフ -->
+<div class="bg-surface-container-lowest rounded-2xl p-4 border border-outline-variant/30 w-80 h-80">
+<h2 class="text-sm font-bold text-on-surface mb-3">ステータス分布</h2>
+<canvas id="chartStatus"></canvas>
+</div>
+
+<!-- 右側：サマリーカード（2x2） -->
 <div class="grid grid-cols-2 gap-3">
 <div class="bg-surface-container-lowest rounded-xl p-3 border border-outline-variant/30">
 <p class="text-[10px] text-on-surface-variant font-bold uppercase tracking-widest mb-1">売上合計</p>
@@ -140,11 +148,6 @@ fetch('/header.html')
 <p class="text-lg font-bold text-primary tabular-nums" id="summary-actual-profit">¥-</p>
 </div>
 </div>
-
-<!-- グラフ -->
-<div class="bg-surface-container-lowest rounded-2xl p-4 border border-outline-variant/30 w-80 h-80">
-<h2 class="text-sm font-bold text-on-surface mb-3">ステータス分布</h2>
-<canvas id="chartStatus"></canvas>
 </div>
 
 <footer class="pt-16 pb-8 border-t border-outline-variant text-center">
