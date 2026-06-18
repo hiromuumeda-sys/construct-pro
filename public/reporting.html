@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html class="light" lang="ja">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<title>レポーティング - CONSTRUCT_PRO</title>
+<style>
+body {
+  font-family: 'Inter', 'Noto Sans JP', sans-serif;
+  background-color: #faf9f7;
+}
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  vertical-align: middle;
+}
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+</style>
+<script id="tailwind-config">
+tailwind.config = {
+  darkMode: "class",
+  theme: {
+    extend: {
+      "colors": {
+        "surface": "#faf9f7",
+        "outline-variant": "#c1c7cc",
+        "on-primary": "#ffffff",
+        "on-surface-variant": "#41484c",
+        "surface-container-low": "#f4f3f1",
+        "primary": "#104356",
+        "surface-container-lowest": "#ffffff",
+        "on-surface": "#1a1c1b"
+      },
+      "borderRadius": {
+        "DEFAULT": "0.25rem",
+        "xl": "12px",
+        "2xl": "16px",
+      },
+      "spacing": {
+        "xxl": "64px",
+        "container-padding": "32px",
+      }
+    },
+  },
+}
+</script>
+</head>
+<body class="bg-surface text-on-surface antialiased overflow-x-hidden">
+<div id="header-placeholder"></div>
+<script>
+fetch('/header.html')
+  .then(response => response.text())
+  .then(html => {
+    document.getElementById('header-placeholder').innerHTML = html;
+  });
+</script>
+<main class="pt-24 pb-xxl w-full">
+<div class="w-full px-container-padding space-y-lg">
+<!-- ページタイトル -->
+<div class="flex justify-between items-center">
+<div class="flex items-center gap-3">
+<button class="w-9 h-9 flex items-center justify-center rounded-xl border border-outline-variant bg-surface-container-lowest hover:bg-surface-container transition-colors text-on-surface-variant shrink-0" onclick="history.back()">
+<span class="material-symbols-outlined text-[20px]">arrow_back</span>
+</button>
+<h1 class="text-xl font-bold text-on-surface tracking-tight">レポーティング</h1>
+</div>
+</div>
+
+<!-- タブエリア -->
+<div class="bg-surface-container-low/50 p-1 rounded-2xl border border-outline-variant/30 inline-flex gap-1">
+<button id="btn-customer" class="px-8 py-3 text-sm font-bold text-on-primary bg-primary rounded-xl transition-all shadow-lg shadow-primary/10" onclick="setReportType('customer')">顧客別</button>
+<button id="btn-vendor" class="px-8 py-3 text-sm font-medium text-on-surface-variant bg-transparent rounded-xl hover:bg-surface-container-lowest transition-all" onclick="setReportType('vendor')">外注先別</button>
+</div>
+
+<!-- フィルタエリア -->
+<div class="bg-surface-container-low p-5 rounded-2xl border border-outline-variant/30">
+<div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+<div>
+<label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-2">期間開始</label>
+<input type="date" id="dateStart" class="w-full bg-surface-container-lowest border-outline-variant/50 rounded-xl text-sm px-4 py-2.5 focus:ring-2 focus:ring-primary/20" onchange="updateReports()"/>
+</div>
+<div>
+<label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-2">期間終了</label>
+<input type="date" id="dateEnd" class="w-full bg-surface-container-lowest border-outline-variant/50 rounded-xl text-sm px-4 py-2.5 focus:ring-2 focus:ring-primary/20" onchange="updateReports()"/>
+</div>
+<div>
+<label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-2">会社を選択</label>
+<select id="companySelect" class="w-full bg-surface-container-lowest border-outline-variant/50 rounded-xl text-sm px-4 py-2.5 focus:ring-2 focus:ring-primary/20" onchange="updateReports()">
+<option value="">全社</option>
+</select>
+</div>
+<div class="col-span-2 flex items-end">
+<button class="w-full bg-primary text-on-primary px-6 py-2.5 text-sm font-bold rounded-xl shadow-lg shadow-primary/10 hover:opacity-90 transition-all" onclick="updateReports()">
+<span class="material-symbols-outlined text-lg">refresh</span>
+更新
+</button>
+</div>
+</div>
+</div>
+
+<!-- サマリーカード -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+<div class="bg-surface-container-lowest rounded-2xl p-6 border border-outline-variant/30">
+<p class="text-xs text-on-surface-variant font-bold uppercase tracking-widest mb-2">売上合計</p>
+<p class="text-2xl font-bold text-primary tabular-nums" id="summary-revenue">¥-</p>
+</div>
+<div class="bg-surface-container-lowest rounded-2xl p-6 border border-outline-variant/30">
+<p class="text-xs text-on-surface-variant font-bold uppercase tracking-widest mb-2">平均粗利率</p>
+<p class="text-3xl font-bold text-on-surface" id="summary-gross-margin">-</p>
+</div>
+<div class="bg-surface-container-lowest rounded-2xl p-6 border border-outline-variant/30">
+<p class="text-xs text-on-surface-variant font-bold uppercase tracking-widest mb-2">想定利益率</p>
+<p class="text-3xl font-bold text-on-surface" id="summary-expected-profit">-</p>
+</div>
+<div class="bg-surface-container-lowest rounded-2xl p-6 border border-outline-variant/30">
+<p class="text-xs text-on-surface-variant font-bold uppercase tracking-widest mb-2">実利益合計</p>
+<p class="text-2xl font-bold text-primary tabular-nums" id="summary-actual-profit">¥-</p>
+</div>
+</div>
+
+<!-- グラフエリア -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+<!-- 件数グラフ -->
+<div class="bg-surface-container-lowest rounded-2xl p-6 border border-outline-variant/30">
+<h2 class="text-lg font-bold text-on-surface mb-4">件数</h2>
+<canvas id="chartCount"></canvas>
+</div>
+
+<!-- 金額グラフ -->
+<div class="bg-surface-container-lowest rounded-2xl p-6 border border-outline-variant/30">
+<h2 class="text-lg font-bold text-on-surface mb-4">金額</h2>
+<canvas id="chartAmount"></canvas>
+</div>
+
+<!-- ステータス分布 -->
+<div class="bg-surface-container-lowest rounded-2xl p-6 border border-outline-variant/30">
+<h2 class="text-lg font-bold text-on-surface mb-4">ステータス分布</h2>
+<canvas id="chartStatus"></canvas>
+</div>
+
+<!-- 詳細テーブル -->
+<div class="bg-surface-container-lowest rounded-2xl p-6 border border-outline-variant/30">
+<h2 class="text-lg font-bold text-on-surface mb-4">詳細</h2>
+<div class="overflow-x-auto">
+<table class="w-full text-sm">
+<thead>
+<tr class="border-b border-outline-variant">
+<th class="text-left py-3 px-4 font-bold text-on-surface-variant">名前</th>
+<th class="text-right py-3 px-4 font-bold text-on-surface-variant">件数</th>
+<th class="text-right py-3 px-4 font-bold text-on-surface-variant">合計金額</th>
+</tr>
+</thead>
+<tbody id="detailTable">
+</tbody>
+</table>
+</div>
+</div>
+</div>
+
+<footer class="pt-16 pb-8 border-t border-outline-variant text-center">
+<p class="text-[11px] text-on-surface-variant font-bold uppercase tracking-[0.3em] mb-2">CONSTRUCT_PRO ENTERPRISE SYSTEMS v2.4.0</p>
+<p class="text-[11px] text-on-surface-variant/50">© 2024 CONSTRUCT_PRO Systems. All Rights Reserved.</p>
+</footer>
+</div>
+</main>
+
+<script>
+let chartCount = null;
+let chartAmount = null;
+let chartStatus = null;
+
+if (!window.appCache) {
+  window.appCache = { projects: [], vendors: [], categories: [], orders: [], customers: [] };
+}
+
+async function initializeCache() {
+  try {
+    const res = await fetch('/api/cache');
+    window.appCache = await res.json();
+  } catch(e) {
+    console.error('Failed to load cache:', e);
+  }
+}
+
+function getDateRange() {
+  const today = new Date();
+  const endDate = document.getElementById('dateEnd').value || today.toISOString().split('T')[0];
+  let startDate = document.getElementById('dateStart').value;
+
+  if (!startDate) {
+    const threeMonthsAgo = new Date(today);
+    threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+    startDate = threeMonthsAgo.toISOString().split('T')[0];
+    document.getElementById('dateStart').value = startDate;
+  }
+
+  document.getElementById('dateEnd').value = endDate;
+  return { startDate, endDate };
+}
+
+function filterDataByDate(items, dateField) {
+  const { startDate, endDate } = getDateRange();
+  return items.filter(item => {
+    const date = item[dateField];
+    if (!date) return false;
+    return date >= startDate && date <= endDate;
+  });
+}
+
+function setReportType(type) {
+  // Hidden input to store the value
+  if (!document.getElementById('reportType')) {
+    const input = document.createElement('input');
+    input.id = 'reportType';
+    input.type = 'hidden';
+    input.value = type;
+    document.body.appendChild(input);
+  } else {
+    document.getElementById('reportType').value = type;
+  }
+
+  // Update tab states
+  const btnCustomer = document.getElementById('btn-customer');
+  const btnVendor = document.getElementById('btn-vendor');
+
+  if (type === 'customer') {
+    btnCustomer.classList.remove('bg-transparent', 'text-on-surface-variant', 'font-medium');
+    btnCustomer.classList.add('bg-primary', 'text-on-primary', 'font-bold', 'shadow-lg', 'shadow-primary/10');
+
+    btnVendor.classList.remove('bg-primary', 'text-on-primary', 'font-bold', 'shadow-lg', 'shadow-primary/10');
+    btnVendor.classList.add('bg-transparent', 'text-on-surface-variant', 'font-medium');
+  } else {
+    btnVendor.classList.remove('bg-transparent', 'text-on-surface-variant', 'font-medium');
+    btnVendor.classList.add('bg-primary', 'text-on-primary', 'font-bold', 'shadow-lg', 'shadow-primary/10');
+
+    btnCustomer.classList.remove('bg-primary', 'text-on-primary', 'font-bold', 'shadow-lg', 'shadow-primary/10');
+    btnCustomer.classList.add('bg-transparent', 'text-on-surface-variant', 'font-medium');
+  }
+
+  populateCompanySelect();
+  updateReports();
+}
+
+function populateCompanySelect() {
+  const reportType = document.getElementById('reportType')?.value || 'customer';
+  const companySelect = document.getElementById('companySelect');
+  const currentValue = companySelect.value;
+
+  companySelect.innerHTML = '<option value="">全社</option>';
+
+  if (reportType === 'customer') {
+    const companies = [...new Set(window.appCache.projects.map(p => p.clientCompany || p.client).filter(Boolean))].sort();
+    companies.forEach(company => {
+      const option = document.createElement('option');
+      option.value = company;
+      option.textContent = company;
+      companySelect.appendChild(option);
+    });
+  } else {
+    const vendors = [...new Set(window.appCache.orders.map(o => o.vendor).filter(Boolean))].sort();
+    vendors.forEach(vendor => {
+      const option = document.createElement('option');
+      option.value = vendor;
+      option.textContent = vendor;
+      companySelect.appendChild(option);
+    });
+  }
+
+  companySelect.value = currentValue;
+}
+
+function updateReports() {
+  const reportType = document.getElementById('reportType')?.value || 'customer';
+
+  if (reportType === 'customer') {
+    generateCustomerReport();
+  } else {
+    generateVendorReport();
+  }
+}
+
+function generateCustomerReport() {
+  const selectedCompany = document.getElementById('companySelect').value;
+  let projects = filterDataByDate(window.appCache.projects, 'startDate');
+
+  if (selectedCompany) {
+    projects = projects.filter(p => (p.clientCompany || p.client) === selectedCompany);
+  }
+
+  const projectIds = projects.map(p => p.id);
+  let orders = window.appCache.orders.filter(o => projectIds.includes(o.project_id));
+  const { startDate, endDate } = getDateRange();
+  orders = orders.filter(o => {
+    const date = o.period_start || '';
+    if (!date) return true;
+    return date >= startDate && date <= endDate;
+  });
+
+  const customerMap = {};
+  projects.forEach(p => {
+    const company = p.clientCompany || p.client || '未設定';
+    if (!customerMap[company]) {
+      customerMap[company] = { count: 0, revenue: 0, cost: 0, profit: 0, orders: [] };
+    }
+    customerMap[company].count++;
+  });
+
+  orders.forEach(o => {
+    const project = window.appCache.projects.find(p => p.id === o.project_id);
+    if (!project) return;
+    const company = project.clientCompany || project.client || '未設定';
+    if (customerMap[company]) {
+      customerMap[company].revenue += (o.decided || o.planned || 0);
+      customerMap[company].cost += (o.estimate || 0);
+      customerMap[company].orders.push(o);
+    }
+  });
+
+  Object.values(customerMap).forEach(data => {
+    data.profit = data.revenue - data.cost;
+  });
+
+  const sorted = Object.entries(customerMap)
+    .sort((a, b) => b[1].revenue - a[1].revenue);
+
+  renderCharts(sorted, projects, customerMap);
+}
+
+function generateVendorReport() {
+  const selectedCompany = document.getElementById('companySelect').value;
+  let orders = window.appCache.orders;
+  const { startDate, endDate } = getDateRange();
+  orders = orders.filter(o => {
+    const date = o.period_start || '';
+    if (!date) return true;
+    return date >= startDate && date <= endDate;
+  });
+
+  if (selectedCompany) {
+    orders = orders.filter(o => o.vendor === selectedCompany);
+  }
+
+  const vendorMap = {};
+  orders.forEach(o => {
+    const vendor = o.vendor || '未設定';
+    if (!vendorMap[vendor]) {
+      vendorMap[vendor] = { count: 0, revenue: 0, cost: 0, profit: 0, orders: [] };
+    }
+    vendorMap[vendor].count++;
+    vendorMap[vendor].revenue += (o.decided || o.planned || 0);
+    vendorMap[vendor].cost += (o.estimate || 0);
+    vendorMap[vendor].orders.push(o);
+  });
+
+  Object.values(vendorMap).forEach(data => {
+    data.profit = data.revenue - data.cost;
+  });
+
+  const sorted = Object.entries(vendorMap)
+    .sort((a, b) => b[1].revenue - a[1].revenue);
+
+  renderCharts(sorted, orders, vendorMap);
+}
+
+function renderCharts(sorted, allItems, dataMap) {
+  const reportType = document.getElementById('reportType')?.value || 'customer';
+  const names = sorted.map(([name]) => name);
+  const counts = sorted.map(([, data]) => data.count);
+  const revenues = sorted.map(([, data]) => data.revenue || 0);
+  const costs = sorted.map(([, data]) => data.cost || 0);
+
+  updateSummary(sorted, dataMap);
+  updateDetailTable(sorted);
+
+  // 件数グラフ
+  const ctxCount = document.getElementById('chartCount').getContext('2d');
+  if (chartCount) chartCount.destroy();
+  chartCount = new Chart(ctxCount, {
+    type: 'bar',
+    data: {
+      labels: names,
+      datasets: [{
+        label: '件数',
+        data: counts,
+        backgroundColor: '#104356',
+        borderRadius: 4,
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: { y: { beginAtZero: true } }
+    }
+  });
+
+  // 金額グラフ - 売上vs原価
+  const ctxAmount = document.getElementById('chartAmount').getContext('2d');
+  if (chartAmount) chartAmount.destroy();
+  chartAmount = new Chart(ctxAmount, {
+    type: 'bar',
+    data: {
+      labels: names,
+      datasets: [
+        {
+          label: '売上',
+          data: revenues,
+          backgroundColor: '#104356',
+          borderRadius: 4,
+        },
+        {
+          label: '原価',
+          data: costs,
+          backgroundColor: '#a33c2d',
+          borderRadius: 4,
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      scales: { y: { beginAtZero: true } }
+    }
+  });
+
+  // ステータス分布 または 見積vs決定
+  const ctxStatus = document.getElementById('chartStatus').getContext('2d');
+  if (chartStatus) chartStatus.destroy();
+
+  if (reportType === 'customer') {
+    const statusMap = {};
+    window.appCache.projects.forEach(p => {
+      const status = p.status || '未対応';
+      statusMap[status] = (statusMap[status] || 0) + 1;
+    });
+
+    chartStatus = new Chart(ctxStatus, {
+      type: 'doughnut',
+      data: {
+        labels: Object.keys(statusMap),
+        datasets: [{
+          data: Object.values(statusMap),
+          backgroundColor: ['#104356', '#a33c2d', '#f0bd89', '#2d5a6e', '#ffb4a7'],
+        }]
+      },
+      options: { responsive: true }
+    });
+  } else {
+    chartStatus = new Chart(ctxStatus, {
+      type: 'bar',
+      data: {
+        labels: names,
+        datasets: [
+          {
+            label: '見積金額',
+            data: costs,
+            backgroundColor: '#a33c2d',
+            borderRadius: 4,
+          },
+          {
+            label: '決定金額',
+            data: revenues,
+            backgroundColor: '#104356',
+            borderRadius: 4,
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        scales: { y: { beginAtZero: true } }
+      }
+    });
+  }
+}
+
+function updateSummary(sorted, dataMap) {
+  // Calculate financial metrics
+  const totalRevenue = sorted.reduce((sum, [, data]) => sum + (data.revenue || 0), 0);
+  const totalCost = sorted.reduce((sum, [, data]) => sum + (data.cost || 0), 0);
+  const totalProfit = sorted.reduce((sum, [, data]) => sum + (data.profit || 0), 0);
+
+  // 売上合計 (Sales Total)
+  document.getElementById('summary-revenue').textContent = '¥' + totalRevenue.toLocaleString();
+
+  // 平均粗利率 (Average Gross Margin %)
+  const margins = sorted.map(([, data]) => {
+    if (data.revenue > 0) {
+      return (data.profit / data.revenue) * 100;
+    }
+    return 0;
+  });
+  const avgMargin = margins.length > 0 ? margins.reduce((a, b) => a + b, 0) / margins.length : 0;
+  document.getElementById('summary-gross-margin').textContent = avgMargin.toFixed(1) + '%';
+
+  // 想定利益率 (Expected Profit Margin %)
+  const expectedProfitMargin = totalRevenue > 0 ? (totalProfit / totalRevenue) * 100 : 0;
+  document.getElementById('summary-expected-profit').textContent = expectedProfitMargin.toFixed(1) + '%';
+
+  // 実利益合計 (Actual Profit Total)
+  document.getElementById('summary-actual-profit').textContent = '¥' + totalProfit.toLocaleString();
+}
+
+function updateDetailTable(sorted) {
+  const tbody = document.getElementById('detailTable');
+  tbody.innerHTML = sorted.map(([name, data]) => {
+    const margin = data.revenue > 0 ? ((data.profit / data.revenue) * 100).toFixed(1) : 0;
+    return `
+      <tr class="border-b border-outline-variant hover:bg-surface-container-low">
+        <td class="py-3 px-4 font-medium">${name}</td>
+        <td class="py-3 px-4 text-right">${data.count}</td>
+        <td class="py-3 px-4 text-right tabular-nums">¥${(data.revenue || 0).toLocaleString()}</td>
+        <td class="py-3 px-4 text-right tabular-nums">${margin}%</td>
+      </tr>
+    `;
+  }).join('');
+
+  // Update table headers
+  const thead = document.querySelector('#detailTable').closest('table').querySelector('thead');
+  if (thead && !thead.innerHTML.includes('粗利率')) {
+    thead.innerHTML = `
+      <tr class="border-b border-outline-variant">
+        <th class="text-left py-3 px-4 font-bold text-on-surface-variant">名前</th>
+        <th class="text-right py-3 px-4 font-bold text-on-surface-variant">件数</th>
+        <th class="text-right py-3 px-4 font-bold text-on-surface-variant">売上</th>
+        <th class="text-right py-3 px-4 font-bold text-on-surface-variant">粗利率</th>
+      </tr>
+    `;
+  }
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
+  await initializeCache();
+  setReportType('customer');
+});
+</script>
+</body>
+</html>
