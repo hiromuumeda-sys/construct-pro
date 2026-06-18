@@ -79,7 +79,7 @@ fetch('/header.html')
 
 <!-- フィルタエリア -->
 <div class="bg-surface-container-low p-5 rounded-2xl border border-outline-variant/30">
-<div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
 <div>
 <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-2">期間開始</label>
 <input type="date" id="dateStart" class="w-full bg-surface-container-lowest border-outline-variant/50 rounded-xl text-sm px-4 py-2.5 focus:ring-2 focus:ring-primary/20" onchange="updateReports()"/>
@@ -93,12 +93,6 @@ fetch('/header.html')
 <select id="companySelect" class="w-full bg-surface-container-lowest border-outline-variant/50 rounded-xl text-sm px-4 py-2.5 focus:ring-2 focus:ring-primary/20" onchange="updateReports()">
 <option value="">全社</option>
 </select>
-</div>
-<div class="col-span-2 flex items-end">
-<button class="w-full bg-primary text-on-primary px-6 py-2.5 text-sm font-bold rounded-xl shadow-lg shadow-primary/10 hover:opacity-90 transition-all" onclick="updateReports()">
-<span class="material-symbols-outlined text-lg">refresh</span>
-更新
-</button>
 </div>
 </div>
 </div>
