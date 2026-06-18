@@ -78,8 +78,18 @@ fetch('/header.html')
 </div>
 
 <!-- フィルタエリア -->
-<div class="bg-surface-container-low p-5 rounded-2xl border border-outline-variant/30">
-<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+<div class="bg-surface-container-low p-5 rounded-2xl border border-outline-variant/30 space-y-4">
+<!-- 集計方法 -->
+<div>
+<p class="text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-2">集計方法</p>
+<div class="inline-flex gap-1 bg-surface-container-low/50 p-1 rounded-2xl border border-outline-variant/30">
+<button id="btn-period" class="px-8 py-2 text-sm font-bold text-on-primary bg-primary rounded-xl transition-all shadow-lg shadow-primary/10" onclick="setAggregateType('period')">期間</button>
+<button id="btn-project" class="px-8 py-2 text-sm font-medium text-on-surface-variant bg-transparent rounded-xl hover:bg-surface-container-lowest transition-all" onclick="setAggregateType('project')">案件</button>
+</div>
+</div>
+
+<!-- 期間モードのフィルタ -->
+<div id="period-filters" class="grid grid-cols-1 md:grid-cols-3 gap-4">
 <div>
 <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-2">期間開始</label>
 <input type="date" id="dateStart" class="w-full bg-surface-container-lowest border-outline-variant/50 rounded-xl text-sm px-4 py-2.5 focus:ring-2 focus:ring-primary/20" onchange="updateReports()"/>
@@ -91,6 +101,22 @@ fetch('/header.html')
 <div>
 <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-2">会社を選択</label>
 <select id="companySelect" class="w-full bg-surface-container-lowest border-outline-variant/50 rounded-xl text-sm px-4 py-2.5 focus:ring-2 focus:ring-primary/20" onchange="updateReports()">
+<option value="">全社</option>
+</select>
+</div>
+</div>
+
+<!-- 案件モードのフィルタ -->
+<div id="project-filters" class="grid grid-cols-1 md:grid-cols-3 gap-4 hidden">
+<div>
+<label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-2">案件を選択</label>
+<select id="projectSelect" class="w-full bg-surface-container-lowest border-outline-variant/50 rounded-xl text-sm px-4 py-2.5 focus:ring-2 focus:ring-primary/20" onchange="updateReports()">
+<option value="">全案件</option>
+</select>
+</div>
+<div>
+<label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-2">会社を選択</label>
+<select id="projectCompanySelect" class="w-full bg-surface-container-lowest border-outline-variant/50 rounded-xl text-sm px-4 py-2.5 focus:ring-2 focus:ring-primary/20" onchange="updateReports()">
 <option value="">全社</option>
 </select>
 </div>
@@ -144,6 +170,46 @@ async function initializeCache() {
   } catch(e) {
     console.error('Failed to load cache:', e);
   }
+}
+
+function setAggregateType(type) {
+  // Store aggregate type
+  if (!document.getElementById('aggregateType')) {
+    const input = document.createElement('input');
+    input.id = 'aggregateType';
+    input.type = 'hidden';
+    input.value = type;
+    document.body.appendChild(input);
+  } else {
+    document.getElementById('aggregateType').value = type;
+  }
+
+  // Update button states
+  const btnPeriod = document.getElementById('btn-period');
+  const btnProject = document.getElementById('btn-project');
+
+  if (type === 'period') {
+    btnPeriod.classList.remove('bg-transparent', 'text-on-surface-variant', 'font-medium');
+    btnPeriod.classList.add('bg-primary', 'text-on-primary', 'font-bold', 'shadow-lg', 'shadow-primary/10');
+
+    btnProject.classList.remove('bg-primary', 'text-on-primary', 'font-bold', 'shadow-lg', 'shadow-primary/10');
+    btnProject.classList.add('bg-transparent', 'text-on-surface-variant', 'font-medium');
+
+    document.getElementById('period-filters').classList.remove('hidden');
+    document.getElementById('project-filters').classList.add('hidden');
+  } else {
+    btnProject.classList.remove('bg-transparent', 'text-on-surface-variant', 'font-medium');
+    btnProject.classList.add('bg-primary', 'text-on-primary', 'font-bold', 'shadow-lg', 'shadow-primary/10');
+
+    btnPeriod.classList.remove('bg-primary', 'text-on-primary', 'font-bold', 'shadow-lg', 'shadow-primary/10');
+    btnPeriod.classList.add('bg-transparent', 'text-on-surface-variant', 'font-medium');
+
+    document.getElementById('period-filters').classList.add('hidden');
+    document.getElementById('project-filters').classList.remove('hidden');
+  }
+
+  populateCompanySelect();
+  updateReports();
 }
 
 function getDateRange() {
@@ -207,30 +273,69 @@ function setReportType(type) {
 
 function populateCompanySelect() {
   const reportType = document.getElementById('reportType')?.value || 'customer';
-  const companySelect = document.getElementById('companySelect');
-  const currentValue = companySelect.value;
+  const aggregateType = document.getElementById('aggregateType')?.value || 'period';
 
-  companySelect.innerHTML = '<option value="">全社</option>';
+  if (aggregateType === 'period') {
+    const companySelect = document.getElementById('companySelect');
+    const currentValue = companySelect.value;
+    companySelect.innerHTML = '<option value="">全社</option>';
 
-  if (reportType === 'customer') {
-    const companies = [...new Set(window.appCache.projects.map(p => p.clientCompany || p.client).filter(Boolean))].sort();
-    companies.forEach(company => {
-      const option = document.createElement('option');
-      option.value = company;
-      option.textContent = company;
-      companySelect.appendChild(option);
-    });
+    if (reportType === 'customer') {
+      const companies = [...new Set(window.appCache.projects.map(p => p.clientCompany || p.client).filter(Boolean))].sort();
+      companies.forEach(company => {
+        const option = document.createElement('option');
+        option.value = company;
+        option.textContent = company;
+        companySelect.appendChild(option);
+      });
+    } else {
+      const vendors = [...new Set(window.appCache.orders.map(o => o.vendor).filter(Boolean))].sort();
+      vendors.forEach(vendor => {
+        const option = document.createElement('option');
+        option.value = vendor;
+        option.textContent = vendor;
+        companySelect.appendChild(option);
+      });
+    }
+
+    companySelect.value = currentValue;
   } else {
-    const vendors = [...new Set(window.appCache.orders.map(o => o.vendor).filter(Boolean))].sort();
-    vendors.forEach(vendor => {
-      const option = document.createElement('option');
-      option.value = vendor;
-      option.textContent = vendor;
-      companySelect.appendChild(option);
-    });
-  }
+    // Project mode
+    const projectSelect = document.getElementById('projectSelect');
+    const projectCompanySelect = document.getElementById('projectCompanySelect');
+    const currentProject = projectSelect.value;
+    const currentCompany = projectCompanySelect.value;
 
-  companySelect.value = currentValue;
+    projectSelect.innerHTML = '<option value="">全案件</option>';
+    const projects = [...new Set(window.appCache.projects.map(p => ({ id: p.id, name: p.name })))];
+    projects.forEach(project => {
+      const option = document.createElement('option');
+      option.value = project.id;
+      option.textContent = project.name;
+      projectSelect.appendChild(option);
+    });
+    projectSelect.value = currentProject;
+
+    projectCompanySelect.innerHTML = '<option value="">全社</option>';
+    if (reportType === 'customer') {
+      const companies = [...new Set(window.appCache.projects.map(p => p.clientCompany || p.client).filter(Boolean))].sort();
+      companies.forEach(company => {
+        const option = document.createElement('option');
+        option.value = company;
+        option.textContent = company;
+        projectCompanySelect.appendChild(option);
+      });
+    } else {
+      const vendors = [...new Set(window.appCache.orders.map(o => o.vendor).filter(Boolean))].sort();
+      vendors.forEach(vendor => {
+        const option = document.createElement('option');
+        option.value = vendor;
+        option.textContent = vendor;
+        projectCompanySelect.appendChild(option);
+      });
+    }
+    projectCompanySelect.value = currentCompany;
+  }
 }
 
 function updateReports() {
@@ -244,21 +349,41 @@ function updateReports() {
 }
 
 function generateCustomerReport() {
-  const selectedCompany = document.getElementById('companySelect').value;
-  let projects = filterDataByDate(window.appCache.projects, 'startDate');
+  const aggregateType = document.getElementById('aggregateType')?.value || 'period';
+  let projects = window.appCache.projects;
+  let orders = window.appCache.orders;
 
-  if (selectedCompany) {
-    projects = projects.filter(p => (p.clientCompany || p.client) === selectedCompany);
+  if (aggregateType === 'period') {
+    const selectedCompany = document.getElementById('companySelect').value;
+    projects = filterDataByDate(projects, 'startDate');
+
+    if (selectedCompany) {
+      projects = projects.filter(p => (p.clientCompany || p.client) === selectedCompany);
+    }
+
+    const projectIds = projects.map(p => p.id);
+    orders = orders.filter(o => projectIds.includes(o.project_id));
+    const { startDate, endDate } = getDateRange();
+    orders = orders.filter(o => {
+      const date = o.period_start || '';
+      if (!date) return true;
+      return date >= startDate && date <= endDate;
+    });
+  } else {
+    const selectedProject = document.getElementById('projectSelect').value;
+    const selectedCompany = document.getElementById('projectCompanySelect').value;
+
+    if (selectedProject) {
+      projects = projects.filter(p => p.id === parseInt(selectedProject));
+    }
+
+    if (selectedCompany) {
+      projects = projects.filter(p => (p.clientCompany || p.client) === selectedCompany);
+    }
+
+    const projectIds = projects.map(p => p.id);
+    orders = orders.filter(o => projectIds.includes(o.project_id));
   }
-
-  const projectIds = projects.map(p => p.id);
-  let orders = window.appCache.orders.filter(o => projectIds.includes(o.project_id));
-  const { startDate, endDate } = getDateRange();
-  orders = orders.filter(o => {
-    const date = o.period_start || '';
-    if (!date) return true;
-    return date >= startDate && date <= endDate;
-  });
 
   const customerMap = {};
   projects.forEach(p => {
@@ -291,17 +416,33 @@ function generateCustomerReport() {
 }
 
 function generateVendorReport() {
-  const selectedCompany = document.getElementById('companySelect').value;
+  const aggregateType = document.getElementById('aggregateType')?.value || 'period';
   let orders = window.appCache.orders;
-  const { startDate, endDate } = getDateRange();
-  orders = orders.filter(o => {
-    const date = o.period_start || '';
-    if (!date) return true;
-    return date >= startDate && date <= endDate;
-  });
+  let projects = window.appCache.projects;
 
-  if (selectedCompany) {
-    orders = orders.filter(o => o.vendor === selectedCompany);
+  if (aggregateType === 'period') {
+    const selectedCompany = document.getElementById('companySelect').value;
+    const { startDate, endDate } = getDateRange();
+    orders = orders.filter(o => {
+      const date = o.period_start || '';
+      if (!date) return true;
+      return date >= startDate && date <= endDate;
+    });
+
+    if (selectedCompany) {
+      orders = orders.filter(o => o.vendor === selectedCompany);
+    }
+  } else {
+    const selectedProject = document.getElementById('projectSelect').value;
+    const selectedCompany = document.getElementById('projectCompanySelect').value;
+
+    if (selectedProject) {
+      orders = orders.filter(o => o.project_id === parseInt(selectedProject));
+    }
+
+    if (selectedCompany) {
+      orders = orders.filter(o => o.vendor === selectedCompany);
+    }
   }
 
   const vendorMap = {};
@@ -414,6 +555,7 @@ function updateSummary(sorted, dataMap) {
 
 document.addEventListener('DOMContentLoaded', async () => {
   await initializeCache();
+  setAggregateType('period');
   setReportType('customer');
 });
 </script>
