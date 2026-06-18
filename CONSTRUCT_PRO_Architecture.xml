@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="drawio" modified="2026-06-18T16:30:00.000Z" version="13.0.0">
+  <diagram name="CONSTRUCT_PRO Architecture" id="123">
+    <mxGraphModel dx="1200" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" background="#1a1a1a">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+
+        <!-- クライアント -->
+        <mxCell id="2" value="クライアント（複数拠点）&#10;ブラウザ&#10;(PC / タブレット)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#606060;strokeColor=#ffffff;strokeWidth=2;fontSize=12;fontColor=#ffffff;" vertex="1" parent="1">
+          <mxGeometry x="190" y="30" width="240" height="110" as="geometry"/>
+        </mxCell>
+
+        <!-- HTTPS矢印 -->
+        <mxCell id="3" value="HTTPS" style="rounded=0;edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#ffffff;strokeWidth=2;fontSize=11;fontColor=#ffffff;" edge="1" parent="1" source="2" target="4">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- Railway -->
+        <mxCell id="4" value="Railway" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#606060;strokeColor=#ffffff;strokeWidth=2;fontSize=12;fontColor=#ffffff;align=left;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="70" y="220" width="480" height="200" as="geometry"/>
+        </mxCell>
+
+        <!-- Node.js + Express -->
+        <mxCell id="5" value="Node.js + Express&#10;(CONSTRUCT_PRO)&#10;&#10;• API エンドポイント&#10;• PDF 生成&#10;• メール送信" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#ffffff;strokeWidth=2;fontSize=11;fontColor=#ffffff;align=center;" vertex="1" parent="1">
+          <mxGeometry x="125" y="255" width="290" height="130" as="geometry"/>
+        </mxCell>
+
+        <!-- PostgreSQL -->
+        <mxCell id="6" value="PostgreSQL&#10;+ Row Level Security" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#404040;strokeColor=#ffffff;strokeWidth=2;fontSize=12;fontColor=#ffffff;" vertex="1" parent="1">
+          <mxGeometry x="105" y="520" width="400" height="80" as="geometry"/>
+        </mxCell>
+
+        <!-- DB矢印 -->
+        <mxCell id="7" value="" style="rounded=0;edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#ffffff;strokeWidth=2;" edge="1" parent="1" source="5" target="6">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- Storage -->
+        <mxCell id="8" value="Storage&#10;(PDF / ファイル)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#ffffff;strokeWidth=2;fontSize=11;fontColor=#ffffff;" vertex="1" parent="1">
+          <mxGeometry x="145" y="420" width="150" height="60" as="geometry"/>
+        </mxCell>
+
+        <!-- Storage矢印 -->
+        <mxCell id="9" value="" style="rounded=0;edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#ffffff;strokeWidth=2;" edge="1" parent="1" source="5" target="8">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- AWS S3 -->
+        <mxCell id="10" value="AWS S3&#10;(PDF・ファイル保存)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#ffffff;strokeWidth=2;fontSize=11;fontColor=#ffffff;" vertex="1" parent="1">
+          <mxGeometry x="505" y="290" width="150" height="60" as="geometry"/>
+        </mxCell>
+
+        <!-- S3矢印 -->
+        <mxCell id="11" value="" style="rounded=0;edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#ffffff;strokeWidth=2;" edge="1" parent="1" source="5" target="10">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- Mail Service -->
+        <mxCell id="12" value="SendGrid&#10;または&#10;AWS SES" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#ffffff;strokeWidth=2;fontSize=11;fontColor=#ffffff;" vertex="1" parent="1">
+          <mxGeometry x="355" y="420" width="150" height="60" as="geometry"/>
+        </mxCell>
+
+        <!-- Mail矢印 -->
+        <mxCell id="13" value="" style="rounded=0;edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#ffffff;strokeWidth=2;" edge="1" parent="1" source="5" target="12">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

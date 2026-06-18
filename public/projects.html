@@ -172,6 +172,7 @@ fetch('/header.html')
 <th class="px-3 py-1.5 text-[11px] font-bold text-on-surface-variant uppercase tracking-widest border-b border-outline-variant/30 text-center w-72">工期</th>
 <th class="px-3 py-1.5 text-[11px] font-bold text-on-surface-variant uppercase tracking-widest border-b border-outline-variant/30 text-right w-44">契約金額</th>
 <th class="px-3 py-1.5 text-[11px] font-bold text-on-surface-variant uppercase tracking-widest border-b border-outline-variant/30 text-center w-36">状態</th>
+<th class="px-3 py-1.5 text-[11px] font-bold text-on-surface-variant uppercase tracking-widest border-b border-outline-variant/30 text-center w-24">支払い</th>
 <th class="px-3 py-1.5 text-[11px] font-bold text-on-surface-variant uppercase tracking-widest border-b border-outline-variant/30 min-w-[280px]">備考</th>
 <th class="px-3 py-1.5 text-[11px] font-bold text-on-surface-variant uppercase tracking-widest border-b border-outline-variant/30 text-center w-32">操作</th>
 </tr>
@@ -283,7 +284,7 @@ fetch('/header.html')
 </tr>
 </thead>
 <tbody class="divide-y divide-outline-variant/20" id="history-table-body">
-<tr class="hover:bg-surface-container-low transition-colors">
+<tr class="hover:bg-surface-container-low transition-colors cursor-pointer" onclick="location.href='history.html?type=project'">
 <td class="px-6 py-4 text-xs text-on-surface-variant tabular-numbers">2026/06/17 00:45:47</td>
 <td class="px-6 py-4 text-xs font-bold text-primary">システム一括処理</td>
 <td class="px-6 py-4 text-xs text-on-surface-variant">管理者 太郎 | 初期テストデータ30件をインポートしました</td>
@@ -292,10 +293,10 @@ fetch('/header.html')
 </table>
 </div>
 <div class="px-6 py-4 border-t border-outline-variant/30 bg-surface-container-low/30 text-center">
-<button class="text-xs font-bold text-primary hover:underline transition-all inline-flex items-center gap-1">
-                        全件を表示する
+<a href="history.html?type=project" class="text-xs font-bold text-primary hover:underline transition-all inline-flex items-center gap-1">
+                        もっと見る
                         <span class="material-symbols-outlined text-sm">arrow_forward</span>
-</button>
+</a>
 </div>
 </section>
 <footer class="pt-16 pb-8 text-center">
@@ -307,24 +308,44 @@ fetch('/header.html')
 <!-- 編集モーダル -->
 <div class="fixed inset-0 z-[100] hidden" id="edit-modal">
 <div class="absolute inset-0 bg-primary/20 backdrop-blur-md" onclick="closeModal('edit-modal')"></div>
-<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl bg-surface-container-lowest rounded-2xl shadow-2xl overflow-hidden border border-outline-variant/30 transform transition-all scale-95 opacity-0 duration-300">
+<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl max-h-[90vh] bg-surface-container-lowest rounded-2xl shadow-2xl overflow-hidden border border-outline-variant/30 transform transition-all scale-95 opacity-0 duration-300 flex flex-col">
 <div class="px-6 py-4 border-b border-outline-variant/30 flex justify-between items-center bg-surface-container-low/50">
 <h3 class="text-lg font-bold text-on-surface">案件詳細の編集</h3>
 <button class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-surface-container transition-colors text-on-surface-variant" onclick="closeModal('edit-modal')">
 <span class="material-symbols-outlined">close</span>
 </button>
 </div>
-<div class="p-5 space-y-4">
+<div class="p-5 space-y-4 overflow-y-auto flex-1">
 <input id="edit-id" type="hidden"/>
 <div class="grid grid-cols-2 gap-6">
 <div class="col-span-2">
 <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-2.5">工事名</label>
 <input class="w-full bg-surface-container-low border-outline-variant/50 rounded-xl text-sm px-4 py-3 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" id="edit-name" type="text"/>
 </div>
-<div>
-<label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-2.5">発注元</label>
-<input class="w-full bg-surface-container-low border-outline-variant/50 rounded-xl text-sm px-4 py-3 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" id="edit-client" type="text"/>
+<div class="col-span-2">
+<label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-2.5">顧客（発注元）</label>
+<select class="w-full bg-surface-container-low border-outline-variant/50 rounded-xl text-sm px-4 py-3 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" id="edit-customer-select" onchange="onEditCustomerSelected()">
+<option value="">顧客マスタから選択...</option>
+</select>
 </div>
+<div>
+<label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-2.5">担当者</label>
+<input class="w-full bg-surface-container-low/30 border-outline-variant/50 rounded-xl text-sm px-4 py-3 text-on-surface-variant cursor-not-allowed" id="edit-client-contact" type="text" readonly disabled/>
+</div>
+<div>
+<label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-2.5">電話番号</label>
+<input class="w-full bg-surface-container-low/30 border-outline-variant/50 rounded-xl text-sm px-4 py-3 text-on-surface-variant cursor-not-allowed" id="edit-client-phone" type="tel" readonly disabled/>
+</div>
+<div>
+<label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-2.5">メールアドレス</label>
+<input class="w-full bg-surface-container-low/30 border-outline-variant/50 rounded-xl text-sm px-4 py-3 text-on-surface-variant cursor-not-allowed" id="edit-client-email" type="email" readonly disabled/>
+</div>
+<div class="col-span-2">
+<label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-2.5">住所</label>
+<input class="w-full bg-surface-container-low/30 border-outline-variant/50 rounded-xl text-sm px-4 py-3 text-on-surface-variant cursor-not-allowed" id="edit-client-address" type="text" readonly disabled/>
+</div>
+<input id="edit-client" type="hidden"/>
+<input id="edit-client-company" type="hidden"/>
 <div>
 <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-2.5">ステータス</label>
 <select class="w-full bg-surface-container-low border-outline-variant/50 rounded-xl text-sm px-4 py-3 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" id="edit-status">
@@ -351,10 +372,14 @@ fetch('/header.html')
 <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-2.5">備考</label>
 <textarea class="w-full bg-surface-container-low border-outline-variant/50 rounded-xl text-sm px-4 py-3 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" id="edit-notes" rows="4"></textarea>
 </div>
+<div class="col-span-2 flex items-center gap-3 pt-2">
+<input type="checkbox" id="edit-paid" class="w-4 h-4 rounded cursor-pointer"/>
+<label for="edit-paid" class="text-sm font-bold text-on-surface cursor-pointer">支払い済み</label>
+</div>
 </div>
 </div>
 <div class="px-6 py-4 bg-surface-container-low/50 border-t border-outline-variant/30 flex justify-between items-center">
-<button class="text-error font-bold text-sm flex items-center gap-2 hover:bg-error/5 px-3 py-1.5 rounded-xl transition-all">
+<button class="text-error font-bold text-sm flex items-center gap-2 hover:bg-error/5 px-3 py-1.5 rounded-xl transition-all" id="delete-btn" onclick="deleteProject()">
 <span class="material-symbols-outlined text-lg">delete</span>
                     案件を削除
                 </button>
@@ -371,23 +396,30 @@ fetch('/header.html')
 <!-- 登録モーダル -->
 <div class="fixed inset-0 z-[100] hidden" id="register-modal">
 <div class="absolute inset-0 bg-primary/20 backdrop-blur-md" onclick="closeModal('register-modal')"></div>
-<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl bg-surface-container-lowest rounded-2xl shadow-2xl overflow-hidden border border-outline-variant/30 transform transition-all scale-95 opacity-0 duration-300">
+<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl max-h-[90vh] bg-surface-container-lowest rounded-2xl shadow-2xl overflow-hidden border border-outline-variant/30 transform transition-all scale-95 opacity-0 duration-300 flex flex-col">
 <div class="px-6 py-4 border-b border-outline-variant/30 flex justify-between items-center bg-surface-container-low/50">
 <h3 class="text-lg font-bold text-on-surface">新規案件の登録</h3>
 <button class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-surface-container transition-colors text-on-surface-variant" onclick="closeModal('register-modal')">
 <span class="material-symbols-outlined">close</span>
 </button>
 </div>
-<div class="p-5 space-y-4">
+<div class="p-5 space-y-4 overflow-y-auto flex-1">
 <div class="grid grid-cols-2 gap-6">
 <div class="col-span-2">
 <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-2.5">工事名</label>
 <input class="w-full bg-surface-container-low border-outline-variant/50 rounded-xl text-sm px-4 py-3 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" id="reg-name" placeholder="正式な工事名称を入力してください" type="text"/>
 </div>
-<div>
-<label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-2.5">発注元</label>
-<input class="w-full bg-surface-container-low border-outline-variant/50 rounded-xl text-sm px-4 py-3 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" id="reg-client" placeholder="発注元会社名" type="text"/>
+<div class="col-span-2">
+<label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-2.5">顧客（発注元）</label>
+<select class="w-full bg-surface-container-low border-outline-variant/50 rounded-xl text-sm px-4 py-3 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" id="reg-customer-select" onchange="onRegisterCustomerSelected()">
+<option value="">顧客マスタから選択...</option>
+</select>
 </div>
+<input id="reg-client" type="hidden"/>
+<input id="reg-client-company" type="hidden"/>
+<input id="reg-client-phone" type="hidden"/>
+<input id="reg-client-email" type="hidden"/>
+<input id="reg-client-address" type="hidden"/>
 <div>
 <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-2.5">ステータス</label>
 <select class="w-full bg-surface-container-low border-outline-variant/50 rounded-xl text-sm px-4 py-3 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" id="reg-status">
@@ -413,6 +445,10 @@ fetch('/header.html')
 <div class="col-span-2">
 <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-2.5">備考</label>
 <textarea class="w-full bg-surface-container-low border-outline-variant/50 rounded-xl text-sm px-4 py-3 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" id="reg-notes" placeholder="補足情報や特記事項を入力してください" rows="4"></textarea>
+</div>
+<div class="col-span-2 flex items-center gap-3 pt-2">
+<input type="checkbox" id="reg-paid" class="w-4 h-4 rounded cursor-pointer"/>
+<label for="reg-paid" class="text-sm font-bold text-on-surface cursor-pointer">支払い済み</label>
 </div>
 </div>
 </div>
@@ -456,15 +492,98 @@ fetch('/header.html')
 
         // グローバルキャッシュの初期化
         if (!window.appCache) {
-            window.appCache = { projects: [], vendors: [], categories: [], orders: [] };
+            window.appCache = { projects: [], vendors: [], categories: [], orders: [], customers: [] };
         }
 
         async function initializeGlobalCache() {
             try {
                 const res = await fetch('/api/cache');
                 window.appCache = await res.json();
+                populateCustomerDropdown();
             } catch(e) {
                 console.error('Failed to load cache:', e);
+            }
+        }
+
+        function populateCustomerDropdown() {
+            const select = document.getElementById('reg-customer-select');
+            const editSelect = document.getElementById('edit-customer-select');
+
+            console.log('populateCustomerDropdown called');
+            console.log('Customers:', window.appCache.customers);
+            console.log('reg-customer-select:', select);
+            console.log('edit-customer-select:', editSelect);
+
+            if (!select && !editSelect) {
+                console.log('No dropdowns found');
+                return;
+            }
+
+            if (select) {
+                const currentValue = select.value;
+                select.innerHTML = '<option value="">顧客マスタから選択...</option>';
+                if (window.appCache.customers && window.appCache.customers.length > 0) {
+                    window.appCache.customers.forEach(c => {
+                        const option = document.createElement('option');
+                        option.value = c.id;
+                        option.textContent = c.company;
+                        select.appendChild(option);
+                    });
+                }
+                select.value = currentValue;
+            }
+
+            if (editSelect) {
+                const currentValue = editSelect.value;
+                editSelect.innerHTML = '<option value="">顧客マスタから選択...</option>';
+                if (window.appCache.customers && window.appCache.customers.length > 0) {
+                    window.appCache.customers.forEach(c => {
+                        const option = document.createElement('option');
+                        option.value = c.id;
+                        option.textContent = c.company;
+                        editSelect.appendChild(option);
+                    });
+                }
+                editSelect.value = currentValue;
+            }
+        }
+
+        function onRegisterCustomerSelected() {
+            const select = document.getElementById('reg-customer-select');
+            const customerId = select.value;
+            if (!customerId) return;
+
+            const customer = window.appCache.customers.find(c => c.id == customerId);
+            if (customer) {
+                document.getElementById('reg-client').value = customer.company;
+                document.getElementById('reg-client-company').value = customer.company;
+                document.getElementById('reg-client-phone').value = customer.phone || '';
+                document.getElementById('reg-client-email').value = customer.email || '';
+                document.getElementById('reg-client-address').value = customer.address || '';
+            }
+        }
+
+        function onEditCustomerSelected() {
+            const select = document.getElementById('edit-customer-select');
+            const customerId = select.value;
+            if (!customerId) {
+                document.getElementById('edit-client-contact').value = '';
+                document.getElementById('edit-client-phone').value = '';
+                document.getElementById('edit-client-email').value = '';
+                document.getElementById('edit-client-address').value = '';
+                document.getElementById('edit-client').value = '';
+                document.getElementById('edit-client-company').value = '';
+                return;
+            }
+
+            const customer = window.appCache.customers.find(c => c.id == customerId);
+            if (customer) {
+                document.getElementById('edit-client-contact').value = customer.contact || '';
+                document.getElementById('edit-client-phone').value = customer.phone || '';
+                document.getElementById('edit-client-email').value = customer.email || '';
+                document.getElementById('edit-client-address').value = customer.address || '';
+                document.getElementById('edit-client').value = customer.company;
+                document.getElementById('edit-client-company').value = customer.company;
             }
         }
 
@@ -483,6 +602,11 @@ fetch('/header.html')
                     <td class="px-3 py-1.5 text-right text-xs font-bold text-primary tabular-numbers cursor-pointer" onclick="openEditModal(${p.id})">¥${p.amount.toLocaleString()}</td>
                     <td class="px-3 py-1.5 text-center cursor-pointer whitespace-nowrap" onclick="openEditModal(${p.id})">
                         <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase ${getStatusClass(p.status)}">${p.status}</span>
+                    </td>
+                    <td class="px-3 py-1.5 text-center text-xs font-bold cursor-pointer" onclick="openEditModal(${p.id})">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold ${p.paid ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}">
+                            ${p.paid ? '済' : '未'}
+                        </span>
                     </td>
                     <td class="px-3 py-1.5 text-xs text-on-surface-variant leading-relaxed truncate max-w-[280px] cursor-pointer" onclick="openEditModal(${p.id})">${p.notes || ''}</td>
                     <td class="px-3 py-0 text-center whitespace-nowrap">
@@ -505,32 +629,87 @@ fetch('/header.html')
 
         function openEditModal(id) {
             editingId = id;
+            populateCustomerDropdown();
             const p = window.appCache.projects.find(x => x.id === id);
             if(p) {
                 document.getElementById('edit-id').value = id;
                 document.getElementById('edit-name').value = p.name;
                 document.getElementById('edit-client').value = p.client;
+                document.getElementById('edit-client-company').value = p.clientCompany || '';
+                document.getElementById('edit-client-phone').value = p.clientPhone || '';
+                document.getElementById('edit-client-email').value = p.clientEmail || '';
+                document.getElementById('edit-client-address').value = p.clientAddress || '';
                 document.getElementById('edit-amount').value = p.amount;
                 document.getElementById('edit-status').value = p.status;
+                document.getElementById('edit-period-start').value = p.startDate || '';
+                document.getElementById('edit-period-end').value = p.endDate || '';
+                document.getElementById('edit-notes').value = p.notes || '';
+                document.getElementById('edit-paid').checked = p.paid ? true : false;
+
+                // 顧客選択を初期化（clientCompanyに一致する顧客を探す）
+                setTimeout(() => {
+                    const customer = window.appCache.customers.find(c => c.company === p.clientCompany);
+                    const customerSelect = document.getElementById('edit-customer-select');
+                    if (customer) {
+                        customerSelect.value = customer.id;
+                        onEditCustomerSelected();
+                    } else {
+                        customerSelect.value = '';
+                        document.getElementById('edit-client-contact').value = '';
+                        document.getElementById('edit-client-phone').value = p.clientPhone || '';
+                        document.getElementById('edit-client-email').value = p.clientEmail || '';
+                        document.getElementById('edit-client-address').value = p.clientAddress || '';
+                    }
+                }, 100);
             }
             openModal('edit-modal');
         }
 
         function openRegisterModal() {
             editingId = null;
-            document.getElementById('edit-name').value = '';
-            document.getElementById('edit-client').value = '';
-            document.getElementById('edit-amount').value = '';
-            document.getElementById('edit-status').value = '未対応';
+            populateCustomerDropdown();
+            document.getElementById('reg-name').value = '';
+            document.getElementById('reg-customer-select').value = '';
+            document.getElementById('reg-client').value = '';
+            document.getElementById('reg-client-company').value = '';
+            document.getElementById('reg-client-phone').value = '';
+            document.getElementById('reg-client-email').value = '';
+            document.getElementById('reg-client-address').value = '';
+            document.getElementById('reg-amount').value = '';
+            document.getElementById('reg-status').value = '未対応';
+            document.getElementById('reg-period-start').value = '';
+            document.getElementById('reg-period-end').value = '';
+            document.getElementById('reg-notes').value = '';
+            document.getElementById('reg-paid').checked = false;
             openModal('register-modal');
+        }
+
+        async function deleteProject() {
+            if(!editingId || !confirm('この案件を削除してもよろしいですか？')) return;
+            try {
+                await fetch(`/api/projects/${editingId}`, { method: 'DELETE' });
+                await initializeGlobalCache();
+                loadProjects();
+                closeModal('edit-modal');
+            } catch(e) {
+                alert('削除に失敗しました');
+            }
         }
 
         // Save register modal
         document.querySelector('#register-modal .bg-primary').onclick = async function() {
             const name = document.getElementById('reg-name').value;
             const client = document.getElementById('reg-client').value;
+            const clientCompany = document.getElementById('reg-client-company').value;
+            const clientPhone = document.getElementById('reg-client-phone').value;
+            const clientEmail = document.getElementById('reg-client-email').value;
+            const clientAddress = document.getElementById('reg-client-address').value;
             const amount = parseInt(document.getElementById('reg-amount').value) || 0;
             const status = document.getElementById('reg-status').value;
+            const startDate = document.getElementById('reg-period-start').value;
+            const endDate = document.getElementById('reg-period-end').value;
+            const notes = document.getElementById('reg-notes').value;
+            const paid = document.getElementById('reg-paid').checked;
 
             if(!name || !client) return alert('必須項目を入力してください');
 
@@ -538,12 +717,19 @@ fetch('/header.html')
                 const res = await fetch('/api/projects', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name, client, amount, status, startDate: '', endDate: '', notes: '' })
+                    body: JSON.stringify({ name, client, clientCompany, clientPhone, clientEmail, clientAddress, amount, status, startDate, endDate, notes, paid })
                 });
                 document.getElementById('reg-name').value = '';
                 document.getElementById('reg-client').value = '';
+                document.getElementById('reg-client-company').value = '';
+                document.getElementById('reg-client-phone').value = '';
+                document.getElementById('reg-client-email').value = '';
+                document.getElementById('reg-client-address').value = '';
                 document.getElementById('reg-amount').value = '';
                 document.getElementById('reg-status').value = '未対応';
+                document.getElementById('reg-period-start').value = '';
+                document.getElementById('reg-period-end').value = '';
+                document.getElementById('reg-notes').value = '';
                 await initializeGlobalCache();
                 loadProjects();
                 closeModal('register-modal');
@@ -557,14 +743,22 @@ fetch('/header.html')
             if(!editingId) return;
             const name = document.getElementById('edit-name').value;
             const client = document.getElementById('edit-client').value;
+            const clientCompany = document.getElementById('edit-client-company').value;
+            const clientPhone = document.getElementById('edit-client-phone').value;
+            const clientEmail = document.getElementById('edit-client-email').value;
+            const clientAddress = document.getElementById('edit-client-address').value;
             const amount = parseInt(document.getElementById('edit-amount').value) || 0;
             const status = document.getElementById('edit-status').value;
+            const startDate = document.getElementById('edit-period-start').value;
+            const endDate = document.getElementById('edit-period-end').value;
+            const notes = document.getElementById('edit-notes').value;
+            const paid = document.getElementById('edit-paid').checked;
 
             try {
                 await fetch(`/api/projects/${editingId}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name, client, amount, status, startDate: '', endDate: '', notes: '' })
+                    body: JSON.stringify({ name, client, clientCompany, clientPhone, clientEmail, clientAddress, amount, status, startDate, endDate, notes, paid })
                 });
                 await initializeGlobalCache();
                 loadProjects();
@@ -591,6 +785,7 @@ fetch('/header.html')
 
         (async () => {
             await initializeGlobalCache();
+            populateCustomerDropdown();
             loadProjects();
         })();
     </script>

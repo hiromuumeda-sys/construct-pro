@@ -218,12 +218,12 @@ fetch('/header.html')
 </tr>
 </thead>
 <tbody class="divide-y divide-surface-container-low" id="history-table-body">
-<tr class="hover:bg-surface-container-low transition-colors">
+<tr class="hover:bg-surface-container-low transition-colors cursor-pointer" onclick="location.href='history.html?type=vendor'">
 <td class="px-4 py-2 tabular-nums text-xs text-on-surface-variant">2024/11/15 09:15:33</td>
 <td class="px-4 py-2 text-xs font-medium text-on-surface">管理者 太郎</td>
 <td class="px-4 py-2 text-xs text-on-surface-variant">関西エリアの外注先30件を一括インポートしました</td>
 </tr>
-<tr class="hover:bg-surface-container-low transition-colors">
+<tr class="hover:bg-surface-container-low transition-colors cursor-pointer" onclick="location.href='history.html?type=vendor'">
 <td class="px-4 py-2 tabular-nums text-xs text-on-surface-variant">2024/10/24 15:30:45</td>
 <td class="px-4 py-2 text-xs font-medium text-on-surface">管理者 太郎</td>
 <td class="px-4 py-2 text-xs text-on-surface-variant">外注先「株式会社タカハシ工業」の情報を更新しました</td>
@@ -231,11 +231,11 @@ fetch('/header.html')
 </tbody>
 </table>
 </div>
-<div class="px-4 py-2 bg-surface-container-low text-center">
-<button class="text-[11px] font-bold text-primary hover:underline transition-all flex items-center gap-2 mx-auto uppercase tracking-widest group">
+<div class="px-4 py-2 bg-surface-container-low text-center flex justify-center">
+<a href="history.html?type=vendor" class="text-[11px] font-bold text-primary hover:underline transition-all flex items-center gap-2 uppercase tracking-widest group">
                         もっと見る
                         <span class="material-symbols-outlined text-[18px] group-hover:translate-x-1 transition-transform">arrow_forward</span>
-</button>
+</a>
 </div>
 </div>
 <footer class="pt-16 pb-8 border-t border-outline-variant text-center">

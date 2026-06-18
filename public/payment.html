@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html class="light" lang="ja">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<title>送金管理 - CONSTRUCT_PRO</title>
+<script id="tailwind-config">
+tailwind.config = {
+  darkMode: "class",
+  theme: {
+    extend: {
+      "colors": {
+        "surface": "#faf9f7",
+        "on-secondary-fixed": "#400100",
+        "outline-variant": "#c1c7cc",
+        "on-primary": "#ffffff",
+        "outline": "#71787c",
+        "error-container": "#ffdad6",
+        "surface-dim": "#dadad8",
+        "on-surface-variant": "#41484c",
+        "surface-variant": "#e3e2e0",
+        "secondary-container": "#ff816d",
+        "inverse-surface": "#2f3130",
+        "background": "#faf9f7",
+        "surface-container-highest": "#e3e2e0",
+        "surface-container-low": "#f4f3f1",
+        "secondary": "#a33c2d",
+        "surface-container-high": "#e9e8e6",
+        "primary-container": "#2d5a6e",
+        "primary": "#104356",
+        "tertiary": "#57360e",
+        "inverse-on-surface": "#f1f1ef",
+        "error": "#ba1a1a",
+        "on-background": "#1a1c1b",
+        "on-secondary": "#ffffff",
+        "surface-container-lowest": "#ffffff",
+        "on-tertiary": "#ffffff",
+        "on-error": "#ffffff",
+        "on-surface": "#1a1c1b"
+      },
+      "borderRadius": {
+        "DEFAULT": "0.25rem",
+        "lg": "0.5rem",
+        "xl": "12px",
+        "2xl": "16px",
+        "full": "9999px"
+      },
+      "spacing": {
+        "xxl": "64px",
+        "xl": "40px",
+        "gutter": "24px",
+        "md": "16px",
+        "container-padding": "32px",
+        "sm": "8px",
+        "lg": "24px",
+        "xs": "4px",
+        "base": "4px"
+      },
+      "fontFamily": {
+        "sans": ["Inter", "Noto Sans JP", "sans-serif"]
+      }
+    }
+  }
+}
+</script>
+<style>
+body {
+  font-family: 'Inter', 'Noto Sans JP', sans-serif;
+  background-color: #faf9f7;
+}
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  vertical-align: middle;
+}
+.tabular-numbers {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+</style>
+</head>
+<body class="text-on-surface antialiased">
+<!-- ヘッダー -->
+<div id="header-placeholder"></div>
+<script>
+fetch('/header.html')
+  .then(response => response.text())
+  .then(html => {
+    document.getElementById('header-placeholder').innerHTML = html;
+  });
+</script>
+
+<main class="pt-24 pb-xxl w-full">
+<div class="w-full px-container-padding space-y-lg">
+<!-- ページタイトルエリア -->
+<div class="flex justify-between items-center">
+<div class="flex items-center gap-3">
+<button class="w-9 h-9 flex items-center justify-center rounded-xl border border-outline-variant bg-surface-container-lowest hover:bg-surface-container transition-colors text-on-surface-variant shrink-0" onclick="history.back()">
+<span class="material-symbols-outlined text-[20px]">arrow_back</span>
+</button>
+<h1 class="text-xl font-bold text-on-surface tracking-tight">送金管理</h1>
+</div>
+</div>
+
+<!-- フィルタエリア -->
+<div class="bg-surface-container-low p-5 rounded-2xl border border-outline-variant/30 flex flex-wrap items-center gap-4">
+<div class="relative min-w-[220px]">
+<select class="w-full bg-surface-container-lowest border-outline-variant/50 text-sm py-2.5 px-4 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary appearance-none transition-all cursor-pointer" id="status-filter">
+<option value="">すべてのステータス</option>
+<option value="未払い">未払い</option>
+<option value="部分払い">部分払い</option>
+<option value="支払済み">支払済み</option>
+</select>
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-on-surface-variant">keyboard_arrow_down</span>
+</div>
+<div class="relative flex-1 max-w-lg">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant text-xl">search</span>
+<input class="w-full bg-surface-container-lowest border-outline-variant/50 text-sm pl-12 pr-4 py-2.5 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" id="keyword-search" placeholder="案件名、外注先で検索..." type="text"/>
+</div>
+</div>
+
+<!-- データテーブル -->
+<div class="bg-surface-container-lowest border border-outline-variant/30 rounded-2xl overflow-hidden shadow-sm">
+<table class="w-full text-left border-separate border-spacing-0">
+<thead>
+<tr class="bg-surface-container-low/50">
+<th class="px-3 py-1.5 text-[11px] font-bold text-on-surface-variant uppercase tracking-widest border-b border-outline-variant/30">案件名</th>
+<th class="px-3 py-1.5 text-[11px] font-bold text-on-surface-variant uppercase tracking-widest border-b border-outline-variant/30 w-1/5">工事区分</th>
+<th class="px-3 py-1.5 text-[11px] font-bold text-on-surface-variant uppercase tracking-widest border-b border-outline-variant/30 w-1/4">外注先</th>
+<th class="px-3 py-1.5 text-[11px] font-bold text-on-surface-variant uppercase tracking-widest border-b border-outline-variant/30 text-right">費用</th>
+<th class="px-3 py-1.5 text-[11px] font-bold text-on-surface-variant uppercase tracking-widest border-b border-outline-variant/30 text-center w-32">入金ステータス</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant/20" id="payment-table-body">
+<!-- データが JavaScript で挿入される -->
+</tbody>
+</table>
+</div>
+</div>
+</main>
+
+<!-- 送金編集モーダル -->
+<div class="fixed inset-0 z-[100] hidden overflow-y-auto" id="edit-modal">
+<div class="absolute inset-0 bg-primary/20 backdrop-blur-md" onclick="closeModal()"></div>
+<div class="relative w-full max-w-2xl mx-auto my-8 bg-surface-container-lowest rounded-2xl shadow-2xl overflow-hidden border border-outline-variant/30 transform transition-all scale-95 opacity-0 duration-300">
+<div class="px-6 py-4 border-b border-outline-variant/30 flex justify-between items-center bg-surface-container-low/50 sticky top-0">
+<h3 class="text-lg font-bold text-on-surface">送金管理の編集</h3>
+<button class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-surface-container transition-colors text-on-surface-variant" onclick="closeModal()">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+<div class="p-5 space-y-4 max-h-[calc(100vh-200px)] overflow-y-auto">
+<input id="edit-id" type="hidden"/>
+<div class="grid grid-cols-2 gap-6">
+<div class="col-span-2">
+<label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-2.5">案件名</label>
+<input class="w-full bg-surface-container-low border-outline-variant/50 rounded-xl text-sm px-4 py-3 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" id="edit-project" type="text" readonly/>
+</div>
+<div>
+<label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-2.5">工事区分</label>
+<input class="w-full bg-surface-container-low border-outline-variant/50 rounded-xl text-sm px-4 py-3 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" id="edit-category" type="text" readonly/>
+</div>
+<div>
+<label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-2.5">外注先</label>
+<input class="w-full bg-surface-container-low border-outline-variant/50 rounded-xl text-sm px-4 py-3 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" id="edit-vendor" type="text" readonly/>
+</div>
+<div>
+<label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-2.5">費用</label>
+<input class="w-full bg-surface-container-low border-outline-variant/50 rounded-xl text-sm px-4 py-3 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all tabular-numbers" id="edit-amount" type="text" readonly/>
+</div>
+<div>
+<label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-2.5">入金ステータス</label>
+<select class="w-full bg-surface-container-low border-outline-variant/50 rounded-xl text-sm px-4 py-3 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" id="edit-status">
+<option value="未払い">未払い</option>
+<option value="部分払い">部分払い</option>
+<option value="支払済み">支払済み</option>
+</select>
+</div>
+<div>
+<label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-2.5">支払予定日</label>
+<input class="w-full bg-surface-container-low border-outline-variant/50 rounded-xl text-sm px-4 py-3 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" id="edit-payment-date" type="date"/>
+</div>
+<div class="col-span-2">
+<label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-2.5">備考</label>
+<textarea class="w-full bg-surface-container-low border-outline-variant/50 rounded-xl text-sm px-4 py-3 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" id="edit-notes" rows="3"></textarea>
+</div>
+</div>
+<div class="px-6 py-4 border-t border-outline-variant/30 flex justify-end items-center gap-3 bg-surface-container-low/50 sticky bottom-0">
+<button class="px-6 py-2.5 text-sm font-semibold text-on-surface border border-outline-variant rounded-xl hover:bg-surface-container transition-all" onclick="closeModal()">キャンセル</button>
+<button class="px-6 py-2.5 text-sm font-bold text-on-primary bg-primary rounded-xl hover:opacity-90 transition-all" onclick="savePayment()">保存</button>
+</div>
+</div>
+</div>
+</div>
+
+<script>
+if (!window.appCache) {
+  window.appCache = { projects: [], orders: [] };
+}
+
+let payments = [];
+
+async function initializeCache() {
+  try {
+    const res = await fetch('/api/cache');
+    window.appCache = await res.json();
+  } catch(e) {
+    console.error('Failed to load cache:', e);
+  }
+}
+
+function loadPayments() {
+  payments = window.appCache.orders.map(order => {
+    const project = window.appCache.projects.find(p => p.id === order.project_id);
+    return {
+      id: order.id,
+      projectName: project?.name || '未設定',
+      category: order.category || '-',
+      vendor: order.vendor || '-',
+      amount: order.decided || order.planned || 0,
+      status: order.paymentStatus || '未払い',
+      paymentDate: order.paymentDate || '',
+      notes: order.paymentNotes || '',
+      project_id: order.project_id,
+      period_start: order.period_start
+    };
+  });
+
+  renderTable();
+}
+
+function renderTable() {
+  const tbody = document.getElementById('payment-table-body');
+  tbody.innerHTML = payments.map((payment) => `
+    <tr class="hover:bg-surface-container-low transition-colors cursor-pointer group" onclick="openModal(${payment.id})">
+      <td class="px-3 py-1.5 text-xs font-bold text-on-surface group-hover:text-primary transition-colors">${payment.projectName}</td>
+      <td class="px-3 py-1.5 text-xs text-on-surface-variant">${payment.category}</td>
+      <td class="px-3 py-1.5 text-xs text-on-surface-variant">${payment.vendor}</td>
+      <td class="px-3 py-1.5 text-xs text-right tabular-numbers">¥${payment.amount.toLocaleString()}</td>
+      <td class="px-3 py-1.5 text-xs text-center whitespace-nowrap">
+        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold ${getStatusColor(payment.status)}">${payment.status}</span>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function getStatusColor(status) {
+  const colors = {
+    '未払い': 'bg-error/10 text-error',
+    '部分払い': 'bg-tertiary-fixed text-on-tertiary-fixed-variant',
+    '支払済み': 'bg-secondary-container text-on-secondary-container'
+  };
+  return colors[status] || 'bg-surface-container text-on-surface';
+}
+
+function openModal(id) {
+  const payment = payments.find(p => p.id === id);
+  if (!payment) return;
+
+  document.getElementById('edit-id').value = payment.id;
+  document.getElementById('edit-project').value = payment.projectName;
+  document.getElementById('edit-category').value = payment.category;
+  document.getElementById('edit-vendor').value = payment.vendor;
+  document.getElementById('edit-amount').value = '¥' + payment.amount.toLocaleString();
+  document.getElementById('edit-status').value = payment.status;
+  document.getElementById('edit-payment-date').value = payment.paymentDate;
+  document.getElementById('edit-notes').value = payment.notes;
+
+  const modal = document.getElementById('edit-modal');
+  modal.classList.remove('hidden');
+  setTimeout(() => {
+    const content = modal.querySelector('.bg-surface-container-lowest');
+    if (content) {
+      content.classList.remove('scale-95', 'opacity-0');
+      content.classList.add('scale-100', 'opacity-100');
+    }
+  }, 10);
+  document.body.style.overflow = 'hidden';
+}
+
+function closeModal() {
+  const modal = document.getElementById('edit-modal');
+  const content = modal.querySelector('.bg-surface-container-lowest');
+  if (content) {
+    content.classList.add('scale-95', 'opacity-0');
+    content.classList.remove('scale-100', 'opacity-100');
+  }
+  setTimeout(() => {
+    modal.classList.add('hidden');
+  }, 300);
+  document.body.style.overflow = '';
+}
+
+async function savePayment() {
+  const id = document.getElementById('edit-id').value;
+  const data = {
+    paymentStatus: document.getElementById('edit-status').value,
+    paymentDate: document.getElementById('edit-payment-date').value,
+    paymentNotes: document.getElementById('edit-notes').value
+  };
+
+  try {
+    await fetch(`/api/orders/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+
+    // Update cache
+    const ordersRes = await fetch('/api/orders');
+    window.appCache.orders = await ordersRes.json();
+    loadPayments();
+    closeModal();
+  } catch(e) {
+    console.error('Failed to save payment:', e);
+  }
+}
+
+// フィルタ機能
+document.addEventListener('DOMContentLoaded', async () => {
+  await initializeCache();
+  loadPayments();
+
+  document.getElementById('status-filter').addEventListener('change', filterTable);
+  document.getElementById('keyword-search').addEventListener('input', filterTable);
+});
+
+function filterTable() {
+  const status = document.getElementById('status-filter').value;
+  const keyword = document.getElementById('keyword-search').value.toLowerCase();
+
+  const filtered = payments.filter(p => {
+    const matchStatus = !status || p.status === status;
+    const matchKeyword = !keyword ||
+      p.projectName.toLowerCase().includes(keyword) ||
+      p.vendor.toLowerCase().includes(keyword);
+    return matchStatus && matchKeyword;
+  });
+
+  const tbody = document.getElementById('payment-table-body');
+  tbody.innerHTML = filtered.map((payment) => `
+    <tr class="hover:bg-surface-container-low transition-colors cursor-pointer group" onclick="openModal(${payment.id})">
+      <td class="px-3 py-1.5 text-xs font-bold text-on-surface group-hover:text-primary transition-colors">${payment.projectName}</td>
+      <td class="px-3 py-1.5 text-xs text-on-surface-variant">${payment.category}</td>
+      <td class="px-3 py-1.5 text-xs text-on-surface-variant">${payment.vendor}</td>
+      <td class="px-3 py-1.5 text-xs text-right tabular-numbers">¥${payment.amount.toLocaleString()}</td>
+      <td class="px-3 py-1.5 text-xs text-center whitespace-nowrap">
+        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold ${getStatusColor(payment.status)}">${payment.status}</span>
+      </td>
+    </tr>
+  `).join('');
+}
+</script>
+</body>
+</html>

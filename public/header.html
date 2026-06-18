@@ -5,8 +5,12 @@
 <nav class="hidden md:flex items-center gap-1 flex-nowrap">
 <a class="px-4 py-2 text-sm font-medium text-on-surface-variant hover:text-primary hover:bg-surface-container rounded-xl transition-all" href="#" id="nav-dashboard" onclick="event.preventDefault();alert('ダッシュボードは準備中です')">ダッシュボード</a>
 <a class="px-4 py-2 text-sm font-medium text-on-surface-variant hover:text-primary hover:bg-surface-container rounded-xl transition-all" href="/" id="nav-projects">案件マスタ</a>
+<a class="px-4 py-2 text-sm font-medium text-on-surface-variant hover:text-primary hover:bg-surface-container rounded-xl transition-all" href="/customers.html" id="nav-customers">顧客マスタ</a>
 <a class="px-4 py-2 text-sm font-medium text-on-surface-variant hover:text-primary hover:bg-surface-container rounded-xl transition-all" href="/vendors.html" id="nav-vendors">外注先マスタ</a>
 <a class="px-4 py-2 text-sm font-medium text-on-surface-variant hover:text-primary hover:bg-surface-container rounded-xl transition-all" href="/categories.html" id="nav-categories">工事区分マスタ</a>
+<a class="px-4 py-2 text-sm font-medium text-on-surface-variant hover:text-primary hover:bg-surface-container rounded-xl transition-all" href="/reporting.html" id="nav-reporting">レポーティング</a>
+<a class="px-4 py-2 text-sm font-medium text-on-surface-variant hover:text-primary hover:bg-surface-container rounded-xl transition-all" href="/payment.html" id="nav-payment">送金管理</a>
+<a class="px-4 py-2 text-sm font-medium text-on-surface-variant hover:text-primary hover:bg-surface-container rounded-xl transition-all" href="/history.html" id="nav-history">履歴詳細</a>
 </nav>
 </div>
 <div class="flex items-center gap-4">
@@ -28,10 +32,18 @@ function setActiveNav() {
   let activeId;
   if (path === '/' || path === '/projects.html') {
     activeId = 'nav-projects';
+  } else if (path.includes('customers')) {
+    activeId = 'nav-customers';
   } else if (path.includes('vendors')) {
     activeId = 'nav-vendors';
   } else if (path.includes('categories')) {
     activeId = 'nav-categories';
+  } else if (path.includes('reporting')) {
+    activeId = 'nav-reporting';
+  } else if (path.includes('payment')) {
+    activeId = 'nav-payment';
+  } else if (path.includes('history')) {
+    activeId = 'nav-history';
   }
 
   if (activeId) {

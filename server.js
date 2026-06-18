@@ -2,6 +2,8 @@ const express = require('express');
 const cors = require('cors');
 const Database = require('better-sqlite3');
 const path = require('path');
+const PDFDocument = require('pdfkit');
+const nodemailer = require('nodemailer');
 
 const app = express();
 const db = new Database('construct.db');
@@ -23,11 +25,16 @@ function initDB() {
       id INTEGER PRIMARY KEY,
       name TEXT NOT NULL,
       client TEXT NOT NULL,
+      clientCompany TEXT,
+      clientPhone TEXT,
+      clientEmail TEXT,
+      clientAddress TEXT,
       amount INTEGER,
       startDate TEXT,
       endDate TEXT,
       status TEXT,
-      notes TEXT
+      notes TEXT,
+      paid INTEGER DEFAULT 0
     );
 
     CREATE TABLE IF NOT EXISTS vendors (
@@ -63,27 +70,42 @@ function initDB() {
       period_start TEXT,
       period_end TEXT,
       handover TEXT,
-      payment TEXT
+      payment TEXT,
+      paymentStatus TEXT DEFAULT '未払い',
+      paymentDate TEXT,
+      paymentNotes TEXT
+    );
+
+    CREATE TABLE IF NOT EXISTS customers (
+      id INTEGER PRIMARY KEY,
+      company TEXT NOT NULL,
+      department TEXT,
+      contact TEXT,
+      email TEXT,
+      phone TEXT,
+      address TEXT,
+      notes TEXT
     );
   `);
 
   // Check if data exists
-  const count = db.prepare('SELECT COUNT(*) as cnt FROM projects').get().cnt;
-  if (count === 0) {
+  const projectCount = db.prepare('SELECT COUNT(*) as cnt FROM projects').get().cnt;
+  const customerCount = db.prepare('SELECT COUNT(*) as cnt FROM customers').get().cnt;
+  if (projectCount === 0 || customerCount === 0) {
     const projects = [
-      { name: '京都御所南マンション改修工事', client: '京都工務店', amount: 12500000, startDate: '2024/05/10', endDate: '2025/03/31', status: '未対応', notes: '要現場説明会参加。図面承認待ち。' },
-      { name: '中京区三条通オフィスビル新築工事', client: '滋賀設備工事', amount: 4800000, startDate: '2024/06/01', endDate: '2024/08/30', status: '提案中', notes: '概算見積提出済み。' },
-      { name: '下鴨神社周辺戸建住宅リノベーション', client: '大阪内装クリエイト', amount: 28340000, startDate: '2024/07/20', endDate: '2024/12/15', status: '見積確認中', notes: '資材高騰による再見積依頼あり。' },
-      { name: '烏丸御池メディカルモール内装工事', client: '奈良建具製作所', amount: 8500000, startDate: '2024/04/01', endDate: '2025/03/31', status: '受注', notes: '契約締結済み。' },
-      { name: '嵐山旅館客室改修工事', client: '京都工務店', amount: 45000000, startDate: '2024/05/01', endDate: '2024/09/30', status: '失注', notes: '価格競争力により失注。' },
-      { name: '丹波黒豆工場改築工事', client: '兵庫建設', amount: 18900000, startDate: '2024/08/15', endDate: '2025/06/30', status: '受注', notes: '地元企業との協業案件。' },
-      { name: '福知山駅前商業施設新築', client: '福知山市役所', amount: 52000000, startDate: '2024/09/01', endDate: '2025/12/31', status: '提案中', notes: '公共事業。入札予定。' },
-      { name: '伏見港湾倉庫拡張工事', client: 'トランスポート関西', amount: 16200000, startDate: '2024/10/01', endDate: '2025/05/15', status: '見積確認中', notes: '急工程での完成要望あり。' },
-      { name: '長岡京医療施設増築工事', client: '日本赤十字', amount: 35000000, startDate: '2024/07/01', endDate: '2025/08/30', status: '未対応', notes: '設計図面まだ未確定。' },
-      { name: '南丹市庁舎耐震補強工事', client: '南丹市役所', amount: 24500000, startDate: '2024/11/01', endDate: '2025/09/30', status: '受注', notes: '施工実績が必要な物件。' },
+      { name: '京都御所南マンション改修工事', client: '京都工務店', clientCompany: '(株)京都工務', clientPhone: '075-123-4567', clientEmail: 'contact@kyoto-koumuten.jp', clientAddress: '京都府京都市中京区', amount: 12500000, startDate: '2024/05/10', endDate: '2025/03/31', status: '未対応', notes: '要現場説明会参加。図面承認待ち。' },
+      { name: '中京区三条通オフィスビル新築工事', client: '滋賀設備工事', clientCompany: '滋賀設備工事(株)', clientPhone: '077-567-8901', clientEmail: 'info@shiga-setubi.co.jp', clientAddress: '滋賀県大津市', amount: 4800000, startDate: '2024/06/01', endDate: '2024/08/30', status: '提案中', notes: '概算見積提出済み。' },
+      { name: '下鴨神社周辺戸建住宅リノベーション', client: '大阪内装クリエイト', clientCompany: '大阪内装(株)', clientPhone: '06-234-5678', clientEmail: 'sales@osaka-naikusou.jp', clientAddress: '大阪府大阪市北区', amount: 28340000, startDate: '2024/07/20', endDate: '2024/12/15', status: '見積確認中', notes: '資材高騰による再見積依頼あり。' },
+      { name: '烏丸御池メディカルモール内装工事', client: '奈良建具製作所', clientCompany: '(株)奈良建具', clientPhone: '0742-789-0123', clientEmail: 'nara@tategu.jp', clientAddress: '奈良県奈良市', amount: 8500000, startDate: '2024/04/01', endDate: '2025/03/31', status: '受注', notes: '契約締結済み。' },
+      { name: '嵐山旅館客室改修工事', client: '京都工務店', clientCompany: '(株)京都工務', clientPhone: '075-123-4567', clientEmail: 'contact@kyoto-koumuten.jp', clientAddress: '京都府京都市中京区', amount: 45000000, startDate: '2024/05/01', endDate: '2024/09/30', status: '失注', notes: '価格競争力により失注。' },
+      { name: '丹波黒豆工場改築工事', client: '兵庫建設', clientCompany: '兵庫建設(株)', clientPhone: '079-345-6789', clientEmail: 'hyogo@kensetsu.jp', clientAddress: '兵庫県丹波市', amount: 18900000, startDate: '2024/08/15', endDate: '2025/06/30', status: '受注', notes: '地元企業との協業案件。' },
+      { name: '福知山駅前商業施設新築', client: '福知山市役所', clientCompany: '福知山市役所', clientPhone: '0773-901-2345', clientEmail: 'projects@fukuchiyama.jp', clientAddress: '京都府福知山市', amount: 52000000, startDate: '2024/09/01', endDate: '2025/12/31', status: '提案中', notes: '公共事業。入札予定。' },
+      { name: '伏見港湾倉庫拡張工事', client: 'トランスポート関西', clientCompany: 'トランスポート関西(株)', clientPhone: '075-456-7890', clientEmail: 'kowan@transport-kansai.jp', clientAddress: '京都府京都市伏見区', amount: 16200000, startDate: '2024/10/01', endDate: '2025/05/15', status: '見積確認中', notes: '急工程での完成要望あり。' },
+      { name: '長岡京医療施設増築工事', client: '日本赤十字', clientCompany: '日本赤十字社', clientPhone: '075-567-8901', clientEmail: 'medical@jrc.or.jp', clientAddress: '京都府長岡京市', amount: 35000000, startDate: '2024/07/01', endDate: '2025/08/30', status: '未対応', notes: '設計図面まだ未確定。' },
+      { name: '南丹市庁舎耐震補強工事', client: '南丹市役所', clientCompany: '南丹市役所', clientPhone: '0771-678-9012', clientEmail: 'kenchiku@nantan.jp', clientAddress: '京都府南丹市', amount: 24500000, startDate: '2024/11/01', endDate: '2025/09/30', status: '受注', notes: '施工実績が必要な物件。' },
     ];
-    const insertProject = db.prepare('INSERT INTO projects (name, client, amount, startDate, endDate, status, notes) VALUES (?, ?, ?, ?, ?, ?, ?)');
-    projects.forEach(p => insertProject.run(p.name, p.client, p.amount, p.startDate, p.endDate, p.status, p.notes));
+    const insertProject = db.prepare('INSERT INTO projects (name, client, clientCompany, clientPhone, clientEmail, clientAddress, amount, startDate, endDate, status, notes, paid) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+    projects.forEach(p => insertProject.run(p.name, p.client, p.clientCompany, p.clientPhone, p.clientEmail, p.clientAddress, p.amount, p.startDate, p.endDate, p.status, p.notes, 0));
 
     const vendors = [
       { id: '001', company: 'なにわ建設株式会社', dept: '建築部', contact: '田中 一郎', email: 'i.tanaka@naniwa-con.co.jp', phone: '06-6123-4567', address: '大阪府大阪市北区梅田', area: '大阪府' },
@@ -132,6 +154,21 @@ function initDB() {
     ];
     const insertOrder = db.prepare('INSERT INTO orders (project_id, category, vendor, estimate, planned, decided, status, details, site, period_start, period_end, handover, payment) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
     orders.forEach(o => insertOrder.run(o.project_id, o.category, o.vendor, o.estimate, o.planned, o.decided, o.status, o.details, o.site, o.period_start, o.period_end, o.handover, o.payment));
+
+    const customers = [
+      { company: '(株)京都工務', department: '営業部', contact: '山田 太郎', email: 'contact@kyoto-koumuten.jp', phone: '075-123-4567', address: '京都府京都市中京区', notes: '老舗施工企業。品質重視。' },
+      { company: '滋賀設備工事(株)', department: '工事部', contact: '田中 花子', email: 'info@shiga-setubi.co.jp', phone: '077-567-8901', address: '滋賀県大津市', notes: '設備工事専門。納期厳守。' },
+      { company: '大阪内装(株)', department: '営業課', contact: '佐藤 次郎', email: 'sales@osaka-naikusou.jp', phone: '06-234-5678', address: '大阪府大阪市北区', notes: '内装デザイン力が強み。' },
+      { company: '(株)奈良建具', department: '製造部', contact: '鈴木 美咲', email: 'nara@tategu.jp', phone: '0742-789-0123', address: '奈良県奈良市', notes: '建具製作納期は3週間。' },
+      { company: '兵庫建設(株)', department: '営業部', contact: '山本 健太', email: 'hyogo@kensetsu.jp', phone: '079-345-6789', address: '兵庫県丹波市', notes: '地域密着型。親切。' },
+      { company: '福知山市役所', department: '都市建設課', contact: '高橋 健一', email: 'projects@fukuchiyama.jp', phone: '0773-901-2345', address: '京都府福知山市', notes: '公共事業。予算厳格。入札対応。' },
+      { company: 'トランスポート関西(株)', department: '施設部', contact: '伊藤 由美', email: 'kowan@transport-kansai.jp', phone: '075-456-7890', address: '京都府京都市伏見区', notes: '物流施設専門。急工程対応。' },
+      { company: '日本赤十字社', department: '施設建設課', contact: '中村 誠一', email: 'medical@jrc.or.jp', phone: '075-567-8901', address: '京都府長岡京市', notes: '医療施設。安全性重視。機密情報厳禁。' },
+      { company: '南丹市役所', department: '建設課', contact: '西田 美咲', email: 'kenchiku@nantan.jp', phone: '0771-678-9012', address: '京都府南丹市', notes: '耐震改修案件多。公共工事。' },
+      { company: '関西電設工業(株)', department: '営業部', contact: '伊藤 太郎', email: 'info@kansai-densetsu.jp', phone: '077-512-3456', address: '滋賀県大津市中央', notes: '電気工事専門。技術力高い。' },
+    ];
+    const insertCustomer = db.prepare('INSERT INTO customers (company, department, contact, email, phone, address, notes) VALUES (?, ?, ?, ?, ?, ?, ?)');
+    customers.forEach(c => insertCustomer.run(c.company, c.department, c.contact, c.email, c.phone, c.address, c.notes));
   }
 }
 
@@ -144,14 +181,14 @@ app.get('/api/projects', (req, res) => {
 });
 
 app.post('/api/projects', (req, res) => {
-  const { name, client, amount, startDate, endDate, status, notes } = req.body;
-  const result = db.prepare('INSERT INTO projects (name, client, amount, startDate, endDate, status, notes) VALUES (?, ?, ?, ?, ?, ?, ?)').run(name, client, amount, startDate, endDate, status, notes);
+  const { name, client, clientCompany, clientPhone, clientEmail, clientAddress, amount, startDate, endDate, status, notes } = req.body;
+  const result = db.prepare('INSERT INTO projects (name, client, clientCompany, clientPhone, clientEmail, clientAddress, amount, startDate, endDate, status, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)').run(name, client, clientCompany, clientPhone, clientEmail, clientAddress, amount, startDate, endDate, status, notes);
   res.json({ id: result.lastInsertRowid, ...req.body });
 });
 
 app.put('/api/projects/:id', (req, res) => {
-  const { name, client, amount, startDate, endDate, status, notes } = req.body;
-  db.prepare('UPDATE projects SET name=?, client=?, amount=?, startDate=?, endDate=?, status=?, notes=? WHERE id=?').run(name, client, amount, startDate, endDate, status, notes, req.params.id);
+  const { name, client, clientCompany, clientPhone, clientEmail, clientAddress, amount, startDate, endDate, status, notes, paid } = req.body;
+  db.prepare('UPDATE projects SET name=?, client=?, clientCompany=?, clientPhone=?, clientEmail=?, clientAddress=?, amount=?, startDate=?, endDate=?, status=?, notes=?, paid=? WHERE id=?').run(name, client, clientCompany, clientPhone, clientEmail, clientAddress, amount, startDate, endDate, status, notes, paid ? 1 : 0, req.params.id);
   res.json({ id: req.params.id, ...req.body });
 });
 
@@ -234,13 +271,151 @@ app.delete('/api/orders/:id', (req, res) => {
   res.json({ success: true });
 });
 
+// Customers API
+app.get('/api/customers', (req, res) => {
+  const customers = db.prepare('SELECT * FROM customers ORDER BY id').all();
+  res.json(customers);
+});
+
+app.post('/api/customers', (req, res) => {
+  const { company, department, contact, email, phone, address, notes } = req.body;
+  const result = db.prepare('INSERT INTO customers (company, department, contact, email, phone, address, notes) VALUES (?, ?, ?, ?, ?, ?, ?)').run(company, department, contact, email, phone, address, notes);
+  res.json({ id: result.lastInsertRowid, ...req.body });
+});
+
+app.put('/api/customers/:id', (req, res) => {
+  const { company, department, contact, email, phone, address, notes } = req.body;
+  db.prepare('UPDATE customers SET company=?, department=?, contact=?, email=?, phone=?, address=?, notes=? WHERE id=?').run(company, department, contact, email, phone, address, notes, req.params.id);
+  res.json({ id: req.params.id, ...req.body });
+});
+
+app.delete('/api/customers/:id', (req, res) => {
+  db.prepare('DELETE FROM customers WHERE id=?').run(req.params.id);
+  res.json({ success: true });
+});
+
 // Cache endpoint - returns all data at once
 app.get('/api/cache', (req, res) => {
   const projects = db.prepare('SELECT * FROM projects ORDER BY id').all();
   const vendors = db.prepare('SELECT * FROM vendors ORDER BY id').all();
   const categories = db.prepare('SELECT * FROM categories ORDER BY "order"').all();
   const orders = db.prepare('SELECT * FROM orders ORDER BY id').all();
-  res.json({ projects, vendors, categories, orders });
+  const customers = db.prepare('SELECT * FROM customers ORDER BY id').all();
+  res.json({ projects, vendors, categories, orders, customers });
+});
+
+// Test endpoint
+app.get('/api/test', (req, res) => {
+  res.json({ status: 'ok', message: 'Server is running' });
+});
+
+// Invoice API - Project invoice (all orders)
+app.get('/api/invoice/project/:projectId', (req, res) => {
+  try {
+    console.log('Invoice request for project:', req.params.projectId);
+    const project = db.prepare('SELECT * FROM projects WHERE id=?').get(req.params.projectId);
+    console.log('Project found:', project);
+    if(!project) return res.status(404).json({ error: 'Project not found' });
+
+    const orders = db.prepare('SELECT * FROM orders WHERE project_id=?').all(req.params.projectId);
+    console.log('Orders found:', orders.length);
+
+  const doc = new PDFDocument({ margin: 40, bufferPages: true });
+  res.setHeader('Content-Type', 'application/pdf');
+  res.setHeader('Content-Disposition', `attachment; filename="invoice-${project.id}.pdf"`);
+
+  doc.pipe(res);
+
+  const purpleColor = '#8B4789';
+  const pageWidth = doc.page.width;
+
+  // Header background
+  doc.rect(0, 0, pageWidth, 100).fill(purpleColor);
+
+  // Title
+  doc.fontSize(40).font('Helvetica-Bold').fillColor('white');
+  doc.text('請　求　書', 50, 30);
+
+  // Left panel
+  doc.fillColor('black').fontSize(10);
+  doc.text(`${project.clientCompany || '-'}`, 50, 130);
+  doc.text('件名：', 50, 150);
+  doc.text(project.name, 80, 150, { width: 200 });
+
+  // Calculate total
+  const totalAmount = orders.reduce((sum, o) => sum + (o.decided || 0), 0);
+  doc.text(`合計金額: ¥${totalAmount.toLocaleString()}`, 50, 200);
+  doc.text(`請求日: ${new Date().toLocaleDateString('ja-JP')}`, 50, 220);
+  doc.text(`お支払期限: ${new Date(Date.now() + 30*24*60*60*1000).toLocaleDateString('ja-JP')}`, 50, 240);
+
+  // Right panel - Company info
+  doc.fontSize(9);
+  doc.text('株式会社WIN WIN', 380, 130);
+  doc.text('〒604-0924', 380, 145);
+  doc.text('京都市中京区一之船入町537-20', 380, 158);
+  doc.text('FIS御池ビル505号', 380, 171);
+  doc.text('TEL : 075-777-1236', 380, 190);
+
+  // Invoice info
+  doc.fontSize(9);
+  doc.text(`請求№: INV-${project.id}`, 380, 220);
+  doc.text(`適格請求書発行事業者登録番号: T8130001068355`, 380, 235);
+
+  // Table header
+  const tableTop = 290;
+  doc.rect(50, tableTop, pageWidth - 100, 25).fill(purpleColor);
+
+  doc.fillColor('white').fontSize(9);
+  const colPositions = [60, 150, 210, 280, 350, 420];
+  const colLabels = ['品名', '数量', '単位', '単価', '金額', '摘要'];
+  colLabels.forEach((label, i) => {
+    doc.text(label, colPositions[i], tableTop + 8);
+  });
+
+  // Table rows
+  let tableRowY = tableTop + 30;
+  doc.fillColor('black').fontSize(8);
+
+  orders.forEach((order, idx) => {
+    if(tableRowY > 700) {
+      doc.addPage();
+      tableRowY = 50;
+    }
+    doc.text(order.category || '-', colPositions[0], tableRowY);
+    doc.text('1', colPositions[1], tableRowY);
+    doc.text('式', colPositions[2], tableRowY);
+    doc.text(`¥${(order.decided || 0).toLocaleString()}`, colPositions[3], tableRowY);
+    doc.text(`¥${(order.decided || 0).toLocaleString()}`, colPositions[4], tableRowY);
+    tableRowY += 20;
+  });
+
+  // Calculations
+  const calcY = tableRowY + 20;
+  doc.fontSize(9);
+  doc.text('小　　計:', 300, calcY);
+  doc.text(`¥${totalAmount.toLocaleString()}`, 450, calcY, { align: 'right', width: 80 });
+
+  doc.text('税率:', 300, calcY + 20);
+  doc.text('10%', 450, calcY + 20, { align: 'right', width: 80 });
+
+  const tax = Math.floor(totalAmount * 0.1);
+  doc.text('消費税:', 300, calcY + 40);
+  doc.text(`¥${tax.toLocaleString()}`, 450, calcY + 40, { align: 'right', width: 80 });
+
+  const total = totalAmount + tax;
+  doc.font('Helvetica-Bold').text('合　　計:', 300, calcY + 60);
+  doc.text(`¥${total.toLocaleString()}`, 450, calcY + 60, { align: 'right', width: 80 });
+
+    // Bank info
+    doc.font('Helvetica').fontSize(9);
+    doc.text('[振込先] 〇〇銀行 京都支店', 50, calcY + 120);
+    doc.text('口座番号／(普)0777777', 50, calcY + 140);
+
+    doc.end();
+  } catch(err) {
+    console.error('Invoice generation error:', err);
+    res.status(500).json({ error: 'Failed to generate invoice' });
+  }
 });
 
 const PORT = process.env.PORT || 3000;

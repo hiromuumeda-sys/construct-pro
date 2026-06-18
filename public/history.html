@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+
+<html class="light" lang="ja"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Noto+Sans+JP:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<title>履歴詳細 - CONSTRUCT_PRO</title>
+<style>
+        body {
+            font-family: 'Inter', 'Noto Sans JP', sans-serif;
+            background-color: #faf9f7;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f4f3f1;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #dadad8;
+            border-radius: 10px;
+        }
+        .tabular-nums {
+            font-variant-numeric: tabular-nums;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface": "#faf9f7",
+                        "surface-bright": "#faf9f7",
+                        "on-secondary-fixed": "#400100",
+                        "outline-variant": "#c1c7cc",
+                        "on-primary-fixed-variant": "#1d4c5f",
+                        "on-secondary-fixed-variant": "#832519",
+                        "on-tertiary-fixed": "#2c1700",
+                        "on-primary": "#ffffff",
+                        "tertiary-container": "#724d23",
+                        "outline": "#71787c",
+                        "error-container": "#ffdad6",
+                        "on-primary-fixed": "#001f2a",
+                        "surface-tint": "#376478",
+                        "surface-dim": "#dadad8",
+                        "on-surface-variant": "#41484c",
+                        "surface-variant": "#e3e2e0",
+                        "primary-fixed-dim": "#a0cde4",
+                        "secondary-container": "#ff816d",
+                        "on-tertiary-fixed-variant": "#623f16",
+                        "inverse-primary": "#a0cde4",
+                        "secondary-fixed": "#ffdad4",
+                        "on-error-container": "#93000a",
+                        "surface-container": "#efeeec",
+                        "inverse-surface": "#2f3130",
+                        "tertiary-fixed-dim": "#f0bd89",
+                        "on-secondary-container": "#731a0f",
+                        "background": "#faf9f7",
+                        "surface-container-highest": "#e3e2e0",
+                        "on-tertiary-container": "#f3c08c",
+                        "surface-container-low": "#f4f3f1",
+                        "secondary": "#a33c2d",
+                        "surface-container-high": "#e9e8e6",
+                        "primary-container": "#2d5a6e",
+                        "primary": "#104356",
+                        "tertiary": "#57360e",
+                        "inverse-on-surface": "#f1f1ef",
+                        "error": "#ba1a1a",
+                        "secondary-fixed-dim": "#ffb4a7",
+                        "on-background": "#1a1c1b",
+                        "on-secondary": "#ffffff",
+                        "surface-container-lowest": "#ffffff",
+                        "on-tertiary": "#ffffff",
+                        "tertiary-fixed": "#ffdcbc",
+                        "on-error": "#ffffff",
+                        "primary-fixed": "#bfe9ff",
+                        "on-primary-container": "#a3d0e7",
+                        "on-surface": "#1a1c1b"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "12px",
+                        "2xl": "16px",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "xxl": "64px",
+                        "xl": "40px",
+                        "gutter": "24px",
+                        "md": "16px",
+                        "container-padding": "32px",
+                        "sm": "8px",
+                        "lg": "24px",
+                        "xs": "4px",
+                        "base": "4px"
+                    },
+                    "fontFamily": {
+                        "sans": ["Inter", "Noto Sans JP", "sans-serif"]
+                    }
+                },
+            },
+        }
+    </script>
+</head>
+<body class="bg-surface text-on-surface antialiased overflow-x-hidden">
+<div id="header-placeholder"></div>
+<script>
+fetch('/header.html')
+  .then(response => response.text())
+  .then(html => {
+    document.getElementById('header-placeholder').innerHTML = html;
+  });
+</script>
+<main class="pt-24 pb-xxl w-full">
+<div class="w-full px-container-padding space-y-lg">
+<!-- ページタイトルエリア -->
+<div class="flex justify-between items-center">
+<div class="flex items-center gap-3">
+<button class="w-9 h-9 flex items-center justify-center rounded-xl border border-outline-variant bg-surface-container-lowest hover:bg-surface-container transition-colors text-on-surface-variant shrink-0" onclick="history.back()">
+<span class="material-symbols-outlined text-[20px]">arrow_back</span>
+</button>
+<h1 class="text-xl font-bold text-on-surface tracking-tight" id="pageTitle">履歴詳細</h1>
+</div>
+</div>
+<!-- フィルタエリア -->
+<div class="bg-surface-container-low p-5 rounded-2xl border border-outline-variant/30 flex flex-wrap items-center gap-4">
+<div class="relative">
+<select class="bg-surface-container-lowest border-outline-variant/50 text-sm py-2.5 px-4 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary appearance-none transition-all cursor-pointer" id="typeSelect" onchange="selectType(this.value)">
+<option value="">種別を選択</option>
+<option value="project">案件</option>
+<option value="order">注文</option>
+<option value="vendor">外注先</option>
+</select>
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-on-surface-variant">keyboard_arrow_down</span>
+</div>
+<div class="relative min-w-[220px]">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant text-xl">search</span>
+<input class="w-full bg-surface-container-lowest border-outline-variant/50 text-sm pl-12 pr-4 py-2.5 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" id="searchInput" placeholder="検索..." type="text"/>
+</div>
+</div>
+<!-- データテーブル -->
+<div class="bg-surface-container-lowest border border-outline-variant/30 rounded-2xl overflow-hidden shadow-sm" id="tableContainer" style="display: none;">
+<div class="overflow-x-auto custom-scrollbar">
+<table class="w-full text-left border-separate border-spacing-0" id="main-table">
+<thead>
+<tr class="bg-surface-container-low/50">
+<th class="px-3 py-1.5 text-[11px] font-bold text-on-surface-variant uppercase tracking-widest border-b border-outline-variant/30 w-48">日時</th>
+<th class="px-3 py-1.5 text-[11px] font-bold text-on-surface-variant uppercase tracking-widest border-b border-outline-variant/30 min-w-[280px]">対象</th>
+<th class="px-3 py-1.5 text-[11px] font-bold text-on-surface-variant uppercase tracking-widest border-b border-outline-variant/30 min-w-[400px]">変更内容</th>
+<th class="px-3 py-1.5 text-[11px] font-bold text-on-surface-variant uppercase tracking-widest border-b border-outline-variant/30 min-w-[140px]">操作者</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant/20" id="history-table-body">
+</tbody>
+</table>
+</div>
+</div>
+<!-- 空状態 -->
+<div class="bg-surface-container-lowest border border-outline-variant/30 rounded-2xl overflow-hidden shadow-sm p-8 text-center" id="emptyState">
+<span class="material-symbols-outlined text-5xl text-on-surface-variant/30 block mb-3">history</span>
+<p class="text-sm text-on-surface-variant">種別を選択してください</p>
+</div>
+<footer class="pt-16 pb-8 border-t border-outline-variant text-center">
+<p class="text-[11px] text-on-surface-variant font-bold uppercase tracking-[0.3em] mb-2">CONSTRUCT_PRO ENTERPRISE SYSTEMS v2.4.0</p>
+<p class="text-[11px] text-on-surface-variant/50">© 2024 CONSTRUCT_PRO Systems. All Rights Reserved.</p>
+</footer>
+</div>
+</main>
+
+<script>
+// テストデータ
+const testData = {
+  project: [
+    { id: 1, name: "京都御所南マンション改修工事", datetime: "2026/06/18 15:30:45", changes: "金額を ¥1,000,000 → ¥1,200,000 に変更", operator: "山田 太郎" },
+    { id: 2, name: "大阪難波タワー内装工事", datetime: "2026/06/18 14:20:12", changes: "新規登録（ステータス: 受注）", operator: "山田 太郎" },
+    { id: 3, name: "名古屋駅前オフィスビル改修", datetime: "2026/06/17 10:15:33", changes: "工期を 2026/08/31 → 2026/09/15 に変更", operator: "田中 花子" },
+    { id: 4, name: "福岡天神商業施設改装", datetime: "2026/06/16 16:45:22", changes: "担当者を 営業 田中 → 営業 山田 に変更", operator: "山田 太郎" },
+    { id: 5, name: "広島平和公園周辺工事", datetime: "2026/06/15 09:30:11", changes: "新規登録（ステータス: 見積中）", operator: "佐藤 次郎" },
+    { id: 6, name: "仙台駅東口再開発", datetime: "2026/06/14 13:20:45", changes: "クライアント電話番号を 09012345678 → 09087654321 に変更", operator: "山田 太郎" },
+    { id: 7, name: "札幌大通公園付近工事", datetime: "2026/06/13 11:10:22", changes: "新規登録（ステータス: 受注）", operator: "山本 健太" },
+    { id: 8, name: "横浜みなとみらい工事", datetime: "2026/06/12 15:35:18", changes: "ステータスを 受注 → 工事中 に変更", operator: "山田 太郎" },
+    { id: 9, name: "東京渋谷駅前ビル改修", datetime: "2026/06/11 08:45:33", changes: "クライアント企業名を ABC建設 → XYZ建設 に変更", operator: "山田 太郎" },
+    { id: 10, name: "鎌倉古都保存工事", datetime: "2026/06/10 14:20:12", changes: "金額を ¥2,500,000 → ¥2,750,000 に変更", operator: "鈴木 美咲" },
+    { id: 11, name: "平塚駅北口商業施設", datetime: "2026/06/09 10:55:44", changes: "新規登録（ステータス: 見積中）", operator: "山田 太郎" },
+    { id: 12, name: "小田原城周辺整備", datetime: "2026/06/08 16:30:27", changes: "工期を 2026/09/30 → 2026/10/15 に変更", operator: "田中 花子" },
+    { id: 13, name: "厚木市民ホール改修", datetime: "2026/06/07 09:15:58", changes: "新規登録（ステータス: 受注）", operator: "山田 太郎" },
+    { id: 14, name: "相模原中央図書館増築", datetime: "2026/06/06 13:40:22", changes: "クライアント住所を 神奈川県相模原市 → 東京都渋谷区 に変更", operator: "佐藤 次郎" },
+    { id: 15, name: "海老名駅西口開発", datetime: "2026/06/05 11:25:11", changes: "新規登録（ステータス: 工事中）", operator: "山田 太郎" },
+    { id: 16, name: "座間市公共施設改修", datetime: "2026/06/04 15:10:35", changes: "ステータスを 見積中 → 受注 に変更", operator: "山本 健太" },
+    { id: 17, name: "綾瀬市役所増改築", datetime: "2026/06/03 10:45:19", changes: "新規登録（ステータス: 見積中）", operator: "山田 太郎" },
+    { id: 18, name: "大和市駅前再開発", datetime: "2026/06/02 14:30:44", changes: "担当者を 営業 太郎 → 営業 鈴木 に変更", operator: "鈴木 美咲" },
+    { id: 19, name: "瀬谷区役所改修工事", datetime: "2026/06/01 09:20:17", changes: "新規登録（ステータス: 工事中）", operator: "山田 太郎" },
+    { id: 20, name: "栄区文化センター拡張", datetime: "2026/05/31 16:05:50", changes: "金額を ¥1,800,000 → ¥2,100,000 に変更", operator: "田中 花子" },
+    { id: 21, name: "泉区スポーツセンター新築", datetime: "2026/05/30 11:40:22", changes: "新規登録（ステータス: 見積中）", operator: "山田 太郎" },
+    { id: 22, name: "金沢区港湾施設改修", datetime: "2026/05/29 13:55:33", changes: "工期を 2026/08/15 → 2026/09/30 に変更", operator: "佐藤 次郎" },
+    { id: 23, name: "磯子区図書館建て替え", datetime: "2026/05/28 10:30:44", changes: "新規登録（ステータス: 受注）", operator: "山田 太郎" },
+    { id: 24, name: "南区民広場整備", datetime: "2026/05/27 14:15:27", changes: "クライアントメールアドレスを contact@example.com → newemail@example.com に変更", operator: "山本 健太" },
+    { id: 25, name: "港南区福祉センター増築", datetime: "2026/05/26 09:50:11", changes: "新規登録（ステータス: 見積中）", operator: "山田 太郎" },
+    { id: 26, name: "保土ケ谷区保育施設新築", datetime: "2026/05/25 15:25:38", changes: "ステータスを 工事中 → 完工 に変更", operator: "鈴木 美咲" },
+    { id: 27, name: "旭区運動公園拡張", datetime: "2026/05/24 11:10:19", changes: "新規登録（ステータス: 工事中）", operator: "山田 太郎" },
+    { id: 28, name: "緑区民センター改修", datetime: "2026/05/23 13:45:50", changes: "金額を ¥3,200,000 → ¥3,500,000 に変更", operator: "田中 花子" },
+    { id: 29, name: "青葉区庁舎増改築", datetime: "2026/05/22 10:20:22", changes: "新規登録（ステータス: 受注）", operator: "山田 太郎" },
+    { id: 30, name: "都筑区商業施設改装", datetime: "2026/05/21 16:35:44", changes: "担当者を 営業 田中 → 営業 鈴木 に変更", operator: "佐藤 次郎" },
+  ],
+  order: [
+    { id: 1, name: "注文01: 塗装工事", datetime: "2026/06/18 15:30:45", changes: "新規登録（数量: 500m²）", operator: "田中 花子" },
+    { id: 2, name: "注文02: 電気工事", datetime: "2026/06/18 14:20:12", changes: "金額を ¥500,000 → ¥600,000 に変更", operator: "山田 太郎" },
+    { id: 3, name: "注文03: 設備工事", datetime: "2026/06/17 10:15:33", changes: "新規登録（数量: 30セット）", operator: "田中 花子" },
+    { id: 4, name: "注文04: 防水工事", datetime: "2026/06/16 16:45:22", changes: "外注先を なにわ建設 → 関西電設工業 に変更", operator: "山田 太郎" },
+    { id: 5, name: "注文05: 内装工事", datetime: "2026/06/15 09:30:11", changes: "新規登録（数量: 200m²）", operator: "佐藤 次郎" },
+    { id: 6, name: "注文06: 給排水工事", datetime: "2026/06/14 13:20:45", changes: "納期を 2026/08/31 → 2026/09/15 に変更", operator: "山田 太郎" },
+    { id: 7, name: "注文07: 空調工事", datetime: "2026/06/13 11:10:22", changes: "新規登録（数量: 15台）", operator: "山本 健太" },
+    { id: 8, name: "注文08: 土木工事", datetime: "2026/06/12 15:35:18", changes: "ステータスを 発注待ち → 進行中 に変更", operator: "山田 太郎" },
+    { id: 9, name: "注文09: 造園工事", datetime: "2026/06/11 08:45:33", changes: "新規登録（数量: 1500㎡）", operator: "鈴木 美咲" },
+    { id: 10, name: "注文10: 左官工事", datetime: "2026/06/10 14:20:12", changes: "金額を ¥800,000 → ¥950,000 に変更", operator: "山田 太郎" },
+    { id: 11, name: "注文11: 石工工事", datetime: "2026/06/09 10:55:44", changes: "新規登録（数量: 250個）", operator: "田中 花子" },
+    { id: 12, name: "注文12: タイル工事", datetime: "2026/06/08 16:30:27", changes: "外注先を 京都冷熱工業所 → 大阪防水工業 に変更", operator: "山田 太郎" },
+    { id: 13, name: "注文13: 木工事", datetime: "2026/06/07 09:15:58", changes: "新規登録（数量: 150㎥）", operator: "佐藤 次郎" },
+    { id: 14, name: "注文14: 鋼構造工事", datetime: "2026/06/06 13:40:22", changes: "金額を ¥2,000,000 → ¥2,200,000 に変更", operator: "山田 太郎" },
+    { id: 15, name: "注文15: 杭工事", datetime: "2026/06/05 11:25:11", changes: "新規登録（数量: 100本）", operator: "山本 健太" },
+    { id: 16, name: "注文16: 石綿除去工事", datetime: "2026/06/04 15:10:35", changes: "納期を 2026/10/31 → 2026/11/30 に変更", operator: "山田 太郎" },
+    { id: 17, name: "注文17: 解体工事", datetime: "2026/06/03 10:45:19", changes: "新規登録（数量: 2000㎡）", operator: "鈴木 美咲" },
+    { id: 18, name: "注文18: 基礎工事", datetime: "2026/06/02 14:30:44", changes: "ステータスを 見積中 → 発注待ち に変更", operator: "山田 太郎" },
+    { id: 19, name: "注文19: 建築工事", datetime: "2026/06/01 09:20:17", changes: "新規登録（数量: 5000㎡）", operator: "田中 花子" },
+    { id: 20, name: "注文20: 一式工事", datetime: "2026/05/31 16:05:50", changes: "金額を ¥3,500,000 → ¥4,000,000 に変更", operator: "山田 太郎" },
+    { id: 21, name: "注文21: 屋根工事", datetime: "2026/05/30 11:40:22", changes: "新規登録（数量: 800㎡）", operator: "佐藤 次郎" },
+    { id: 22, name: "注文22: 外壁工事", datetime: "2026/05/29 13:55:33", changes: "外注先を 兵庫内装工事 → 奈良給排水工事 に変更", operator: "山田 太郎" },
+    { id: 23, name: "注文23: 窓工事", datetime: "2026/05/28 10:30:44", changes: "新規登録（数量: 45枚）", operator: "山本 健太" },
+    { id: 24, name: "注文24: 門扉工事", datetime: "2026/05/27 14:15:27", changes: "金額を ¥300,000 → ¥350,000 に変更", operator: "山田 太郎" },
+    { id: 25, name: "注文25: フェンス工事", datetime: "2026/05/26 09:50:11", changes: "新規登録（数量: 200m）", operator: "鈴木 美咲" },
+    { id: 26, name: "注文26: 標識工事", datetime: "2026/05/25 15:25:38", changes: "納期を 2026/07/15 → 2026/08/15 に変更", operator: "山田 太郎" },
+    { id: 27, name: "注文27: 照明工事", datetime: "2026/05/24 11:10:19", changes: "新規登録（数量: 120個）", operator: "田中 花子" },
+    { id: 28, name: "注文28: 通信工事", datetime: "2026/05/23 13:45:50", changes: "ステータスを 進行中 → 完了 に変更", operator: "山田 太郎" },
+    { id: 29, name: "注文29: ガス工事", datetime: "2026/05/22 10:20:22", changes: "新規登録（数量: 80m）", operator: "佐藤 次郎" },
+    { id: 30, name: "注文30: 昇降機工事", datetime: "2026/05/21 16:35:44", changes: "金額を ¥1,200,000 → ¥1,300,000 に変更", operator: "山田 太郎" },
+  ],
+  vendor: [
+    { id: 1, name: "なにわ建設", datetime: "2026/06/18 15:30:45", changes: "電話番号を 06-1234-5678 → 06-2345-6789 に変更", operator: "山田 太郎" },
+    { id: 2, name: "関西電設工業", datetime: "2026/06/18 14:20:12", changes: "新規登録（業種: 電気工事）", operator: "田中 花子" },
+    { id: 3, name: "京都冷熱工業所", datetime: "2026/06/17 10:15:33", changes: "住所を 京都府京都市 → 大阪府大阪市 に変更", operator: "山田 太郎" },
+    { id: 4, name: "大阪防水工業", datetime: "2026/06/16 16:45:22", changes: "新規登録（業種: 防水工事）", operator: "佐藤 次郎" },
+    { id: 5, name: "兵庫内装工事", datetime: "2026/06/15 09:30:11", changes: "メールアドレスを old@example.com → newemail@example.com に変更", operator: "山田 太郎" },
+    { id: 6, name: "奈良給排水工事", datetime: "2026/06/14 13:20:45", changes: "新規登録（業種: 給排水工事）", operator: "山本 健太" },
+    { id: 7, name: "滋賀空調設備", datetime: "2026/06/13 11:10:22", changes: "単価を ¥80,000/日 → ¥90,000/日 に変更", operator: "山田 太郎" },
+    { id: 8, name: "和歌山土木工業", datetime: "2026/06/12 15:35:18", changes: "新規登録（業種: 土木工事）", operator: "鈴木 美咲" },
+    { id: 9, name: "三重造園工業", datetime: "2026/06/11 08:45:33", changes: "担当者を 田中 → 佐藤 に変更", operator: "山田 太郎" },
+    { id: 10, name: "愛知左官工事", datetime: "2026/06/10 14:20:12", changes: "新規登録（業種: 左官工事）", operator: "田中 花子" },
+    { id: 11, name: "岐阜石工工業", datetime: "2026/06/09 10:55:44", changes: "電話番号を 058-1234-5678 → 058-2345-6789 に変更", operator: "山田 太郎" },
+    { id: 12, name: "静岡タイル工事", datetime: "2026/06/08 16:30:27", changes: "新規登録（業種: タイル工事）", operator: "佐藤 次郎" },
+    { id: 13, name: "神奈川木工事", datetime: "2026/06/07 09:15:58", changes: "単価を ¥70,000/日 → ¥75,000/日 に変更", operator: "山田 太郎" },
+    { id: 14, name: "千葉鋼構造工業", datetime: "2026/06/06 13:40:22", changes: "新規登録（業種: 鋼構造工事）", operator: "山本 健太" },
+    { id: 15, name: "茨城杭工事", datetime: "2026/06/05 11:25:11", changes: "住所を 茨城県水戸市 → 茨城県つくば市 に変更", operator: "山田 太郎" },
+    { id: 16, name: "栃木石綿除去工事", datetime: "2026/06/04 15:10:35", changes: "新規登録（業種: 石綿除去工事）", operator: "鈴木 美咲" },
+    { id: 17, name: "埼玉解体工業", datetime: "2026/06/03 10:45:19", changes: "メールアドレスを contact@example.com → updated@example.com に変更", operator: "山田 太郎" },
+    { id: 18, name: "東京基礎工事", datetime: "2026/06/02 14:30:44", changes: "新規登録（業種: 基礎工事）", operator: "田中 花子" },
+    { id: 19, name: "山梨建築工事", datetime: "2026/06/01 09:20:17", changes: "単価を ¥100,000/日 → ¥110,000/日 に変更", operator: "山田 太郎" },
+    { id: 20, name: "長野一式工事", datetime: "2026/05/31 16:05:50", changes: "新規登録（業種: 一式工事）", operator: "佐藤 次郎" },
+    { id: 21, name: "新潟屋根工事", datetime: "2026/05/30 11:40:22", changes: "電話番号を 025-1234-5678 → 025-2345-6789 に変更", operator: "山田 太郎" },
+    { id: 22, name: "富山外壁工事", datetime: "2026/05/29 13:55:33", changes: "新規登録（業種: 外壁工事）", operator: "山本 健太" },
+    { id: 23, name: "石川窓工事", datetime: "2026/05/28 10:30:44", changes: "担当者を 山田 → 鈴木 に変更", operator: "山田 太郎" },
+    { id: 24, name: "福井門扉工事", datetime: "2026/05/27 14:15:27", changes: "新規登録（業種: 門扉工事）", operator: "鈴木 美咲" },
+    { id: 25, name: "岡山フェンス工事", datetime: "2026/05/26 09:50:11", changes: "単価を ¥65,000/日 → ¥72,000/日 に変更", operator: "山田 太郎" },
+    { id: 26, name: "広島標識工事", datetime: "2026/05/25 15:25:38", changes: "新規登録（業種: 標識工事）", operator: "田中 花子" },
+    { id: 27, name: "山口照明工事", datetime: "2026/05/24 11:10:19", changes: "住所を 山口県山口市 → 山口県下関市 に変更", operator: "山田 太郎" },
+    { id: 28, name: "香川通信工事", datetime: "2026/05/23 13:45:50", changes: "新規登録（業種: 通信工事）", operator: "佐藤 次郎" },
+    { id: 29, name: "徳島ガス工事", datetime: "2026/05/22 10:20:22", changes: "メールアドレスを info@example.com → newinfo@example.com に変更", operator: "山田 太郎" },
+    { id: 30, name: "高知昇降機工事", datetime: "2026/05/21 16:35:44", changes: "新規登録（業種: 昇降機工事）", operator: "山本 健太" },
+  ]
+};
+
+// 種別選択
+function selectType(type) {
+  if (!type) {
+    document.getElementById('tableContainer').style.display = 'none';
+    document.getElementById('emptyState').style.display = 'block';
+    return;
+  }
+
+  const typeNames = { project: '案件', order: '注文', vendor: '外注先' };
+  document.getElementById('pageTitle').textContent = `履歴詳細 - ${typeNames[type]}`;
+
+  const data = testData[type] || [];
+  const tbody = document.getElementById('history-table-body');
+
+  tbody.innerHTML = data.map(item => `
+    <tr class="hover:bg-surface-container-low transition-colors">
+      <td class="px-3 py-1.5 text-xs tabular-nums text-on-surface-variant">${item.datetime}</td>
+      <td class="px-3 py-1.5 text-xs font-bold text-on-surface">${item.name}</td>
+      <td class="px-3 py-1.5 text-xs text-on-surface-variant">${item.changes}</td>
+      <td class="px-3 py-1.5 text-xs text-on-surface-variant">${item.operator}</td>
+    </tr>
+  `).join('');
+
+  document.getElementById('tableContainer').style.display = 'block';
+  document.getElementById('emptyState').style.display = 'none';
+  updateQueryParam(type);
+}
+
+// URL パラメータ更新
+function updateQueryParam(type) {
+  const url = new URL(window.location);
+  url.searchParams.set('type', type);
+  window.history.pushState({}, '', url);
+}
+
+// 初期化
+(function() {
+  const type = new URLSearchParams(window.location.search).get('type');
+  if (type && testData[type]) {
+    document.getElementById('typeSelect').value = type;
+    selectType(type);
+  }
+})();
+</script>
+</body>
+</html>

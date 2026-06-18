@@ -170,6 +170,41 @@ fetch('/header.html')
 </div>
 </div>
 </div>
+<!-- 操作履歴 -->
+<section class="bg-surface-container-lowest border border-outline-variant/30 rounded-2xl overflow-hidden shadow-sm mt-10">
+<div class="px-6 py-4 border-b border-outline-variant/30 flex justify-between items-center bg-surface-container-low/50">
+<h2 class="text-sm font-bold text-primary flex items-center gap-2">
+<span class="material-symbols-outlined text-lg">history</span>
+操作履歴
+</h2>
+<span class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">履歴ログ (最新100件)</span>
+</div>
+<div class="max-h-[280px] overflow-y-auto custom-scrollbar">
+<table class="w-full text-left border-separate border-spacing-0">
+<thead>
+<tr class="bg-surface-container-lowest sticky top-0 z-10">
+<th class="px-6 py-3 text-[10px] font-bold text-on-surface-variant uppercase tracking-widest border-b border-outline-variant/30 w-48">日時</th>
+<th class="px-6 py-3 text-[10px] font-bold text-on-surface-variant uppercase tracking-widest border-b border-outline-variant/30 w-56">対象</th>
+<th class="px-6 py-3 text-[10px] font-bold text-on-surface-variant uppercase tracking-widest border-b border-outline-variant/30">実行内容</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant/20" id="history-table-body">
+<tr class="hover:bg-surface-container-low transition-colors cursor-pointer" onclick="location.href='history.html?type=category'">
+<td class="px-6 py-4 text-xs text-on-surface-variant tabular-numbers">2026/06/17 00:45:47</td>
+<td class="px-6 py-4 text-xs font-bold text-primary">システム一括処理</td>
+<td class="px-6 py-4 text-xs text-on-surface-variant">管理者 太郎 | 初期テストデータ30件をインポートしました</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="px-6 py-4 border-t border-outline-variant/30 bg-surface-container-low/30 text-center flex justify-center">
+<a href="history.html?type=category" class="text-xs font-bold text-primary hover:underline transition-all inline-flex items-center gap-1">
+もっと見る
+<span class="material-symbols-outlined text-sm">arrow_forward</span>
+</a>
+</div>
+</section>
+</div>
 </main>
 </body>
 
