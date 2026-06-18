@@ -497,27 +497,18 @@ function renderCharts(sorted, allItems, dataMap) {
       options: { responsive: true }
     });
   } else {
-    const costs = sorted.map(([, data]) => data.cost || 0);
-    const revenues = sorted.map(([, data]) => data.revenue || 0);
+    const counts = sorted.map(([, data]) => data.count || 0);
 
     chartStatus = new Chart(ctxStatus, {
       type: 'bar',
       data: {
         labels: names,
-        datasets: [
-          {
-            label: '見積金額',
-            data: costs,
-            backgroundColor: '#a33c2d',
-            borderRadius: 4,
-          },
-          {
-            label: '決定金額',
-            data: revenues,
-            backgroundColor: '#104356',
-            borderRadius: 4,
-          }
-        ]
+        datasets: [{
+          label: '依頼件数',
+          data: counts,
+          backgroundColor: '#104356',
+          borderRadius: 4,
+        }]
       },
       options: {
         responsive: true,
