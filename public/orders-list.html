@@ -141,6 +141,10 @@ CSV出力
 <span class="material-symbols-outlined text-[20px]">add</span>
 新規注文登録
 </button>
+<button class="bg-primary text-on-primary px-6 py-2.5 text-sm font-bold rounded-xl flex items-center gap-2 shadow-lg shadow-primary/10 hover:opacity-90 transition-all" onclick="generateInvoice()">
+<span class="material-symbols-outlined text-[20px]">description</span>
+請求書を発行
+</button>
 </div>
 </div>
 <!-- フィルタエリア -->
@@ -271,13 +275,19 @@ CSV出力
 </tr>
 </thead>
 <tbody class="divide-y divide-outline-variant/20">
-<tr class="hover:bg-surface-container-low/20 transition-colors">
+<tr class="hover:bg-surface-container-low/20 transition-colors cursor-pointer" onclick="location.href='history.html?type=order'">
 <td class="px-4 py-2 text-xs text-on-surface-variant tabular-numbers">2024/05/08 14:25:31</td>
 <td class="px-4 py-2 text-xs font-semibold text-on-surface">管理者 太郎</td>
 <td class="px-4 py-2 text-xs text-on-surface-variant">初期データ30件を一括生成しました</td>
 </tr>
 </tbody>
 </table>
+</div>
+<div class="px-4 py-3 border-t border-outline-variant/30 bg-surface-container-low/30 text-center">
+<a href="history.html?type=order" class="text-xs font-bold text-primary hover:underline transition-all inline-flex items-center gap-1">
+もっと見る
+<span class="material-symbols-outlined text-sm">arrow_forward</span>
+</a>
 </div>
 </div>
 </main>
@@ -342,7 +352,7 @@ CSV出力
 </div>
 <div class="col-span-2">
 <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-2.5">検査・引渡時期</label>
-<input class="w-full bg-surface-container-low border-outline-variant/50 rounded-xl text-sm px-4 py-3 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" id="edit-handover" type="text"/>
+<input class="w-full bg-surface-container-low border-outline-variant/50 rounded-xl text-sm px-4 py-3 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" id="edit-handover" type="date"/>
 </div>
 <div class="col-span-2">
 <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-2.5">支払条件</label>
@@ -789,6 +799,19 @@ function filterTable() {
             </td>
         </tr>
     `).join('');
+}
+
+function generateInvoice() {
+    const url = new URL(window.location);
+    const projectId = url.searchParams.get('project_id');
+    console.log('Project ID:', projectId);
+    if (!projectId) {
+        alert('案件IDが取得できません');
+        return;
+    }
+    const invoiceUrl = `/api/invoice/project/${projectId}`;
+    console.log('Opening:', invoiceUrl);
+    window.open(invoiceUrl, '_blank');
 }
 </script>
 </body>
