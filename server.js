@@ -72,6 +72,7 @@ function initDB() {
       handover TEXT,
       payment TEXT,
       paymentStatus TEXT DEFAULT '未払い',
+      paymentMethod TEXT,
       paymentDate TEXT,
       paymentNotes TEXT
     );

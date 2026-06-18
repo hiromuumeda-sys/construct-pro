@@ -179,6 +179,15 @@ fetch('/header.html')
 </select>
 </div>
 <div>
+<label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-2.5">支払い方法</label>
+<select class="w-full bg-surface-container-low border-outline-variant/50 rounded-xl text-sm px-4 py-3 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" id="edit-method">
+<option value="">選択してください</option>
+<option value="口座振替">口座振替</option>
+<option value="銀行振込">銀行振込</option>
+<option value="現金">現金</option>
+</select>
+</div>
+<div>
 <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-2.5">支払予定日</label>
 <input class="w-full bg-surface-container-low border-outline-variant/50 rounded-xl text-sm px-4 py-3 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" id="edit-payment-date" type="date"/>
 </div>
@@ -221,10 +230,12 @@ function loadPayments() {
       vendor: order.vendor || '-',
       amount: order.decided || order.planned || 0,
       status: order.paymentStatus || '未払い',
+      method: order.paymentMethod || '',
       paymentDate: order.paymentDate || '',
       notes: order.paymentNotes || '',
       project_id: order.project_id,
-      period_start: order.period_start
+      period_start: order.period_start,
+      handover: order.handover || ''
     };
   });
 
@@ -265,8 +276,21 @@ function openModal(id) {
   document.getElementById('edit-vendor').value = payment.vendor;
   document.getElementById('edit-amount').value = '¥' + payment.amount.toLocaleString();
   document.getElementById('edit-status').value = payment.status;
-  document.getElementById('edit-payment-date').value = payment.paymentDate;
+  document.getElementById('edit-method').value = payment.method;
   document.getElementById('edit-notes').value = payment.notes;
+
+  // 支払予定日の自動計算（引き渡し日の翌々月5日）
+  if (payment.paymentDate) {
+    document.getElementById('edit-payment-date').value = payment.paymentDate;
+  } else if (payment.handover) {
+    const date = new Date(payment.handover);
+    if (!isNaN(date)) {
+      date.setMonth(date.getMonth() + 2);
+      date.setDate(5);
+      const formatted = date.toISOString().split('T')[0];
+      document.getElementById('edit-payment-date').value = formatted;
+    }
+  }
 
   const modal = document.getElementById('edit-modal');
   modal.classList.remove('hidden');
@@ -297,6 +321,7 @@ async function savePayment() {
   const id = document.getElementById('edit-id').value;
   const data = {
     paymentStatus: document.getElementById('edit-status').value,
+    paymentMethod: document.getElementById('edit-method').value,
     paymentDate: document.getElementById('edit-payment-date').value,
     paymentNotes: document.getElementById('edit-notes').value
   };
