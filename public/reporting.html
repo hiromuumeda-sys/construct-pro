@@ -118,31 +118,9 @@ fetch('/header.html')
 </div>
 
 <!-- グラフエリア -->
-<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-<!-- ステータス分布 -->
 <div class="bg-surface-container-lowest rounded-2xl p-6 border border-outline-variant/30">
 <h2 class="text-lg font-bold text-on-surface mb-4">ステータス分布</h2>
 <canvas id="chartStatus"></canvas>
-</div>
-
-<!-- 詳細テーブル -->
-<div class="bg-surface-container-lowest rounded-2xl p-6 border border-outline-variant/30">
-<h2 class="text-lg font-bold text-on-surface mb-4">詳細</h2>
-<div class="overflow-x-auto">
-<table class="w-full text-sm">
-<thead>
-<tr class="border-b border-outline-variant">
-<th class="text-left py-3 px-4 font-bold text-on-surface-variant">名前</th>
-<th class="text-right py-3 px-4 font-bold text-on-surface-variant">件数</th>
-<th class="text-right py-3 px-4 font-bold text-on-surface-variant">売上</th>
-<th class="text-right py-3 px-4 font-bold text-on-surface-variant">粗利率</th>
-</tr>
-</thead>
-<tbody id="detailTable">
-</tbody>
-</table>
-</div>
-</div>
 </div>
 
 <footer class="pt-16 pb-8 border-t border-outline-variant text-center">
@@ -353,7 +331,6 @@ function renderCharts(sorted, allItems, dataMap) {
   const names = sorted.map(([name]) => name);
 
   updateSummary(sorted, dataMap);
-  updateDetailTable(sorted);
 
   // ステータス分布 または 見積vs決定
   const ctxStatus = document.getElementById('chartStatus').getContext('2d');
@@ -433,34 +410,6 @@ function updateSummary(sorted, dataMap) {
 
   // 実利益合計 (Actual Profit Total)
   document.getElementById('summary-actual-profit').textContent = '¥' + totalProfit.toLocaleString();
-}
-
-function updateDetailTable(sorted) {
-  const tbody = document.getElementById('detailTable');
-  tbody.innerHTML = sorted.map(([name, data]) => {
-    const margin = data.revenue > 0 ? ((data.profit / data.revenue) * 100).toFixed(1) : 0;
-    return `
-      <tr class="border-b border-outline-variant hover:bg-surface-container-low">
-        <td class="py-3 px-4 font-medium">${name}</td>
-        <td class="py-3 px-4 text-right">${data.count}</td>
-        <td class="py-3 px-4 text-right tabular-nums">¥${(data.revenue || 0).toLocaleString()}</td>
-        <td class="py-3 px-4 text-right tabular-nums">${margin}%</td>
-      </tr>
-    `;
-  }).join('');
-
-  // Update table headers
-  const thead = document.querySelector('#detailTable').closest('table').querySelector('thead');
-  if (thead && !thead.innerHTML.includes('粗利率')) {
-    thead.innerHTML = `
-      <tr class="border-b border-outline-variant">
-        <th class="text-left py-3 px-4 font-bold text-on-surface-variant">名前</th>
-        <th class="text-right py-3 px-4 font-bold text-on-surface-variant">件数</th>
-        <th class="text-right py-3 px-4 font-bold text-on-surface-variant">売上</th>
-        <th class="text-right py-3 px-4 font-bold text-on-surface-variant">粗利率</th>
-      </tr>
-    `;
-  }
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
