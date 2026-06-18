@@ -125,18 +125,6 @@ fetch('/header.html')
 
 <!-- グラフエリア -->
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-<!-- 件数グラフ -->
-<div class="bg-surface-container-lowest rounded-2xl p-6 border border-outline-variant/30">
-<h2 class="text-lg font-bold text-on-surface mb-4">件数</h2>
-<canvas id="chartCount"></canvas>
-</div>
-
-<!-- 金額グラフ -->
-<div class="bg-surface-container-lowest rounded-2xl p-6 border border-outline-variant/30">
-<h2 class="text-lg font-bold text-on-surface mb-4">金額</h2>
-<canvas id="chartAmount"></canvas>
-</div>
-
 <!-- ステータス分布 -->
 <div class="bg-surface-container-lowest rounded-2xl p-6 border border-outline-variant/30">
 <h2 class="text-lg font-bold text-on-surface mb-4">ステータス分布</h2>
@@ -152,7 +140,8 @@ fetch('/header.html')
 <tr class="border-b border-outline-variant">
 <th class="text-left py-3 px-4 font-bold text-on-surface-variant">名前</th>
 <th class="text-right py-3 px-4 font-bold text-on-surface-variant">件数</th>
-<th class="text-right py-3 px-4 font-bold text-on-surface-variant">合計金額</th>
+<th class="text-right py-3 px-4 font-bold text-on-surface-variant">売上</th>
+<th class="text-right py-3 px-4 font-bold text-on-surface-variant">粗利率</th>
 </tr>
 </thead>
 <tbody id="detailTable">
@@ -170,8 +159,6 @@ fetch('/header.html')
 </main>
 
 <script>
-let chartCount = null;
-let chartAmount = null;
 let chartStatus = null;
 
 if (!window.appCache) {
@@ -370,61 +357,9 @@ function generateVendorReport() {
 function renderCharts(sorted, allItems, dataMap) {
   const reportType = document.getElementById('reportType')?.value || 'customer';
   const names = sorted.map(([name]) => name);
-  const counts = sorted.map(([, data]) => data.count);
-  const revenues = sorted.map(([, data]) => data.revenue || 0);
-  const costs = sorted.map(([, data]) => data.cost || 0);
 
   updateSummary(sorted, dataMap);
   updateDetailTable(sorted);
-
-  // 件数グラフ
-  const ctxCount = document.getElementById('chartCount').getContext('2d');
-  if (chartCount) chartCount.destroy();
-  chartCount = new Chart(ctxCount, {
-    type: 'bar',
-    data: {
-      labels: names,
-      datasets: [{
-        label: '件数',
-        data: counts,
-        backgroundColor: '#104356',
-        borderRadius: 4,
-      }]
-    },
-    options: {
-      responsive: true,
-      plugins: { legend: { display: false } },
-      scales: { y: { beginAtZero: true } }
-    }
-  });
-
-  // 金額グラフ - 売上vs原価
-  const ctxAmount = document.getElementById('chartAmount').getContext('2d');
-  if (chartAmount) chartAmount.destroy();
-  chartAmount = new Chart(ctxAmount, {
-    type: 'bar',
-    data: {
-      labels: names,
-      datasets: [
-        {
-          label: '売上',
-          data: revenues,
-          backgroundColor: '#104356',
-          borderRadius: 4,
-        },
-        {
-          label: '原価',
-          data: costs,
-          backgroundColor: '#a33c2d',
-          borderRadius: 4,
-        }
-      ]
-    },
-    options: {
-      responsive: true,
-      scales: { y: { beginAtZero: true } }
-    }
-  });
 
   // ステータス分布 または 見積vs決定
   const ctxStatus = document.getElementById('chartStatus').getContext('2d');
@@ -449,6 +384,9 @@ function renderCharts(sorted, allItems, dataMap) {
       options: { responsive: true }
     });
   } else {
+    const costs = sorted.map(([, data]) => data.cost || 0);
+    const revenues = sorted.map(([, data]) => data.revenue || 0);
+
     chartStatus = new Chart(ctxStatus, {
       type: 'bar',
       data: {
