@@ -221,8 +221,12 @@ async function initializeCache() {
   }
 }
 
-function loadPayments() {
-  payments = window.appCache.orders.map(order => {
+async function loadPayments() {
+  // Always fetch latest orders from server, don't rely on cache
+  const ordersRes = await fetch('/api/orders');
+  const orders = await ordersRes.json();
+
+  payments = orders.map(order => {
     const project = window.appCache.projects.find(p => p.id === order.project_id);
     return {
       id: order.id,
@@ -335,10 +339,8 @@ async function savePayment() {
       body: JSON.stringify(data)
     });
 
-    // Update cache
-    const ordersRes = await fetch('/api/orders');
-    window.appCache.orders = await ordersRes.json();
-    loadPayments();
+    // Reload latest data from server
+    await loadPayments();
     closeModal();
   } catch(e) {
     console.error('Failed to save payment:', e);
@@ -348,7 +350,7 @@ async function savePayment() {
 // フィルタ機能
 document.addEventListener('DOMContentLoaded', async () => {
   await initializeCache();
-  loadPayments();
+  await loadPayments();
 
   document.getElementById('status-filter').addEventListener('change', filterTable);
   document.getElementById('keyword-search').addEventListener('input', filterTable);
