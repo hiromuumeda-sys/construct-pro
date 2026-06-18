@@ -262,8 +262,8 @@ app.post('/api/orders', (req, res) => {
 });
 
 app.put('/api/orders/:id', (req, res) => {
-  const { project_id, category, vendor, estimate, planned, decided, status, details, site, period_start, period_end, handover, payment } = req.body;
-  db.prepare('UPDATE orders SET project_id=?, category=?, vendor=?, estimate=?, planned=?, decided=?, status=?, details=?, site=?, period_start=?, period_end=?, handover=?, payment=? WHERE id=?').run(project_id, category, vendor, estimate, planned, decided, status, details, site, period_start, period_end, handover, payment, req.params.id);
+  const { project_id, category, vendor, estimate, planned, decided, status, details, site, period_start, period_end, handover, payment, paymentStatus, paymentMethod, paymentDate, paymentNotes } = req.body;
+  db.prepare('UPDATE orders SET project_id=?, category=?, vendor=?, estimate=?, planned=?, decided=?, status=?, details=?, site=?, period_start=?, period_end=?, handover=?, payment=?, paymentStatus=?, paymentMethod=?, paymentDate=?, paymentNotes=? WHERE id=?').run(project_id, category, vendor, estimate, planned, decided, status, details, site, period_start, period_end, handover, payment, paymentStatus, paymentMethod, paymentDate, paymentNotes, req.params.id);
   res.json({ id: req.params.id, ...req.body });
 });
 
