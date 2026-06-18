@@ -108,17 +108,18 @@ function initDB() {
   checkAndAddColumn('orders', 'paymentDate', 'paymentDate TEXT');
   checkAndAddColumn('orders', 'paymentNotes', 'paymentNotes TEXT');
 
-  // Check if payment fields are missing/incomplete in orders
-  const ordersWithoutPayment = db.prepare("SELECT COUNT(*) as cnt FROM orders WHERE paymentStatus IS NULL OR paymentStatus = '' OR paymentMethod IS NULL").get().cnt;
-
   // Check if data exists
   const projectCount = db.prepare('SELECT COUNT(*) as cnt FROM projects').get().cnt;
   const customerCount = db.prepare('SELECT COUNT(*) as cnt FROM customers').get().cnt;
-  if (projectCount === 0 || customerCount === 0 || ordersWithoutPayment > 0) {
-    // Clear orders if payment data is incomplete
-    if (ordersWithoutPayment > 0) {
-      db.prepare('DELETE FROM orders').run();
-    }
+  const orderCount = db.prepare('SELECT COUNT(*) as cnt FROM orders').get().cnt;
+
+  if (projectCount === 0 || customerCount === 0 || orderCount === 0) {
+    // Clear all tables and reinitialize
+    db.prepare('DELETE FROM orders').run();
+    db.prepare('DELETE FROM projects').run();
+    db.prepare('DELETE FROM vendors').run();
+    db.prepare('DELETE FROM categories').run();
+    db.prepare('DELETE FROM customers').run();
     const projects = [
       { name: '京都御所南マンション改修工事', client: '京都工務店', clientCompany: '(株)京都工務', clientPhone: '075-123-4567', clientEmail: 'contact@kyoto-koumuten.jp', clientAddress: '京都府京都市中京区', amount: 12500000, startDate: '2024/05/10', endDate: '2025/03/31', status: '未対応', notes: '要現場説明会参加。図面承認待ち。' },
       { name: '中京区三条通オフィスビル新築工事', client: '滋賀設備工事', clientCompany: '滋賀設備工事(株)', clientPhone: '077-567-8901', clientEmail: 'info@shiga-setubi.co.jp', clientAddress: '滋賀県大津市', amount: 4800000, startDate: '2024/06/01', endDate: '2024/08/30', status: '提案中', notes: '概算見積提出済み。' },
