@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+
+<html class="light" lang="ja"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Noto+Sans+JP:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<title>工事区分マスタ - CONSTRUCT_PRO</title>
+<style>
+        body {
+            font-family: 'Inter', 'Noto Sans JP', sans-serif;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f4f3f1;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #dadad8;
+            border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #c1c7cc;
+        }
+        .tabular-numbers {
+            font-variant-numeric: tabular-nums;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface": "#faf9f7",
+                        "surface-bright": "#faf9f7",
+                        "on-secondary-fixed": "#400100",
+                        "outline-variant": "#c1c7cc",
+                        "on-primary-fixed-variant": "#1d4c5f",
+                        "on-secondary-fixed-variant": "#832519",
+                        "on-tertiary-fixed": "#2c1700",
+                        "on-primary": "#ffffff",
+                        "tertiary-container": "#724d23",
+                        "outline": "#71787c",
+                        "error-container": "#ffdad6",
+                        "on-primary-fixed": "#001f2a",
+                        "surface-tint": "#376478",
+                        "surface-dim": "#dadad8",
+                        "on-surface-variant": "#41484c",
+                        "surface-variant": "#e3e2e0",
+                        "primary-fixed-dim": "#a0cde4",
+                        "secondary-container": "#ff816d",
+                        "on-tertiary-fixed-variant": "#623f16",
+                        "inverse-primary": "#a0cde4",
+                        "secondary-fixed": "#ffdad4",
+                        "on-error-container": "#93000a",
+                        "surface-container": "#efeeec",
+                        "inverse-surface": "#2f3130",
+                        "tertiary-fixed-dim": "#f0bd89",
+                        "on-secondary-container": "#731a0f",
+                        "background": "#faf9f7",
+                        "surface-container-highest": "#e3e2e0",
+                        "on-tertiary-container": "#f3c08c",
+                        "surface-container-low": "#f4f3f1",
+                        "secondary": "#a33c2d",
+                        "surface-container-high": "#e9e8e6",
+                        "primary-container": "#2d5a6e",
+                        "primary": "#104356",
+                        "tertiary": "#57360e",
+                        "inverse-on-surface": "#f1f1ef",
+                        "error": "#ba1a1a",
+                        "secondary-fixed-dim": "#ffb4a7",
+                        "on-background": "#1a1c1b",
+                        "on-secondary": "#ffffff",
+                        "surface-container-lowest": "#ffffff",
+                        "on-tertiary": "#ffffff",
+                        "tertiary-fixed": "#ffdcbc",
+                        "on-error": "#ffffff",
+                        "primary-fixed": "#bfe9ff",
+                        "on-primary-container": "#a3d0e7",
+                        "on-surface": "#1a1c1b"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.75rem",
+                        "xl": "1rem",
+                        "2xl": "1.5rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "xxl": "64px",
+                        "xl": "40px",
+                        "gutter": "24px",
+                        "md": "16px",
+                        "container-padding": "32px",
+                        "sm": "8px",
+                        "lg": "24px",
+                        "xs": "4px",
+                        "base": "4px"
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-background text-on-surface antialiased min-h-screen">
+<div id="header-placeholder"></div>
+<script>
+fetch('/header.html')
+  .then(response => response.text())
+  .then(html => {
+    document.getElementById('header-placeholder').innerHTML = html;
+  });
+</script>
+<main class="pt-24 pb-xxl w-full">
+<div class="w-full px-container-padding space-y-lg">
+<!-- ページタイトルエリア -->
+<div class="flex justify-between items-center">
+<div class="flex items-center gap-3">
+<button class="w-9 h-9 flex items-center justify-center rounded-xl border border-outline-variant bg-surface-container-lowest hover:bg-surface-container transition-colors text-on-surface-variant shrink-0" onclick="history.back()">
+<span class="material-symbols-outlined text-[20px]">arrow_back</span>
+</button>
+<h1 class="text-xl font-bold text-on-surface tracking-tight">工事区分マスタ</h1>
+</div>
+<div class="flex items-center gap-4">
+<button class="bg-surface-container-lowest border border-outline-variant text-on-surface-variant px-5 py-2.5 text-sm font-semibold rounded-xl flex items-center gap-2 hover:bg-surface-container hover:text-on-surface transition-all">
+<span class="material-symbols-outlined text-[20px]">download</span>
+                        CSV出力
+                    </button>
+<button class="bg-primary text-on-primary px-6 py-2.5 text-sm font-bold rounded-xl flex items-center gap-2 hover:opacity-90 transition-all shadow-md shadow-primary/10" onclick="openAddModal()">
+<span class="material-symbols-outlined text-[20px]">add</span>
+                        新規工事区分登録
+                    </button>
+</div>
+</div>
+<!-- フィルタエリア -->
+<div class="bg-surface-container-low p-6 rounded-2xl border border-outline-variant flex justify-between items-center shadow-sm">
+<div class="relative w-full max-w-md">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant/60 text-xl">search</span>
+<input class="bg-surface-container-lowest border border-outline-variant text-sm pl-12 pr-4 py-3 w-full rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none placeholder:text-on-surface-variant/40" id="keyword-search" placeholder="工事区分名・コードで検索..." type="text"/>
+</div>
+<div class="flex items-center gap-2 px-4 py-2 bg-surface-container rounded-full">
+<span class="text-xs font-bold text-on-surface-variant tracking-wider uppercase">データ総数:</span>
+<span class="text-primary font-bold tabular-numbers" id="total-count">30</span>
+<span class="text-xs font-bold text-on-surface-variant">件</span>
+</div>
+</div>
+<!-- データテーブル -->
+<div class="bg-surface-container-lowest border border-outline-variant/30 rounded-2xl overflow-hidden shadow-sm">
+<div class="overflow-x-auto custom-scrollbar">
+<table class="w-full text-left border-separate border-spacing-0">
+<thead>
+<tr class="bg-surface-container-low/50">
+<th class="px-3 py-1.5 text-[11px] font-bold text-on-surface-variant uppercase tracking-widest border-b border-outline-variant/30 w-48">コード</th>
+<th class="px-3 py-1.5 text-[11px] font-bold text-on-surface-variant uppercase tracking-widest border-b border-outline-variant/30">工事区分名称</th>
+<th class="px-3 py-1.5 text-[11px] font-bold text-on-surface-variant uppercase tracking-widest border-b border-outline-variant/30 text-center w-32">表示順</th>
+<th class="px-3 py-1.5 text-[11px] font-bold text-on-surface-variant uppercase tracking-widest border-b border-outline-variant/30">備考・メモ</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant/20" id="master-table-body">
+</tbody>
+</table>
+</div>
+</div>
+</div>
+</main>
+</body>
+
+<div class="fixed inset-0 z-[100] hidden" id="edit-modal">
+<div class="absolute inset-0 bg-primary/20 backdrop-blur-md" onclick="closeModal('edit-modal')"></div>
+<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl bg-surface-container-lowest rounded-2xl shadow-2xl overflow-hidden border border-outline-variant/30 transform transition-all scale-95 opacity-0 duration-300" id="edit-modal-content">
+<div class="px-6 py-4 border-b border-outline-variant/30 flex justify-between items-center bg-surface-container-low/50">
+<h3 class="text-lg font-bold text-on-surface">工事区分の編集</h3>
+<button class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-surface-container transition-colors text-on-surface-variant" onclick="closeModal('edit-modal')">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+<div class="p-5 space-y-4">
+<div class="grid grid-cols-2 gap-6">
+<div>
+<label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-1.5">工事区分コード</label>
+<input class="w-full bg-surface-container-low border-outline-variant/50 rounded-xl text-sm px-4 py-3 text-primary tabular-numbers font-semibold" id="modal-code" readonly="" type="text"/>
+</div>
+<div>
+<label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-1.5">表示順</label>
+<input class="w-full bg-surface-container-low border-outline-variant/50 rounded-xl text-sm px-4 py-3 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all tabular-numbers" id="modal-order" type="number"/>
+</div>
+</div>
+<div>
+<label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-1.5">工事区分名</label>
+<input class="w-full bg-surface-container-low border-outline-variant/50 rounded-xl text-sm px-4 py-3 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" id="modal-name" placeholder="工事区分名を入力" type="text"/>
+</div>
+<div>
+<label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-1.5">備考</label>
+<textarea class="w-full bg-surface-container-low border-outline-variant/50 rounded-xl text-sm px-4 py-3 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all resize-none" id="modal-note" placeholder="備考を入力してください" rows="3"></textarea>
+</div>
+</div>
+<div class="px-6 py-4 bg-surface-container-low/50 border-t border-outline-variant/30 flex justify-between items-center">
+<button class="px-5 py-2.5 text-sm font-bold text-error hover:bg-error/10 rounded-xl transition-all" id="delete-btn">削除</button>
+<div class="flex items-center gap-4">
+<button class="px-5 py-2.5 text-sm font-bold text-on-surface-variant hover:bg-surface-container rounded-xl transition-all" onclick="closeModal('edit-modal')">キャンセル</button>
+<button class="bg-primary text-on-primary px-8 py-2.5 text-sm font-bold rounded-xl shadow-lg shadow-primary/20 hover:opacity-90 transition-all" id="save-btn">保存する</button>
+</div>
+</div>
+</div>
+</div>
+
+<div class="fixed inset-0 z-[100] hidden" id="add-modal">
+<div class="absolute inset-0 bg-primary/20 backdrop-blur-md" onclick="closeModal('add-modal')"></div>
+<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl bg-surface-container-lowest rounded-2xl shadow-2xl overflow-hidden border border-outline-variant/30 transform transition-all scale-95 opacity-0 duration-300" id="add-modal-content">
+<div class="px-6 py-4 border-b border-outline-variant/30 flex justify-between items-center bg-surface-container-low/50">
+<h3 class="text-lg font-bold text-on-surface">新規工事区分登録</h3>
+<button class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-surface-container transition-colors text-on-surface-variant" onclick="closeModal('add-modal')">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+<div class="p-5 space-y-4">
+<div class="grid grid-cols-2 gap-6">
+<div>
+<label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-1.5">工事区分コード</label>
+<input class="w-full bg-surface-container-low border-outline-variant/50 rounded-xl text-sm px-4 py-3 text-primary tabular-numbers font-semibold" id="new-modal-code" readonly="" type="text" placeholder="自動発番"/>
+</div>
+<div>
+<label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-1.5">表示順</label>
+<input class="w-full bg-surface-container-low border-outline-variant/50 rounded-xl text-sm px-4 py-3 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all tabular-numbers" id="new-modal-order" type="number"/>
+</div>
+</div>
+<div>
+<label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-1.5">工事区分名</label>
+<input class="w-full bg-surface-container-low border-outline-variant/50 rounded-xl text-sm px-4 py-3 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" id="new-modal-name" placeholder="工事区分名を入力" type="text"/>
+</div>
+<div>
+<label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-1.5">備考</label>
+<textarea class="w-full bg-surface-container-low border-outline-variant/50 rounded-xl text-sm px-4 py-3 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all resize-none" id="new-modal-note" placeholder="備考を入力してください" rows="3"></textarea>
+</div>
+</div>
+<div class="px-6 py-4 bg-surface-container-low/50 border-t border-outline-variant/30 flex justify-end items-center gap-4">
+<button class="px-5 py-2.5 text-sm font-bold text-on-surface-variant hover:bg-surface-container rounded-xl transition-all" onclick="closeModal('add-modal')">キャンセル</button>
+<button class="bg-primary text-on-primary px-8 py-2.5 text-sm font-bold rounded-xl shadow-lg shadow-primary/20 hover:opacity-90 transition-all" id="register-btn">登録する</button>
+</div>
+</div>
+</div>
+
+<script>
+        let editingId = null;
+
+        function closeModal(id) {
+            const modal = document.getElementById(id);
+            const content = modal.querySelector('.bg-surface-container-lowest');
+            if (content) {
+                content.classList.add('scale-95', 'opacity-0');
+                content.classList.remove('scale-100', 'opacity-100');
+            }
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 300);
+        }
+
+        // グローバルキャッシュの初期化
+        if (!window.appCache) {
+            window.appCache = { projects: [], vendors: [], categories: [], orders: [] };
+        }
+
+        function loadCategories() {
+            renderTable(window.appCache.categories);
+        }
+
+        function renderTable(categories) {
+            const tbody = document.getElementById('master-table-body');
+            tbody.innerHTML = categories.map(c => `
+                <tr class="hover:bg-surface-container-low transition-colors cursor-pointer group" onclick="openEditModal(${c.id}, '${c.code}', '${c.name}', ${c.order}, '${c.note.replace(/'/g, "\\'")}')">
+                    <td class="px-3 py-1.5 text-xs font-semibold text-primary tabular-numbers">${c.code}</td>
+                    <td class="px-3 py-1.5 text-xs font-bold group-hover:text-primary transition-colors">${c.name}</td>
+                    <td class="px-3 py-1.5 text-xs text-center tabular-numbers font-medium text-on-surface-variant">${c.order}</td>
+                    <td class="px-3 py-1.5 text-xs text-on-surface-variant leading-relaxed">${c.note}</td>
+                </tr>
+            `).join('');
+            document.getElementById('total-count').innerText = categories.length;
+        }
+
+        async function openEditModal(id, code, name, order, note) {
+            editingId = id;
+            document.getElementById('modal-code').value = code;
+            document.getElementById('modal-name').value = name;
+            document.getElementById('modal-order').value = order;
+            document.getElementById('modal-note').value = note;
+            const modal = document.getElementById('edit-modal');
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                const content = modal.querySelector('.bg-surface-container-lowest');
+                if (content) {
+                    content.classList.remove('scale-95', 'opacity-0');
+                    content.classList.add('scale-100', 'opacity-100');
+                }
+            }, 10);
+            document.body.style.overflow = 'hidden';
+        }
+
+        function openAddModal() {
+            editingId = null;
+            document.getElementById('new-modal-code').value = '';
+            document.getElementById('new-modal-name').value = '';
+            document.getElementById('new-modal-order').value = '';
+            document.getElementById('new-modal-note').value = '';
+            const modal = document.getElementById('add-modal');
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                const content = modal.querySelector('.bg-surface-container-lowest');
+                if (content) {
+                    content.classList.remove('scale-95', 'opacity-0');
+                    content.classList.add('scale-100', 'opacity-100');
+                }
+            }, 10);
+            document.body.style.overflow = 'hidden';
+        }
+
+        document.getElementById('save-btn').onclick = async () => {
+            if(!editingId) return;
+            const code = document.getElementById('modal-code').value;
+            const name = document.getElementById('modal-name').value;
+            const order = parseInt(document.getElementById('modal-order').value) || 0;
+            const note = document.getElementById('modal-note').value;
+
+            try {
+                await fetch(`/api/categories/${editingId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ code, name, order, note })
+                });
+                const res = await fetch('/api/categories');
+                window.appCache.categories = await res.json();
+                loadCategories();
+                closeModal('edit-modal');
+            } catch(e) {
+                alert('更新に失敗しました');
+            }
+        };
+
+        document.getElementById('register-btn').onclick = async () => {
+            const name = document.getElementById('new-modal-name').value;
+            const order = parseInt(document.getElementById('new-modal-order').value) || 0;
+            const note = document.getElementById('new-modal-note').value;
+
+            if(!name) return alert('工事区分名は必須です');
+
+            try {
+                await fetch('/api/categories', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, order, note })
+                });
+                document.getElementById('new-modal-code').value = '';
+                document.getElementById('new-modal-name').value = '';
+                document.getElementById('new-modal-order').value = '';
+                document.getElementById('new-modal-note').value = '';
+                const res = await fetch('/api/categories');
+                window.appCache.categories = await res.json();
+                loadCategories();
+                closeModal('add-modal');
+            } catch(e) {
+                alert('登録に失敗しました');
+            }
+        };
+
+        document.getElementById('delete-btn').onclick = async () => {
+            if(!editingId) return;
+            if(confirm('この工事区分を削除してもよろしいですか？')) {
+                try {
+                    await fetch(`/api/categories/${editingId}`, { method: 'DELETE' });
+                    const res = await fetch('/api/categories');
+                    window.appCache.categories = await res.json();
+                    loadCategories();
+                    closeModal('edit-modal');
+                } catch(e) {
+                    alert('削除に失敗しました');
+                }
+            }
+        };
+
+        document.getElementById('keyword-search')?.addEventListener('input', function(e) {
+            const term = e.target.value.toLowerCase();
+            const filtered = window.appCache.categories.filter(c => c.code.toLowerCase().includes(term) || c.name.toLowerCase().includes(term));
+            renderTable(filtered);
+        });
+
+        // Initialize global cache if empty
+        (async () => {
+            if (window.appCache.categories.length === 0) {
+                const res = await fetch('/api/cache');
+                window.appCache = await res.json();
+            }
+            loadCategories();
+        })();
+    </script>
+</html>

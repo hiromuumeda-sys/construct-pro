@@ -1,0 +1,47 @@
+<header class="bg-surface-container-lowest border-b border-outline-variant fixed top-0 w-full z-50 h-16 shadow-sm">
+<div class="w-full px-container-padding h-full flex justify-between items-center">
+<div class="flex items-center gap-10">
+<span class="font-bold text-xl tracking-tight text-primary cursor-pointer" onclick="location.href='/'">CONSTRUCT_PRO</span>
+<nav class="hidden md:flex items-center gap-1 flex-nowrap">
+<a class="px-4 py-2 text-sm font-medium text-on-surface-variant hover:text-primary hover:bg-surface-container rounded-xl transition-all" href="#" id="nav-dashboard" onclick="event.preventDefault();alert('ダッシュボードは準備中です')">ダッシュボード</a>
+<a class="px-4 py-2 text-sm font-medium text-on-surface-variant hover:text-primary hover:bg-surface-container rounded-xl transition-all" href="/" id="nav-projects">案件マスタ</a>
+<a class="px-4 py-2 text-sm font-medium text-on-surface-variant hover:text-primary hover:bg-surface-container rounded-xl transition-all" href="/vendors.html" id="nav-vendors">外注先マスタ</a>
+<a class="px-4 py-2 text-sm font-medium text-on-surface-variant hover:text-primary hover:bg-surface-container rounded-xl transition-all" href="/categories.html" id="nav-categories">工事区分マスタ</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-3 pl-6 border-l border-outline-variant">
+<div class="w-9 h-9 rounded-full bg-primary-container flex items-center justify-center text-on-primary-container font-bold text-xs">管</div>
+<span class="text-sm font-medium hidden lg:inline">管理者 太郎</span>
+</div>
+</div>
+</div>
+</header>
+<script>
+function setActiveNav() {
+  const path = window.location.pathname;
+  document.querySelectorAll('nav a').forEach(link => {
+    link.classList.remove('font-bold', 'bg-surface-container-high');
+    link.classList.add('font-medium', 'text-on-surface-variant', 'hover:text-primary', 'hover:bg-surface-container');
+  });
+
+  let activeId;
+  if (path === '/' || path === '/projects.html') {
+    activeId = 'nav-projects';
+  } else if (path.includes('vendors')) {
+    activeId = 'nav-vendors';
+  } else if (path.includes('categories')) {
+    activeId = 'nav-categories';
+  }
+
+  if (activeId) {
+    const activeLink = document.getElementById(activeId);
+    if (activeLink) {
+      activeLink.classList.remove('font-medium', 'text-on-surface-variant', 'hover:text-primary', 'hover:bg-surface-container');
+      activeLink.classList.add('font-bold', 'text-primary', 'bg-surface-container-high');
+    }
+  }
+}
+
+document.addEventListener('DOMContentLoaded', setActiveNav);
+</script>

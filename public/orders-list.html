@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+
+<html class="light" lang="ja"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Noto+Sans+JP:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<title>注文管理 - CONSTRUCT_PRO</title>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface": "#faf9f7",
+                        "surface-bright": "#faf9f7",
+                        "on-secondary-fixed": "#400100",
+                        "outline-variant": "#c1c7cc",
+                        "on-primary-fixed-variant": "#1d4c5f",
+                        "on-secondary-fixed-variant": "#832519",
+                        "on-tertiary-fixed": "#2c1700",
+                        "on-primary": "#ffffff",
+                        "tertiary-container": "#724d23",
+                        "outline": "#71787c",
+                        "error-container": "#ffdad6",
+                        "on-primary-fixed": "#001f2a",
+                        "surface-tint": "#376478",
+                        "surface-dim": "#dadad8",
+                        "on-surface-variant": "#41484c",
+                        "surface-variant": "#e3e2e0",
+                        "primary-fixed-dim": "#a0cde4",
+                        "secondary-container": "#ff816d",
+                        "on-tertiary-fixed-variant": "#623f16",
+                        "inverse-primary": "#a0cde4",
+                        "secondary-fixed": "#ffdad4",
+                        "on-error-container": "#93000a",
+                        "surface-container": "#efeeec",
+                        "inverse-surface": "#2f3130",
+                        "tertiary-fixed-dim": "#f0bd89",
+                        "on-secondary-container": "#731a0f",
+                        "background": "#faf9f7",
+                        "surface-container-highest": "#e3e2e0",
+                        "on-tertiary-container": "#f3c08c",
+                        "surface-container-low": "#f4f3f1",
+                        "secondary": "#a33c2d",
+                        "surface-container-high": "#e9e8e6",
+                        "primary-container": "#2d5a6e",
+                        "primary": "#104356",
+                        "tertiary": "#57360e",
+                        "inverse-on-surface": "#f1f1ef",
+                        "error": "#ba1a1a",
+                        "secondary-fixed-dim": "#ffb4a7",
+                        "on-background": "#1a1c1b",
+                        "on-secondary": "#ffffff",
+                        "surface-container-lowest": "#ffffff",
+                        "on-tertiary": "#ffffff",
+                        "tertiary-fixed": "#ffdcbc",
+                        "on-error": "#ffffff",
+                        "primary-fixed": "#bfe9ff",
+                        "on-primary-container": "#a3d0e7",
+                        "on-surface": "#1a1c1b"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "12px",
+                        "2xl": "16px",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "xxl": "64px",
+                        "xl": "40px",
+                        "gutter": "24px",
+                        "md": "16px",
+                        "container-padding": "32px",
+                        "sm": "8px",
+                        "lg": "24px",
+                        "xs": "4px",
+                        "base": "4px"
+                    },
+                    "fontFamily": {
+                        "sans": ["Inter", "Noto Sans JP", "sans-serif"]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Inter', 'Noto Sans JP', sans-serif;
+            background-color: #faf9f7;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f4f3f1;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #dadad8;
+            border-radius: 3px;
+        }
+        .tabular-numbers {
+            font-variant-numeric: tabular-nums;
+            font-feature-settings: "tnum";
+        }
+    </style>
+</head>
+<body class="text-on-surface antialiased">
+<!-- ヘッダー -->
+<div id="header-placeholder"></div>
+<script>
+fetch('/header.html')
+  .then(response => response.text())
+  .then(html => {
+    document.getElementById('header-placeholder').innerHTML = html;
+  });
+</script>
+<main class="pt-24 pb-xxl w-full">
+<div class="w-full px-container-padding space-y-lg">
+<!-- ページタイトルエリア -->
+<div class="flex justify-between items-center">
+<div class="flex items-center gap-3">
+<button class="w-9 h-9 flex items-center justify-center rounded-xl border border-outline-variant bg-surface-container-lowest hover:bg-surface-container transition-colors text-on-surface-variant shrink-0" onclick="history.back()">
+<span class="material-symbols-outlined text-[20px]">arrow_back</span>
+</button>
+<h1 class="text-xl font-bold text-on-surface tracking-tight">注文管理</h1>
+</div>
+<div class="flex items-center gap-3">
+<button class="bg-surface-container-lowest border border-outline-variant text-on-surface px-5 py-2.5 text-sm font-semibold rounded-xl flex items-center gap-2 hover:bg-surface-container-high transition-all">
+<span class="material-symbols-outlined text-[20px]">download</span>
+CSV出力
+</button>
+<button class="bg-primary text-on-primary px-6 py-2.5 text-sm font-bold rounded-xl flex items-center gap-2 shadow-lg shadow-primary/10 hover:opacity-90 transition-all" onclick="openOrderModal('', '', '', '', '', '未処理')">
+<span class="material-symbols-outlined text-[20px]">add</span>
+新規注文登録
+</button>
+</div>
+</div>
+<!-- フィルタエリア -->
+<div class="bg-surface-container-low p-5 rounded-2xl border border-outline-variant/30 flex flex-wrap items-center gap-4">
+<div class="relative min-w-[220px]">
+<select class="w-full bg-surface-container-lowest border-outline-variant/50 text-sm py-2.5 px-4 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary appearance-none transition-all cursor-pointer" id="category-filter">
+<option value="">すべての工事区分</option>
+<option value="仮設工事">仮設工事</option>
+<option value="土工事">土工事</option>
+<option value="基礎工事">基礎工事</option>
+</select>
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-on-surface-variant">keyboard_arrow_down</span>
+</div>
+<div class="relative min-w-[220px]">
+<select class="w-full bg-surface-container-lowest border-outline-variant/50 text-sm py-2.5 px-4 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary appearance-none transition-all cursor-pointer" id="status-filter">
+<option value="">すべてのステータス</option>
+<option value="未処理">未処理</option>
+<option value="見積待ち">見積待ち</option>
+<option value="決定済み">決定済み</option>
+<option value="発注完了">発注完了</option>
+</select>
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-on-surface-variant">keyboard_arrow_down</span>
+</div>
+<div class="relative flex-1 max-w-lg">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant text-xl">search</span>
+<input class="w-full bg-surface-container-lowest border-outline-variant/50 text-sm pl-12 pr-4 py-2.5 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" id="keyword-search" placeholder="工事名、外注先で検索..." type="text"/>
+</div>
+</div>
+<!-- データテーブル -->
+<div class="bg-surface-container-lowest border border-outline-variant/30 rounded-2xl overflow-hidden shadow-sm">
+<table class="w-full text-left border-separate border-spacing-0">
+<thead>
+<tr class="bg-surface-container-low/50">
+<th class="px-3 py-1.5 text-[11px] font-bold text-on-surface-variant uppercase tracking-widest border-b border-outline-variant/30 w-1/5">工事区分</th>
+<th class="px-3 py-1.5 text-[11px] font-bold text-on-surface-variant uppercase tracking-widest border-b border-outline-variant/30 w-1/4">外注先</th>
+<th class="px-3 py-1.5 text-[11px] font-bold text-on-surface-variant uppercase tracking-widest border-b border-outline-variant/30 text-right">見積額</th>
+<th class="px-3 py-1.5 text-[11px] font-bold text-on-surface-variant uppercase tracking-widest border-b border-outline-variant/30 text-right">予定金額</th>
+<th class="px-3 py-1.5 text-[11px] font-bold text-on-surface-variant uppercase tracking-widest border-b border-outline-variant/30 text-right">決定金額</th>
+<th class="px-3 py-1.5 text-[11px] font-bold text-on-surface-variant uppercase tracking-widest border-b border-outline-variant/30 text-center w-32">ステータス</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant/20" id="orders-table-body">
+<!-- データが JavaScript で挿入される -->
+</tbody>
+</table>
+</div>
+<!-- Summary Section (与実の管理) -->
+<div class="w-full grid grid-cols-1 md:grid-cols-4 gap-4">
+<div class="bg-surface-container-lowest p-5 rounded-2xl border border-outline-variant/60 shadow-sm group hover:shadow-md transition-shadow">
+<div class="flex items-center justify-between mb-3">
+<p class="text-[11px] font-bold text-on-surface-variant uppercase tracking-widest flex items-center gap-1.5">
+<span class="w-1.5 h-1.5 rounded-full bg-primary/40"></span>売上高合計</p>
+<span class="text-[9px] font-bold text-primary tabular-numbers summary-rate">予算達成率 154%</span>
+</div>
+<div class="space-y-1.5">
+<div class="flex justify-between items-baseline">
+<span class="text-[10px] text-on-surface-variant/70 font-semibold tabular-numbers">予算: 25,000,000</span>
+<span class="text-xl font-bold tracking-tight text-on-surface tabular-numbers summary-revenue">38,500,000</span>
+</div>
+<div class="w-full bg-surface-container-low h-2 rounded-full overflow-hidden">
+<div class="bg-primary h-full rounded-full progress-revenue" style="width: 100%"></div>
+</div>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-5 rounded-2xl border border-outline-variant/60 shadow-sm group hover:shadow-md transition-shadow">
+<div class="flex items-center justify-between mb-3">
+<p class="text-[11px] font-bold text-on-surface-variant uppercase tracking-widest flex items-center gap-1.5">
+<span class="w-1.5 h-1.5 rounded-full bg-error/40"></span>外注費合計</p>
+<span class="text-[9px] font-bold text-error tabular-numbers summary-cost-rate">予算超過注意</span>
+</div>
+<div class="space-y-1.5">
+<div class="flex justify-between items-baseline">
+<span class="text-[10px] text-on-surface-variant/70 font-semibold tabular-numbers">予算: 18,000,000</span>
+<span class="text-xl font-bold tracking-tight text-on-surface tabular-numbers summary-cost">38,017,342</span>
+</div>
+<div class="w-full bg-surface-container-low h-2 rounded-full overflow-hidden">
+<div class="bg-error h-full rounded-full progress-cost" style="width: 98%"></div>
+</div>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-5 rounded-2xl border border-outline-variant/60 shadow-sm group hover:shadow-md transition-shadow">
+<div class="flex items-center justify-between mb-3">
+<p class="text-[11px] font-bold text-on-surface-variant uppercase tracking-widest flex items-center gap-1.5">
+<span class="w-1.5 h-1.5 rounded-full bg-green-500/40"></span>想定利益額</p>
+</div>
+<div class="space-y-1.5">
+<div class="flex justify-between items-baseline">
+<span class="text-[10px] text-on-surface-variant/70 font-semibold tabular-numbers">予算: 7,000,000</span>
+<span class="text-xl font-bold tracking-tight text-on-surface tabular-numbers summary-profit">482,658</span>
+</div>
+<div class="w-full bg-surface-container-low h-2 rounded-full overflow-hidden">
+<div class="bg-green-500 h-full rounded-full progress-profit" style="width: 7%"></div>
+</div>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-5 rounded-2xl border border-outline-variant/60 shadow-sm group hover:shadow-md transition-shadow">
+<div class="flex items-center justify-between mb-3">
+<p class="text-[11px] font-bold text-on-surface-variant uppercase tracking-widest flex items-center gap-1.5">
+<span class="w-1.5 h-1.5 rounded-full bg-primary/40"></span>想定粗利率</p>
+</div>
+<div class="space-y-1.5">
+<div class="flex justify-between items-baseline">
+<span class="text-[10px] text-on-surface-variant/70 font-semibold tabular-numbers">計画: 28.0%</span>
+<span class="text-xl font-bold tracking-tight text-on-surface tabular-numbers summary-margin">1.3%</span>
+</div>
+<div class="w-full bg-surface-container-low h-2 rounded-full overflow-hidden">
+<div class="bg-primary h-full rounded-full" style="width: 5%"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- History Logs -->
+<div class="bg-surface-container-lowest border border-outline-variant/60 rounded-3xl shadow-sm overflow-hidden">
+<div class="px-6 py-5 border-b border-outline-variant/40 flex justify-between items-center bg-surface-container-low/30">
+<h2 class="text-sm font-bold text-on-surface flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[20px]">history</span>
+操作履歴
+</h2>
+<span class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">直近100件を表示</span>
+</div>
+<div class="max-h-[300px] overflow-y-auto custom-scrollbar">
+<table class="w-full text-left border-separate border-spacing-0">
+<thead>
+<tr class="bg-surface-container-lowest sticky top-0 z-10">
+<th class="px-4 py-2 text-[11px] font-bold text-on-surface-variant uppercase tracking-widest border-b border-outline-variant/40 w-48">日時</th>
+<th class="px-4 py-2 text-[11px] font-bold text-on-surface-variant uppercase tracking-widest border-b border-outline-variant/40 w-48">操作者</th>
+<th class="px-4 py-2 text-[11px] font-bold text-on-surface-variant uppercase tracking-widest border-b border-outline-variant/40">内容</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant/20">
+<tr class="hover:bg-surface-container-low/20 transition-colors">
+<td class="px-4 py-2 text-xs text-on-surface-variant tabular-numbers">2024/05/08 14:25:31</td>
+<td class="px-4 py-2 text-xs font-semibold text-on-surface">管理者 太郎</td>
+<td class="px-4 py-2 text-xs text-on-surface-variant">初期データ30件を一括生成しました</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</main>
+
+<!-- 注文編集モーダル -->
+<div class="fixed inset-0 z-[100] hidden overflow-y-auto" id="edit-modal">
+<div class="absolute inset-0 bg-primary/20 backdrop-blur-md" onclick="closeOrderModal()"></div>
+<div class="relative w-full max-w-2xl mx-auto my-8 bg-surface-container-lowest rounded-2xl shadow-2xl overflow-hidden border border-outline-variant/30 transform transition-all scale-95 opacity-0 duration-300">
+<div class="px-6 py-4 border-b border-outline-variant/30 flex justify-between items-center bg-surface-container-low/50 sticky top-0">
+<h3 class="text-lg font-bold text-on-surface">注文詳細の編集</h3>
+<button class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-surface-container transition-colors text-on-surface-variant" onclick="closeOrderModal()">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+<div class="p-5 space-y-4 max-h-[calc(100vh-200px)] overflow-y-auto">
+<input id="edit-id" type="hidden"/>
+<div class="grid grid-cols-2 gap-6">
+<div class="col-span-2">
+<label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-2.5">工事区分</label>
+<select class="w-full bg-surface-container-low border-outline-variant/50 rounded-xl text-sm px-4 py-3 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" id="edit-category">
+<option value="">選択してください</option>
+</select>
+</div>
+<div class="col-span-2">
+<label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-2.5">外注先</label>
+<select class="w-full bg-surface-container-low border-outline-variant/50 rounded-xl text-sm px-4 py-3 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" id="edit-vendor">
+<option value="">選択してください</option>
+</select>
+</div>
+<div>
+<label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-2.5">見積額</label>
+<input class="w-full bg-surface-container-low border-outline-variant/50 rounded-xl text-sm px-4 py-3 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all tabular-numbers" id="edit-estimate" type="number"/>
+</div>
+<div>
+<label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-2.5">予定金額</label>
+<input class="w-full bg-surface-container-low border-outline-variant/50 rounded-xl text-sm px-4 py-3 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all tabular-numbers" id="edit-planned" type="number"/>
+</div>
+<div>
+<label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-2.5">決定金額</label>
+<input class="w-full bg-surface-container-low border-outline-variant/50 rounded-xl text-sm px-4 py-3 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all tabular-numbers" id="edit-decided" type="number"/>
+</div>
+<div>
+<label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-2.5">ステータス</label>
+<select class="w-full bg-surface-container-low border-outline-variant/50 rounded-xl text-sm px-4 py-3 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" id="edit-status">
+<option value="未処理">未処理</option>
+<option value="見積待ち">見積待ち</option>
+<option value="決定済み">決定済み</option>
+<option value="発注完了">発注完了</option>
+</select>
+</div>
+<div class="col-span-2">
+<label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-2.5">工事場所</label>
+<input class="w-full bg-surface-container-low border-outline-variant/50 rounded-xl text-sm px-4 py-3 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" id="edit-site" type="text"/>
+</div>
+<div>
+<label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-2.5">工事開始日</label>
+<input class="w-full bg-surface-container-low border-outline-variant/50 rounded-xl text-sm px-4 py-3 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" id="edit-period-start" type="date"/>
+</div>
+<div>
+<label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-2.5">工事終了日</label>
+<input class="w-full bg-surface-container-low border-outline-variant/50 rounded-xl text-sm px-4 py-3 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" id="edit-period-end" type="date"/>
+</div>
+<div class="col-span-2">
+<label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-2.5">検査・引渡時期</label>
+<input class="w-full bg-surface-container-low border-outline-variant/50 rounded-xl text-sm px-4 py-3 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" id="edit-handover" type="text"/>
+</div>
+<div class="col-span-2">
+<label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-2.5">支払条件</label>
+<input class="w-full bg-surface-container-low border-outline-variant/50 rounded-xl text-sm px-4 py-3 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" id="edit-payment" type="text"/>
+</div>
+<div class="col-span-2">
+<label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-2.5">工事内容</label>
+<textarea class="w-full bg-surface-container-low border-outline-variant/50 rounded-xl text-sm px-4 py-3 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" id="edit-details" rows="3"></textarea>
+</div>
+</div>
+<div class="px-6 py-4 border-t border-outline-variant/30 flex justify-between items-center bg-surface-container-low/50 sticky bottom-0">
+<button class="text-error hover:bg-error-container/20 px-4 py-2 text-sm font-bold rounded-2xl transition-all flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">delete</span>削除
+</button>
+<div class="flex gap-3">
+<button class="bg-surface-container-lowest border border-outline-variant text-on-surface px-5 py-2.5 text-sm font-semibold rounded-xl hover:bg-surface-container-high shadow-sm transition-all flex items-center gap-2" onclick="showPreview()">
+<span class="material-symbols-outlined text-[18px]">visibility</span>発注書プレビュー
+</button>
+<button class="px-6 py-2.5 text-sm font-semibold text-on-surface border border-outline-variant rounded-xl hover:bg-surface-container transition-all" onclick="closeOrderModal()">キャンセル</button>
+<button class="px-6 py-2.5 text-sm font-bold text-on-primary bg-primary rounded-xl hover:opacity-90 transition-all" onclick="saveOrder()">保存</button>
+</div>
+</div>
+</div>
+</div>
+
+<!-- PO Preview Overlay -->
+<div class="fixed inset-0 z-[110] hidden" id="preview-modal">
+<div class="absolute inset-0 bg-inverse-surface/60 backdrop-blur-md"></div>
+<div class="flex items-center justify-center min-h-screen p-4">
+<div class="bg-white w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden relative transform transition-all border border-outline-variant/30">
+<!-- Floating Email Button -->
+<button class="absolute bottom-6 right-6 w-14 h-14 bg-primary text-on-primary rounded-full flex items-center justify-center shadow-lg hover:shadow-xl hover:scale-110 transition-all transform" onclick="sendEmail()" title="メール送信">
+<span class="material-symbols-outlined text-[24px]">send</span>
+</button>
+<div class="px-6 py-4 border-b border-outline-variant flex justify-between items-center">
+<h3 class="text-sm font-bold text-on-surface flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">description</span>
+発注書プレビュー
+</h3>
+<button class="text-outline hover:text-on-surface p-1 transition-colors" onclick="closePreview()">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+<div class="p-5 bg-surface-container-low/30 overflow-y-auto max-h-[70vh]">
+<div class="bg-white p-12 shadow-sm min-h-[600px] border border-outline-variant/60 text-on-surface rounded-xl flex flex-col">
+<div class="flex justify-between items-start mb-12">
+<div>
+<h1 class="text-3xl font-bold tracking-[0.3em] mb-6 text-on-surface">発注書</h1>
+<p class="text-lg border-b-2 border-on-surface pb-1 inline-block" id="preview-company">未選択 御中</p>
+</div>
+<div class="text-right">
+<p class="font-bold text-lg mb-1 tracking-tight">CONSTRUCT_PRO</p>
+<p class="text-[10px] text-on-surface-variant leading-relaxed">
+〒600-8009<br/>
+京都府京都市下京区四条通<br/>
+室町東入函谷鉾町 101<br/>
+TEL: 075-123-4567
+</p>
+</div>
+</div>
+<div class="border-b-2 border-primary py-6 mb-10 flex justify-between items-end">
+<span class="text-sm font-bold">発注金額合計 (税込)</span>
+<span class="text-3xl font-bold tabular-numbers text-primary">¥<span id="preview-amount">0</span>-</span>
+</div>
+<div class="grid grid-cols-2 gap-y-6 text-xs mb-10 border-t border-b border-outline-variant/20 py-6">
+<div class="flex flex-col gap-1">
+<span class="text-on-surface-variant font-bold uppercase tracking-wider text-[10px]">工事場所</span>
+<span class="font-medium" id="preview-site">---</span>
+</div>
+<div class="flex flex-col gap-1">
+<span class="text-on-surface-variant font-bold uppercase tracking-wider text-[10px]">工事期間</span>
+<span class="font-medium" id="preview-period">---</span>
+</div>
+<div class="flex flex-col gap-1">
+<span class="text-on-surface-variant font-bold uppercase tracking-wider text-[10px]">検査・引渡時期</span>
+<span class="font-medium" id="preview-handover">---</span>
+</div>
+<div class="flex flex-col gap-1">
+<span class="text-on-surface-variant font-bold uppercase tracking-wider text-[10px]">支払条件</span>
+<span class="font-medium text-[11px]" id="preview-payment">---</span>
+</div>
+<div class="col-span-2 flex flex-col gap-1 border-t border-outline-variant/10 pt-4 mt-2">
+<span class="text-on-surface-variant font-bold uppercase tracking-wider text-[10px]">工事内容</span>
+<span class="whitespace-pre-wrap font-medium leading-relaxed text-sm" id="preview-details">---</span>
+</div>
+</div>
+<table class="w-full text-sm flex-grow">
+<thead>
+<tr class="border-b border-on-surface font-bold">
+<th class="py-3 text-left">内容・品名</th>
+<th class="py-3 text-right">金額 (税込)</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant/10">
+<tr>
+<td class="py-8 font-medium" id="preview-item">一式</td>
+<td class="py-8 text-right font-bold tabular-numbers text-lg" id="preview-amount-row">0</td>
+</tr>
+</tbody>
+</table>
+<div class="mt-12 border-t border-outline-variant pt-4 text-[10px] text-on-surface-variant">
+<p class="">備考：本発注書の内容に基づき、指定の期日までに納品をお願いいたします。</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<script>
+// Global cache - only for this page's needed data
+// グローバルキャッシュの初期化
+if (!window.appCache) {
+    window.appCache = { projects: [], vendors: [], categories: [], orders: [] };
+}
+
+let orders = [];
+let editingId = null;
+let projectId = new URLSearchParams(window.location.search).get('project_id');
+
+// データ読み込み
+function loadOrders() {
+    // Use global cached data
+    const allOrders = window.appCache.orders;
+
+    // project_id でフィルタリング
+    if (projectId) {
+        orders = allOrders.filter(o => o.project_id == projectId);
+        document.querySelector('h1').textContent = `注文管理（案件ID: ${projectId}）`;
+    } else {
+        orders = allOrders;
+    }
+
+    renderTable();
+    updateSummary();
+}
+
+// テーブルの描画
+function renderTable() {
+    const tbody = document.getElementById('orders-table-body');
+    tbody.innerHTML = orders.map((order) => `
+        <tr class="hover:bg-surface-container-low transition-colors cursor-pointer group" onclick="openOrderDetailModal(${order.id})">
+            <td class="px-3 py-1.5 text-xs font-bold text-on-surface group-hover:text-primary transition-colors">${order.category || '-'}</td>
+            <td class="px-3 py-1.5 text-xs text-on-surface-variant">${order.vendor || '-'}</td>
+            <td class="px-3 py-1.5 text-xs text-right tabular-numbers">${order.estimate ? order.estimate.toLocaleString() : '-'}</td>
+            <td class="px-3 py-1.5 text-xs text-right tabular-numbers">${order.planned ? order.planned.toLocaleString() : '-'}</td>
+            <td class="px-3 py-1.5 text-xs text-right font-bold tabular-numbers">${order.decided ? order.decided.toLocaleString() : '-'}</td>
+            <td class="px-3 py-1.5 text-xs text-center whitespace-nowrap">
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold ${getStatusColor(order.status)}">${order.status}</span>
+            </td>
+        </tr>
+    `).join('');
+}
+
+function getStatusColor(status) {
+    const colors = {
+        '未処理': 'bg-surface-dim text-on-surface-variant',
+        '見積待ち': 'bg-tertiary-container text-on-tertiary-container',
+        '決定済み': 'bg-primary-container text-on-primary-container',
+        '送付済': 'bg-primary text-on-primary',
+        '発注完了': 'bg-secondary-container text-on-secondary-container'
+    };
+    return colors[status] || 'bg-surface-container text-on-surface';
+}
+
+function updateSummary() {
+    const revenue = orders.reduce((sum, o) => sum + (o.decided || o.planned || 0), 0);
+    const cost = orders.reduce((sum, o) => sum + (o.estimate || 0), 0);
+    const profit = revenue - cost;
+    const margin = revenue > 0 ? (profit / revenue * 100) : 0;
+    const budgetRevenue = 25000000;
+    const budgetCost = 18000000;
+    const achievementRate = budgetRevenue > 0 ? Math.round(revenue / budgetRevenue * 100) : 0;
+    const costRate = budgetCost > 0 ? Math.round(cost / budgetCost * 100) : 0;
+    const revenueWidth = Math.min(100, achievementRate);
+    const costWidth = Math.min(100, costRate);
+
+    // Update summary values
+    const summaryRevenue = document.querySelector('.summary-revenue');
+    const summaryRate = document.querySelector('.summary-rate');
+    const progressRevenue = document.querySelector('.progress-revenue');
+    if (summaryRevenue) summaryRevenue.textContent = revenue.toLocaleString();
+    if (summaryRate) summaryRate.textContent = '予算達成率 ' + achievementRate + '%';
+    if (progressRevenue) progressRevenue.style.width = revenueWidth + '%';
+
+    const summaryCost = document.querySelector('.summary-cost');
+    const summaryCostRate = document.querySelector('.summary-cost-rate');
+    const progressCost = document.querySelector('.progress-cost');
+    if (summaryCost) summaryCost.textContent = cost.toLocaleString();
+    if (summaryCostRate) summaryCostRate.textContent = costRate > 100 ? '予算超過注意' : '予算内';
+    if (progressCost) progressCost.style.width = costWidth + '%';
+
+    const summaryProfit = document.querySelector('.summary-profit');
+    const budgetProfit = 7000000;
+    const profitWidth = budgetProfit > 0 ? Math.min(100, Math.max(0, profit / budgetProfit * 100)) : 0;
+    const progressProfit = document.querySelector('.progress-profit');
+    if (summaryProfit) summaryProfit.textContent = profit.toLocaleString();
+    if (progressProfit) progressProfit.style.width = profitWidth + '%';
+
+    const summaryMargin = document.querySelector('.summary-margin');
+    if (summaryMargin) summaryMargin.textContent = margin.toFixed(1) + '%';
+}
+
+function openOrderModal(id, category, vendor, estimate, planned, status) {
+    editingId = id || null;
+    if (id) {
+        const order = orders.find(o => o.id === id);
+        document.getElementById('edit-category').value = order.category;
+        document.getElementById('edit-vendor').value = order.vendor;
+        document.getElementById('edit-estimate').value = order.estimate;
+        document.getElementById('edit-planned').value = order.planned;
+        document.getElementById('edit-decided').value = order.decided;
+        document.getElementById('edit-status').value = order.status;
+        document.getElementById('edit-id').value = order.id;
+    } else {
+        document.getElementById('edit-category').value = '';
+        document.getElementById('edit-vendor').value = '';
+        document.getElementById('edit-estimate').value = '';
+        document.getElementById('edit-planned').value = '';
+        document.getElementById('edit-decided').value = '';
+        document.getElementById('edit-status').value = '未処理';
+    }
+
+    const modal = document.getElementById('edit-modal');
+    modal.classList.remove('hidden');
+    setTimeout(() => {
+        const content = modal.querySelector('.bg-surface-container-lowest');
+        if (content) {
+            content.classList.remove('scale-95', 'opacity-0');
+            content.classList.add('scale-100', 'opacity-100');
+        }
+    }, 10);
+    document.body.style.overflow = 'hidden';
+}
+
+function closeOrderModal() {
+    const modal = document.getElementById('edit-modal');
+    const content = modal.querySelector('.bg-surface-container-lowest');
+    if (content) {
+        content.classList.add('scale-95', 'opacity-0');
+        content.classList.remove('scale-100', 'opacity-100');
+    }
+    setTimeout(() => {
+        modal.classList.add('hidden');
+    }, 300);
+    document.body.style.overflow = '';
+}
+
+function showPreview() {
+    const previewModal = document.getElementById('preview-modal');
+    const vendorValue = document.getElementById('edit-vendor').value;
+    const amountValue = document.getElementById('edit-decided').value || document.getElementById('edit-planned').value || document.getElementById('edit-estimate').value || '0';
+    const periodStart = document.getElementById('edit-period-start').value;
+    const periodEnd = document.getElementById('edit-period-end').value;
+    const period = periodStart && periodEnd ? periodStart + ' 〜 ' + periodEnd : '---';
+
+    document.getElementById('preview-company').textContent = vendorValue + ' 御中';
+    document.getElementById('preview-amount').textContent = parseInt(amountValue).toLocaleString();
+    document.getElementById('preview-amount-row').textContent = '¥' + parseInt(amountValue).toLocaleString();
+    document.getElementById('preview-site').textContent = document.getElementById('edit-site').value || '---';
+    document.getElementById('preview-period').textContent = period;
+    document.getElementById('preview-handover').textContent = document.getElementById('edit-handover').value || '---';
+    document.getElementById('preview-payment').textContent = document.getElementById('edit-payment').value || '---';
+    document.getElementById('preview-details').textContent = document.getElementById('edit-details').value || '---';
+    document.getElementById('preview-item').textContent = document.getElementById('edit-category').value || '一式';
+
+    previewModal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+}
+
+function closePreview() {
+    const previewModal = document.getElementById('preview-modal');
+    previewModal.classList.add('hidden');
+    document.body.style.overflow = '';
+}
+
+function sendEmail() {
+    const vendorValue = document.getElementById('edit-vendor').value;
+    const amountValue = document.getElementById('edit-decided').value || document.getElementById('edit-planned').value || document.getElementById('edit-estimate').value || '0';
+    alert(`発注書をメール送信します\n\n宛先: ${vendorValue}\n金額: ¥${parseInt(amountValue).toLocaleString()}`);
+}
+
+async function saveOrder() {
+    const id = document.getElementById('edit-id').value;
+    const data = {
+        project_id: projectId || null,
+        category: document.getElementById('edit-category').value,
+        vendor: document.getElementById('edit-vendor').value,
+        estimate: parseInt(document.getElementById('edit-estimate').value) || 0,
+        planned: parseInt(document.getElementById('edit-planned').value) || 0,
+        decided: parseInt(document.getElementById('edit-decided').value) || 0,
+        status: document.getElementById('edit-status').value,
+        site: document.getElementById('edit-site').value || '',
+        period_start: document.getElementById('edit-period-start').value || '',
+        period_end: document.getElementById('edit-period-end').value || '',
+        handover: document.getElementById('edit-handover').value || '',
+        payment: document.getElementById('edit-payment').value || '',
+        details: document.getElementById('edit-details').value || ''
+    };
+
+    if (id) {
+        await fetch(`/api/orders/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+    } else {
+        await fetch('/api/orders', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+    }
+
+    // Update cache after save
+    const ordersRes = await fetch('/api/orders');
+    window.appCache.orders = await ordersRes.json();
+    loadOrders();
+    closeOrderModal();
+}
+
+async function deleteOrder(e, id) {
+    e.stopPropagation();
+    if (confirm('削除してもよろしいですか？')) {
+        await fetch(`/api/orders/${id}`, { method: 'DELETE' });
+        // Update cache after delete
+        const ordersRes = await fetch('/api/orders');
+        window.appCache.orders = await ordersRes.json();
+        loadOrders();
+    }
+}
+
+function editOrder(id) {
+    const order = orders.find(o => o.id === id);
+    if (order) {
+        openOrderModal(order.id, order.category, order.vendor, order.estimate, order.planned, order.status);
+    }
+}
+
+function openOrderDetailModal(id) {
+    editingId = id;
+    const order = window.appCache.orders.find(o => o.id === id);
+
+    if (order) {
+        document.getElementById('edit-id').value = order.id;
+        document.getElementById('edit-category').value = order.category;
+        document.getElementById('edit-vendor').value = order.vendor;
+        document.getElementById('edit-estimate').value = order.estimate;
+        document.getElementById('edit-planned').value = order.planned;
+        document.getElementById('edit-decided').value = order.decided;
+        document.getElementById('edit-status').value = order.status;
+        document.getElementById('edit-site').value = order.site || '';
+        document.getElementById('edit-period-start').value = order.period_start || '';
+        document.getElementById('edit-period-end').value = order.period_end || '';
+        document.getElementById('edit-handover').value = order.handover || '';
+        document.getElementById('edit-payment').value = order.payment || '';
+        document.getElementById('edit-details').value = order.details || '';
+    }
+
+    const modal = document.getElementById('edit-modal');
+    modal.classList.remove('hidden');
+    setTimeout(() => {
+        const content = modal.querySelector('.bg-surface-container-lowest');
+        if (content) {
+            content.classList.remove('scale-95', 'opacity-0');
+            content.classList.add('scale-100', 'opacity-100');
+        }
+    }, 10);
+    document.body.style.overflow = 'hidden';
+}
+
+// フィルタ機能
+document.addEventListener('DOMContentLoaded', async () => {
+    // Check if cache is empty and populate it
+    if (window.appCache.orders.length === 0) {
+        const res = await fetch('/api/cache');
+        window.appCache = await res.json();
+    }
+    loadOrders();
+    loadMasterData();
+
+    document.getElementById('category-filter').addEventListener('change', filterTable);
+    document.getElementById('status-filter').addEventListener('change', filterTable);
+    document.getElementById('keyword-search').addEventListener('input', filterTable);
+});
+
+function loadMasterData() {
+    // Use global cached data
+    const categories = window.appCache.categories;
+    const vendors = window.appCache.vendors;
+
+    // Load categories to edit-category
+    const categorySelect = document.getElementById('edit-category');
+    categories.forEach(c => {
+        const option = document.createElement('option');
+        option.value = c.name;
+        option.textContent = c.name;
+        categorySelect.appendChild(option);
+    });
+
+    // Load vendors to edit-vendor
+    const vendorSelect = document.getElementById('edit-vendor');
+    vendors.forEach(v => {
+        const option = document.createElement('option');
+        option.value = v.company;
+        option.textContent = v.company;
+        vendorSelect.appendChild(option);
+    });
+
+    // Load categories to category-filter
+    const categoryFilter = document.getElementById('category-filter');
+    categories.forEach(c => {
+        const option = document.createElement('option');
+        option.value = c.name;
+        option.textContent = c.name;
+        categoryFilter.appendChild(option);
+    });
+}
+
+function filterTable() {
+    const category = document.getElementById('category-filter').value;
+    const status = document.getElementById('status-filter').value;
+    const keyword = document.getElementById('keyword-search').value.toLowerCase();
+
+    const filtered = orders.filter(o => {
+        const matchCategory = !category || o.category === category;
+        const matchStatus = !status || o.status === status;
+        const matchKeyword = !keyword ||
+            o.category.toLowerCase().includes(keyword) ||
+            o.vendor.toLowerCase().includes(keyword);
+        return matchCategory && matchStatus && matchKeyword;
+    });
+
+    const tbody = document.getElementById('orders-table-body');
+    tbody.innerHTML = filtered.map((order) => `
+        <tr class="hover:bg-surface-container-low transition-colors cursor-pointer group" onclick="openOrderDetailModal(${order.id})">
+            <td class="px-3 py-1.5 text-xs font-bold text-on-surface group-hover:text-primary transition-colors">${order.category || '-'}</td>
+            <td class="px-3 py-1.5 text-xs text-on-surface-variant">${order.vendor || '-'}</td>
+            <td class="px-3 py-1.5 text-xs text-right tabular-numbers">${order.estimate ? order.estimate.toLocaleString() : '-'}</td>
+            <td class="px-3 py-1.5 text-xs text-right tabular-numbers">${order.planned ? order.planned.toLocaleString() : '-'}</td>
+            <td class="px-3 py-1.5 text-xs text-right font-bold tabular-numbers">${order.decided ? order.decided.toLocaleString() : '-'}</td>
+            <td class="px-3 py-1.5 text-xs text-center whitespace-nowrap">
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold ${getStatusColor(order.status)}">${order.status}</span>
+            </td>
+        </tr>
+    `).join('');
+}
+</script>
+</body>
+</html>
