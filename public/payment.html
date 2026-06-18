@@ -130,6 +130,7 @@ fetch('/header.html')
 <th class="px-3 py-1.5 text-[11px] font-bold text-on-surface-variant uppercase tracking-widest border-b border-outline-variant/30 w-1/5">工事区分</th>
 <th class="px-3 py-1.5 text-[11px] font-bold text-on-surface-variant uppercase tracking-widest border-b border-outline-variant/30 w-1/4">外注先</th>
 <th class="px-3 py-1.5 text-[11px] font-bold text-on-surface-variant uppercase tracking-widest border-b border-outline-variant/30 text-right">費用</th>
+<th class="px-3 py-1.5 text-[11px] font-bold text-on-surface-variant uppercase tracking-widest border-b border-outline-variant/30 w-24">支払い方法</th>
 <th class="px-3 py-1.5 text-[11px] font-bold text-on-surface-variant uppercase tracking-widest border-b border-outline-variant/30 text-center w-32">入金ステータス</th>
 </tr>
 </thead>
@@ -250,6 +251,7 @@ function renderTable() {
       <td class="px-3 py-1.5 text-xs text-on-surface-variant">${payment.category}</td>
       <td class="px-3 py-1.5 text-xs text-on-surface-variant">${payment.vendor}</td>
       <td class="px-3 py-1.5 text-xs text-right tabular-numbers">¥${payment.amount.toLocaleString()}</td>
+      <td class="px-3 py-1.5 text-xs text-on-surface-variant">${payment.method || '-'}</td>
       <td class="px-3 py-1.5 text-xs text-center whitespace-nowrap">
         <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold ${getStatusColor(payment.status)}">${payment.status}</span>
       </td>
@@ -371,6 +373,7 @@ function filterTable() {
       <td class="px-3 py-1.5 text-xs text-on-surface-variant">${payment.category}</td>
       <td class="px-3 py-1.5 text-xs text-on-surface-variant">${payment.vendor}</td>
       <td class="px-3 py-1.5 text-xs text-right tabular-numbers">¥${payment.amount.toLocaleString()}</td>
+      <td class="px-3 py-1.5 text-xs text-on-surface-variant">${payment.method || '-'}</td>
       <td class="px-3 py-1.5 text-xs text-center whitespace-nowrap">
         <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold ${getStatusColor(payment.status)}">${payment.status}</span>
       </td>
