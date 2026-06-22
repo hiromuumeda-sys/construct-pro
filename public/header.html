@@ -1,32 +1,43 @@
-<header class="bg-surface-container-lowest border-b border-outline-variant fixed top-0 w-full z-50 h-16 shadow-sm">
-<div class="w-full px-container-padding h-full flex justify-between items-center">
-<div class="flex items-center gap-10">
-<span class="font-bold text-xl tracking-tight text-primary cursor-pointer" onclick="location.href='/'">CONSTRUCT_PRO</span>
-<nav class="hidden md:flex items-center gap-1 flex-nowrap">
-<a class="px-4 py-2 text-sm font-medium text-on-surface-variant hover:text-primary hover:bg-surface-container rounded-xl transition-all" href="#" id="nav-dashboard" onclick="event.preventDefault();alert('ダッシュボードは準備中です')">ダッシュボード</a>
-<a class="px-4 py-2 text-sm font-medium text-on-surface-variant hover:text-primary hover:bg-surface-container rounded-xl transition-all" href="/" id="nav-projects">案件マスタ</a>
-<a class="px-4 py-2 text-sm font-medium text-on-surface-variant hover:text-primary hover:bg-surface-container rounded-xl transition-all" href="/customers.html" id="nav-customers">顧客マスタ</a>
-<a class="px-4 py-2 text-sm font-medium text-on-surface-variant hover:text-primary hover:bg-surface-container rounded-xl transition-all" href="/vendors.html" id="nav-vendors">外注先マスタ</a>
-<a class="px-4 py-2 text-sm font-medium text-on-surface-variant hover:text-primary hover:bg-surface-container rounded-xl transition-all" href="/categories.html" id="nav-categories">工事区分マスタ</a>
-<a class="px-4 py-2 text-sm font-medium text-on-surface-variant hover:text-primary hover:bg-surface-container rounded-xl transition-all" href="/reporting.html" id="nav-reporting">レポーティング</a>
-<a class="px-4 py-2 text-sm font-medium text-on-surface-variant hover:text-primary hover:bg-surface-container rounded-xl transition-all" href="/payment.html" id="nav-payment">送金管理</a>
-<a class="px-4 py-2 text-sm font-medium text-on-surface-variant hover:text-primary hover:bg-surface-container rounded-xl transition-all" href="/history.html" id="nav-history">履歴詳細</a>
-</nav>
-</div>
-<div class="flex items-center gap-4">
-<div class="flex items-center gap-3 pl-6 border-l border-outline-variant">
-<div class="w-9 h-9 rounded-full bg-primary-container flex items-center justify-center text-on-primary-container font-bold text-xs">管</div>
-<span class="text-sm font-medium hidden lg:inline">管理者 太郎</span>
-</div>
-</div>
-</div>
+<header class="sticky top-0 z-40 bg-surface/80 backdrop-blur-md shadow-sm h-20 px-margin-desktop flex justify-between items-center">
+  <div class="flex items-center gap-6 flex-1">
+    <span class="font-bold text-headline-md tracking-tight text-primary cursor-pointer" onclick="location.href='/'">WIN WIN様</span>
+    <nav class="hidden md:flex items-center gap-1 flex-nowrap">
+      <a class="px-4 py-3 text-label-md font-label-md text-on-surface-variant hover:text-primary hover:bg-surface-container rounded-lg transition-all duration-200" href="/reporting.html" id="nav-reporting">ダッシュボード</a>
+      <a class="px-4 py-3 text-label-md font-label-md text-on-surface-variant hover:text-primary hover:bg-surface-container rounded-lg transition-all duration-200" href="/projects.html" id="nav-projects">受注一覧</a>
+      <a class="px-4 py-3 text-label-md font-label-md text-on-surface-variant hover:text-primary hover:bg-surface-container rounded-lg transition-all duration-200" href="/customers.html" id="nav-customers">顧客マスタ</a>
+      <a class="px-4 py-3 text-label-md font-label-md text-on-surface-variant hover:text-primary hover:bg-surface-container rounded-lg transition-all duration-200" href="/vendors.html" id="nav-vendors">発注先マスタ</a>
+      <a class="px-4 py-3 text-label-md font-label-md text-on-surface-variant hover:text-primary hover:bg-surface-container rounded-lg transition-all duration-200" href="/categories.html" id="nav-categories">工事区分マスタ</a>
+      <a class="px-4 py-3 text-label-md font-label-md text-on-surface-variant hover:text-primary hover:bg-surface-container rounded-lg transition-all duration-200" href="/payment.html" id="nav-payment">支払管理</a>
+      <a class="px-4 py-3 text-label-md font-label-md text-on-surface-variant hover:text-primary hover:bg-surface-container rounded-lg transition-all duration-200" href="/history.html" id="nav-history">履歴詳細</a>
+    </nav>
+  </div>
+  <div class="flex items-center gap-6">
+    <div class="flex items-center gap-4">
+      <button class="p-2 text-on-surface-variant hover:text-primary transition-colors">
+        <span class="material-symbols-outlined">notifications</span>
+      </button>
+      <button class="p-2 text-on-surface-variant hover:text-primary transition-colors">
+        <span class="material-symbols-outlined">help</span>
+      </button>
+    </div>
+    <div class="h-8 w-px bg-outline-variant"></div>
+    <div class="flex items-center gap-3">
+      <div class="text-right hidden sm:block">
+        <p class="font-label-md text-label-md text-primary leading-none">管理者 太郎</p>
+        <p class="text-[10px] text-on-surface-variant uppercase tracking-widest mt-1">Administrator</p>
+      </div>
+      <div class="w-10 h-10 rounded-full overflow-hidden bg-surface-container-high border-2 border-surface-container-highest">
+        <div class="w-full h-full bg-primary-container flex items-center justify-center text-on-primary-container font-bold text-xs">管</div>
+      </div>
+    </div>
+  </div>
 </header>
 <script>
 function setActiveNav() {
   const path = window.location.pathname;
   document.querySelectorAll('nav a').forEach(link => {
-    link.classList.remove('font-bold', 'bg-surface-container-high');
-    link.classList.add('font-medium', 'text-on-surface-variant', 'hover:text-primary', 'hover:bg-surface-container');
+    link.classList.remove('font-bold', 'bg-surface-container-high', 'text-primary');
+    link.classList.add('font-label-md', 'text-on-surface-variant', 'hover:text-primary', 'hover:bg-surface-container');
   });
 
   let activeId;
@@ -49,7 +60,7 @@ function setActiveNav() {
   if (activeId) {
     const activeLink = document.getElementById(activeId);
     if (activeLink) {
-      activeLink.classList.remove('font-medium', 'text-on-surface-variant', 'hover:text-primary', 'hover:bg-surface-container');
+      activeLink.classList.remove('font-label-md', 'text-on-surface-variant', 'hover:text-primary', 'hover:bg-surface-container');
       activeLink.classList.add('font-bold', 'text-primary', 'bg-surface-container-high');
     }
   }

@@ -3,135 +3,146 @@
 <head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet"/>
+<title>支払管理 - WIN WIN様デモ</title>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
-<title>送金管理 - CONSTRUCT_PRO</title>
-<script id="tailwind-config">
-tailwind.config = {
-  darkMode: "class",
-  theme: {
-    extend: {
-      "colors": {
-        "surface": "#faf9f7",
-        "on-secondary-fixed": "#400100",
-        "outline-variant": "#c1c7cc",
-        "on-primary": "#ffffff",
-        "outline": "#71787c",
-        "error-container": "#ffdad6",
-        "surface-dim": "#dadad8",
-        "on-surface-variant": "#41484c",
-        "surface-variant": "#e3e2e0",
-        "secondary-container": "#ff816d",
-        "inverse-surface": "#2f3130",
-        "background": "#faf9f7",
-        "surface-container-highest": "#e3e2e0",
-        "surface-container-low": "#f4f3f1",
-        "secondary": "#a33c2d",
-        "surface-container-high": "#e9e8e6",
-        "primary-container": "#2d5a6e",
-        "primary": "#104356",
-        "tertiary": "#57360e",
-        "inverse-on-surface": "#f1f1ef",
-        "error": "#ba1a1a",
-        "on-background": "#1a1c1b",
-        "on-secondary": "#ffffff",
-        "surface-container-lowest": "#ffffff",
-        "on-tertiary": "#ffffff",
-        "on-error": "#ffffff",
-        "on-surface": "#1a1c1b"
-      },
-      "borderRadius": {
-        "DEFAULT": "0.25rem",
-        "lg": "0.5rem",
-        "xl": "12px",
-        "2xl": "16px",
-        "full": "9999px"
-      },
-      "spacing": {
-        "xxl": "64px",
-        "xl": "40px",
-        "gutter": "24px",
-        "md": "16px",
-        "container-padding": "32px",
-        "sm": "8px",
-        "lg": "24px",
-        "xs": "4px",
-        "base": "4px"
-      },
-      "fontFamily": {
-        "sans": ["Inter", "Noto Sans JP", "sans-serif"]
-      }
-    }
-  }
-}
-</script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script src="/theme.js"></script>
 <style>
-body {
-  font-family: 'Inter', 'Noto Sans JP', sans-serif;
-  background-color: #faf9f7;
-}
-.material-symbols-outlined {
-  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-  vertical-align: middle;
-}
-.tabular-numbers {
-  font-variant-numeric: tabular-nums;
-  font-feature-settings: "tnum";
-}
+body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
+.material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+.custom-shadow { box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04); }
+.tabular-numbers { font-variant-numeric: tabular-nums; }
 </style>
 </head>
-<body class="text-on-surface antialiased">
-<!-- ヘッダー -->
-<div id="header-placeholder"></div>
-<script>
-fetch('/header.html')
-  .then(response => response.text())
-  .then(html => {
-    document.getElementById('header-placeholder').innerHTML = html;
-  });
-</script>
-
-<main class="pt-24 pb-xxl w-full">
-<div class="w-full px-container-padding space-y-lg">
-<!-- ページタイトルエリア -->
-<div class="flex justify-between items-center">
+<body class="bg-background text-on-surface">
+<!-- Sidebar Navigation -->
+<aside class="fixed left-0 top-0 h-screen w-64 z-50 bg-surface-container-lowest border-r border-outline-variant flex flex-col py-6">
+<div class="px-6 mb-10">
+<h1 class="text-headline-md font-display-lg font-bold text-primary">WIN WIN様</h1>
+<p class="text-label-sm text-on-surface-variant tracking-wider uppercase">デモ画面</p>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center gap-3 px-6 py-3 text-on-surface-variant hover:bg-surface-container-low transition-colors duration-200" href="/reporting.html">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-label-md text-label-md">ダッシュボード</span>
+</a>
+<a class="flex items-center gap-3 px-6 py-3 text-on-surface-variant hover:bg-surface-container-low transition-colors duration-200" href="/projects.html">
+<span class="material-symbols-outlined">engineering</span>
+<span class="font-label-md text-label-md">受注一覧</span>
+</a>
+<a class="flex items-center gap-3 px-6 py-3 text-on-surface-variant hover:bg-surface-container-low transition-colors duration-200" href="/customers.html">
+<span class="material-symbols-outlined">groups</span>
+<span class="font-label-md text-label-md">顧客マスタ</span>
+</a>
+<a class="flex items-center gap-3 px-6 py-3 text-on-surface-variant hover:bg-surface-container-low transition-colors duration-200" href="/vendors.html">
+<span class="material-symbols-outlined">store</span>
+<span class="font-label-md text-label-md">発注先マスタ</span>
+</a>
+<a class="flex items-center gap-3 px-6 py-3 text-on-surface-variant hover:bg-surface-container-low transition-colors duration-200" href="/categories.html">
+<span class="material-symbols-outlined">category</span>
+<span class="font-label-md text-label-md">工事区分マスタ</span>
+</a>
+<a class="flex items-center gap-3 px-6 py-3 text-on-surface-variant hover:bg-surface-container-low transition-colors duration-200" href="/receipts.html">
+<span class="material-symbols-outlined">savings</span>
+<span class="font-label-md text-label-md">売上・入金管理</span>
+</a>
+<a class="flex items-center gap-3 px-6 py-3 text-secondary font-bold border-l-4 border-secondary bg-surface-container-low" href="/payment.html">
+<span class="material-symbols-outlined">payments</span>
+<span class="font-label-md text-label-md">支払管理</span>
+</a>
+<a class="flex items-center gap-3 px-6 py-3 text-on-surface-variant hover:bg-surface-container-low transition-colors duration-200" href="/orders-list.html">
+<span class="material-symbols-outlined">receipt_long</span>
+<span class="font-label-md text-label-md">工事計画</span>
+</a>
+<a class="flex items-center gap-3 px-6 py-3 text-on-surface-variant hover:bg-surface-container-low transition-colors duration-200" href="/history.html">
+<span class="material-symbols-outlined">history</span>
+<span class="font-label-md text-label-md">履歴詳細</span>
+</a>
+</nav>
+</aside>
+<!-- Main Content Canvas -->
+<main class="ml-64 min-h-screen">
+<!-- Top App Bar -->
+<header class="sticky top-0 z-40 flex justify-between items-center h-20 px-margin-desktop bg-surface/80 backdrop-blur-md shadow-sm">
+<div class="flex items-center gap-4 bg-surface-container-low px-4 py-2 rounded-full w-96">
+<span class="material-symbols-outlined text-on-surface-variant">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-body-md w-full" id="keyword-search" placeholder="案件名、発注先で検索..." type="text"/>
+</div>
+<div class="flex items-center gap-md">
+<div class="flex items-center gap-4">
+<div class="relative" id="notif-wrap">
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary relative" onclick="toggleNotif(event)">notifications<span id="notif-badge" class="absolute -top-1 -right-1 bg-error text-on-error text-[9px] font-normal rounded-full min-w-[16px] h-4 px-1 flex items-center justify-center" style="display:none">0</span></button>
+<div id="notif-panel" class="absolute right-0 mt-2 w-96 max-h-[480px] overflow-y-auto bg-surface-container-lowest border border-outline-variant rounded-lg custom-shadow z-[200]" style="display:none" onclick="event.stopPropagation()">
+<div class="px-4 py-3 border-b border-outline-variant flex justify-between items-center sticky top-0 bg-surface-container-lowest">
+<span class="text-label-md font-label-md text-primary">通知</span>
+<span class="text-label-sm text-on-surface-variant" id="notif-count-label"></span>
+</div>
+<div id="notif-list"></div>
+</div>
+</div>
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary">help</button>
+</div>
+<div class="h-8 w-px bg-outline-variant"></div>
 <div class="flex items-center gap-3">
-<button class="w-9 h-9 flex items-center justify-center rounded-xl border border-outline-variant bg-surface-container-lowest hover:bg-surface-container transition-colors text-on-surface-variant shrink-0" onclick="history.back()">
-<span class="material-symbols-outlined text-[20px]">arrow_back</span>
-</button>
-<h1 class="text-xl font-bold text-on-surface tracking-tight">送金管理</h1>
+<div class="text-right">
+<p class="text-label-md font-bold text-primary">Admin User</p>
+<p class="text-label-sm text-on-surface-variant">System</p>
 </div>
+<div class="w-10 h-10 rounded-full bg-surface-container-high border border-outline-variant"></div>
+</div>
+</div>
+</header>
+<!-- Page Content -->
+<div class="p-margin-desktop space-y-lg max-w-container-max mx-auto">
+<!-- Header Section -->
+<div class="flex justify-between items-end mb-lg">
+<div>
+<h2 class="text-[18px] font-label-md text-primary">支払管理</h2>
+</div>
+<button class="px-4 py-1.5 border border-outline text-primary font-label-md rounded-lg hover:bg-surface-container transition-colors flex items-center gap-2" onclick="window.location.href='/api/export/payments'">
+<span class="material-symbols-outlined text-[18px]">download</span>CSV出力
+</button>
 </div>
 
-<!-- フィルタエリア -->
-<div class="bg-surface-container-low p-5 rounded-2xl border border-outline-variant/30 flex flex-wrap items-center gap-4">
-<div class="relative min-w-[220px]">
-<select class="w-full bg-surface-container-lowest border-outline-variant/50 text-sm py-2.5 px-4 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary appearance-none transition-all cursor-pointer" id="status-filter">
+<!-- Filter Section -->
+<div class="bg-surface-container-lowest p-md rounded-lg custom-shadow border border-outline-variant">
+<div class="grid grid-cols-1 md:grid-cols-3 gap-md items-end">
+<div>
+<label class="block text-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">ステータス</label>
+<select id="status-filter" class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-body-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent">
 <option value="">すべてのステータス</option>
 <option value="未払い">未払い</option>
 <option value="部分払い">部分払い</option>
 <option value="支払済み">支払済み</option>
 </select>
-<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-on-surface-variant">keyboard_arrow_down</span>
 </div>
-<div class="relative flex-1 max-w-lg">
-<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant text-xl">search</span>
-<input class="w-full bg-surface-container-lowest border-outline-variant/50 text-sm pl-12 pr-4 py-2.5 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" id="keyword-search" placeholder="案件名、外注先で検索..." type="text"/>
+<div>
+<label class="block text-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">支払期日</label>
+<select id="due-filter" class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-body-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent">
+<option value="">すべての支払期日</option>
+<option value="overdue">期限超過</option>
+<option value="this-month">今月</option>
+<option value="next-month">翌月</option>
+<option value="later">それ以降</option>
+</select>
+</div>
 </div>
 </div>
 
-<!-- データテーブル -->
-<div class="bg-surface-container-lowest border border-outline-variant/30 rounded-2xl overflow-hidden shadow-sm">
+<!-- Data Table（最大20件・以降スクロール） -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-lg overflow-hidden shadow-sm">
+<div class="overflow-y-auto" style="max-height: 810px;">
 <table class="w-full text-left border-separate border-spacing-0">
 <thead>
-<tr class="bg-surface-container-low/50">
-<th class="px-3 py-1.5 text-[11px] font-bold text-on-surface-variant uppercase tracking-widest border-b border-outline-variant/30">案件名</th>
-<th class="px-3 py-1.5 text-[11px] font-bold text-on-surface-variant uppercase tracking-widest border-b border-outline-variant/30 w-1/5">工事区分</th>
-<th class="px-3 py-1.5 text-[11px] font-bold text-on-surface-variant uppercase tracking-widest border-b border-outline-variant/30 w-1/4">外注先</th>
-<th class="px-3 py-1.5 text-[11px] font-bold text-on-surface-variant uppercase tracking-widest border-b border-outline-variant/30 text-right">費用</th>
-<th class="px-3 py-1.5 text-[11px] font-bold text-on-surface-variant uppercase tracking-widest border-b border-outline-variant/30 w-24">支払い方法</th>
-<th class="px-3 py-1.5 text-[11px] font-bold text-on-surface-variant uppercase tracking-widest border-b border-outline-variant/30 text-center w-32">入金ステータス</th>
+<tr class="bg-surface-container-low sticky top-0 z-10">
+<th class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant w-20">#</th>
+<th class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant">案件名</th>
+<th class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant w-1/5">工事区分</th>
+<th class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant w-1/4">発注先</th>
+<th class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant text-right">費用</th>
+<th class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant w-24">支払い方法</th>
+<th class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant text-center w-32">入金ステータス</th>
 </tr>
 </thead>
 <tbody class="divide-y divide-outline-variant/20" id="payment-table-body">
@@ -140,48 +151,54 @@ fetch('/header.html')
 </table>
 </div>
 </div>
+</div>
+<!-- Footer -->
+<footer class="border-t border-outline-variant mt-xl py-lg px-margin-desktop text-center text-on-surface-variant">
+<p class="text-label-sm uppercase tracking-wider mb-2">WIN WIN様 デモ画面 v2.4.0</p>
+<p class="text-body-sm">© 2024 株式会社WIN WIN デモ環境</p>
+</footer>
 </main>
 
 <!-- 送金編集モーダル -->
-<div class="fixed inset-0 z-[100] hidden overflow-y-auto" id="edit-modal">
+<div class="fixed inset-0 z-[100] bg-primary/20 backdrop-blur-md" id="edit-modal" style="display:none" onclick="closeModal()">
 <div class="absolute inset-0 bg-primary/20 backdrop-blur-md" onclick="closeModal()"></div>
-<div class="relative w-full max-w-2xl mx-auto my-8 bg-surface-container-lowest rounded-2xl shadow-2xl overflow-hidden border border-outline-variant/30 transform transition-all scale-95 opacity-0 duration-300">
-<div class="px-6 py-4 border-b border-outline-variant/30 flex justify-between items-center bg-surface-container-low/50 sticky top-0">
-<h3 class="text-lg font-bold text-on-surface">送金管理の編集</h3>
+<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl max-h-[90vh] bg-surface-container-lowest rounded-lg custom-shadow overflow-hidden border border-outline-variant">
+<div class="px-lg py-md border-b border-outline-variant flex justify-between items-center bg-surface-container-low sticky top-0">
+<h3 class="text-label-md font-label-md text-on-surface">支払管理の編集</h3>
 <button class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-surface-container transition-colors text-on-surface-variant" onclick="closeModal()">
 <span class="material-symbols-outlined">close</span>
 </button>
 </div>
-<div class="p-5 space-y-4 max-h-[calc(100vh-200px)] overflow-y-auto">
+<div class="p-lg space-y-md overflow-y-auto flex-1">
 <input id="edit-id" type="hidden"/>
-<div class="grid grid-cols-2 gap-6">
+<div class="grid grid-cols-2 gap-md">
 <div class="col-span-2">
-<label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-2.5">案件名</label>
-<input class="w-full bg-surface-container-low border-outline-variant/50 rounded-xl text-sm px-4 py-3 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" id="edit-project" type="text" readonly/>
+<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">案件名</label>
+<input class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent transition-all" id="edit-project" type="text" readonly/>
 </div>
 <div>
-<label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-2.5">工事区分</label>
-<input class="w-full bg-surface-container-low border-outline-variant/50 rounded-xl text-sm px-4 py-3 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" id="edit-category" type="text" readonly/>
+<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">工事区分</label>
+<input class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent transition-all" id="edit-category" type="text" readonly/>
 </div>
 <div>
-<label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-2.5">外注先</label>
-<input class="w-full bg-surface-container-low border-outline-variant/50 rounded-xl text-sm px-4 py-3 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" id="edit-vendor" type="text" readonly/>
+<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">発注先</label>
+<input class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent transition-all" id="edit-vendor" type="text" readonly/>
 </div>
 <div>
-<label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-2.5">費用</label>
-<input class="w-full bg-surface-container-low border-outline-variant/50 rounded-xl text-sm px-4 py-3 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all tabular-numbers" id="edit-amount" type="text" readonly/>
+<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">費用</label>
+<input class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent transition-all tabular-numbers" id="edit-amount" type="text" readonly/>
 </div>
 <div>
-<label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-2.5">入金ステータス</label>
-<select class="w-full bg-surface-container-low border-outline-variant/50 rounded-xl text-sm px-4 py-3 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" id="edit-status">
+<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">入金ステータス</label>
+<select class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent transition-all" id="edit-status">
 <option value="未払い">未払い</option>
 <option value="部分払い">部分払い</option>
 <option value="支払済み">支払済み</option>
 </select>
 </div>
 <div>
-<label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-2.5">支払い方法</label>
-<select class="w-full bg-surface-container-low border-outline-variant/50 rounded-xl text-sm px-4 py-3 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" id="edit-method">
+<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">支払い方法</label>
+<select class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent transition-all" id="edit-method">
 <option value="">選択してください</option>
 <option value="口座振替">口座振替</option>
 <option value="銀行振込">銀行振込</option>
@@ -189,17 +206,17 @@ fetch('/header.html')
 </select>
 </div>
 <div>
-<label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-2.5">支払予定日</label>
-<input class="w-full bg-surface-container-low border-outline-variant/50 rounded-xl text-sm px-4 py-3 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" id="edit-payment-date" type="date"/>
+<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">支払予定日</label>
+<input class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent transition-all" id="edit-payment-date" type="date"/>
 </div>
 <div class="col-span-2">
-<label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-2.5">備考</label>
-<textarea class="w-full bg-surface-container-low border-outline-variant/50 rounded-xl text-sm px-4 py-3 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" id="edit-notes" rows="3"></textarea>
+<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">備考</label>
+<textarea class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent transition-all" id="edit-notes" rows="3"></textarea>
 </div>
 </div>
-<div class="px-6 py-4 border-t border-outline-variant/30 flex justify-end items-center gap-3 bg-surface-container-low/50 sticky bottom-0">
-<button class="px-6 py-2.5 text-sm font-semibold text-on-surface border border-outline-variant rounded-xl hover:bg-surface-container transition-all" onclick="closeModal()">キャンセル</button>
-<button class="px-6 py-2.5 text-sm font-bold text-on-primary bg-primary rounded-xl hover:opacity-90 transition-all" onclick="savePayment()">保存</button>
+<div class="px-lg py-md border-t border-outline-variant flex justify-end items-center gap-3 bg-surface-container-low sticky bottom-0">
+<button class="px-4 py-1.5 text-label-md font-normal text-on-surface border border-outline-variant rounded-lg hover:bg-surface-container transition-all" onclick="closeModal()">キャンセル</button>
+<button class="px-4 py-1.5 text-label-md font-normal text-on-primary bg-primary rounded-lg hover:opacity-90 transition-all" onclick="savePayment()">保存</button>
 </div>
 </div>
 </div>
@@ -222,12 +239,16 @@ async function initializeCache() {
 }
 
 async function loadPayments() {
-  // Always fetch latest orders from server, don't rely on cache
-  const ordersRes = await fetch('/api/orders');
+  // Always fetch latest data from server, don't rely on cache
+  const [ordersRes, projectsRes] = await Promise.all([
+    fetch('/api/orders'),
+    fetch('/api/projects')
+  ]);
   const orders = await ordersRes.json();
+  const projects = await projectsRes.json();
 
   payments = orders.map(order => {
-    const project = window.appCache.projects.find(p => p.id === order.project_id);
+    const project = projects.find(p => p.id === order.project_id);
     return {
       id: order.id,
       projectName: project?.name || '未設定',
@@ -238,9 +259,8 @@ async function loadPayments() {
       method: order.paymentMethod || '',
       paymentDate: order.paymentDate || '',
       notes: order.paymentNotes || '',
-      project_id: order.project_id,
-      period_start: order.period_start,
-      handover: order.handover || ''
+      // 保存時にPUTで全フィールドを送るために元データを保持
+      _raw: order
     };
   });
 
@@ -251,13 +271,14 @@ function renderTable() {
   const tbody = document.getElementById('payment-table-body');
   tbody.innerHTML = payments.map((payment) => `
     <tr class="hover:bg-surface-container-low transition-colors cursor-pointer group" onclick="openModal(${payment.id})">
-      <td class="px-3 py-1.5 text-xs font-bold text-on-surface group-hover:text-primary transition-colors">${payment.projectName}</td>
-      <td class="px-3 py-1.5 text-xs text-on-surface-variant">${payment.category}</td>
-      <td class="px-3 py-1.5 text-xs text-on-surface-variant">${payment.vendor}</td>
-      <td class="px-3 py-1.5 text-xs text-right tabular-numbers">¥${payment.amount.toLocaleString()}</td>
-      <td class="px-3 py-1.5 text-xs text-on-surface-variant">${payment.method || '-'}</td>
-      <td class="px-3 py-1.5 text-xs text-center whitespace-nowrap">
-        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold ${getStatusColor(payment.status)}">${payment.status}</span>
+      <td class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant tabular-numbers">${String(payment.id).padStart(6, '0')}</td>
+      <td class="px-3 py-1.5 text-label-md font-label-md text-on-surface group-hover:text-primary transition-colors">${payment.projectName}</td>
+      <td class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant">${payment.category}</td>
+      <td class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant">${payment.vendor}</td>
+      <td class="px-3 py-1.5 text-label-md font-label-md text-right tabular-numbers">¥${payment.amount.toLocaleString()}</td>
+      <td class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant">${payment.method || '-'}</td>
+      <td class="px-3 py-1.5 text-label-md font-label-md text-center whitespace-nowrap">
+        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] ${getStatusColor(payment.status)}">${payment.status}</span>
       </td>
     </tr>
   `).join('');
@@ -282,10 +303,9 @@ function openModal(id) {
   document.getElementById('edit-vendor').value = payment.vendor;
   document.getElementById('edit-amount').value = '¥' + payment.amount.toLocaleString();
   document.getElementById('edit-status').value = payment.status;
-  document.getElementById('edit-method').value = payment.method;
-  document.getElementById('edit-notes').value = payment.notes;
+  document.getElementById('edit-method').value = payment.method || '';
+  document.getElementById('edit-notes').value = payment.notes || '';
 
-  // 支払予定日の自動計算（引き渡し日の翌々月5日）
   if (payment.paymentDate) {
     document.getElementById('edit-payment-date').value = payment.paymentDate;
   } else if (payment.handover) {
@@ -293,39 +313,27 @@ function openModal(id) {
     if (!isNaN(date)) {
       date.setMonth(date.getMonth() + 2);
       date.setDate(5);
-      const formatted = date.toISOString().split('T')[0];
-      document.getElementById('edit-payment-date').value = formatted;
+      document.getElementById('edit-payment-date').value = date.toISOString().split('T')[0];
     }
   }
 
-  const modal = document.getElementById('edit-modal');
-  modal.classList.remove('hidden');
-  setTimeout(() => {
-    const content = modal.querySelector('.bg-surface-container-lowest');
-    if (content) {
-      content.classList.remove('scale-95', 'opacity-0');
-      content.classList.add('scale-100', 'opacity-100');
-    }
-  }, 10);
+  document.getElementById('edit-modal').style.display = 'block';
   document.body.style.overflow = 'hidden';
 }
 
 function closeModal() {
-  const modal = document.getElementById('edit-modal');
-  const content = modal.querySelector('.bg-surface-container-lowest');
-  if (content) {
-    content.classList.add('scale-95', 'opacity-0');
-    content.classList.remove('scale-100', 'opacity-100');
-  }
-  setTimeout(() => {
-    modal.classList.add('hidden');
-  }, 300);
+  document.getElementById('edit-modal').style.display = 'none';
   document.body.style.overflow = '';
 }
 
 async function savePayment() {
-  const id = document.getElementById('edit-id').value;
+  const id = parseInt(document.getElementById('edit-id').value);
+  const payment = payments.find(p => p.id === id);
+  if (!payment) return;
+
+  // 元のオーダーデータに支払いフィールドだけ上書きして送る
   const data = {
+    ...payment._raw,
     paymentStatus: document.getElementById('edit-status').value,
     paymentMethod: document.getElementById('edit-method').value,
     paymentDate: document.getElementById('edit-payment-date').value,
@@ -353,35 +361,58 @@ document.addEventListener('DOMContentLoaded', async () => {
   await loadPayments();
 
   document.getElementById('status-filter').addEventListener('change', filterTable);
+  document.getElementById('due-filter').addEventListener('change', filterTable);
   document.getElementById('keyword-search').addEventListener('input', filterTable);
 });
 
+// 支払期日が指定バケットに合致するか判定
+function matchDueBucket(dateStr, bucket) {
+  if (!bucket) return true;
+  if (!dateStr) return false;
+  const d = new Date(String(dateStr).replace(/\//g, '-'));
+  if (isNaN(d)) return false;
+  const now = new Date();
+  const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  const thisMonthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+  const nextMonthStart = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+  const nextMonthEnd = new Date(now.getFullYear(), now.getMonth() + 2, 0, 23, 59, 59);
+  if (bucket === 'overdue') return d < thisMonthStart && d < now;
+  if (bucket === 'this-month') return d >= thisMonthStart && d <= thisMonthEnd;
+  if (bucket === 'next-month') return d >= nextMonthStart && d <= nextMonthEnd;
+  if (bucket === 'later') return d > nextMonthEnd;
+  return true;
+}
+
 function filterTable() {
   const status = document.getElementById('status-filter').value;
+  const due = document.getElementById('due-filter').value;
   const keyword = document.getElementById('keyword-search').value.toLowerCase();
 
   const filtered = payments.filter(p => {
     const matchStatus = !status || p.status === status;
+    const matchDue = matchDueBucket(p.paymentDate, due);
     const matchKeyword = !keyword ||
       p.projectName.toLowerCase().includes(keyword) ||
       p.vendor.toLowerCase().includes(keyword);
-    return matchStatus && matchKeyword;
+    return matchStatus && matchDue && matchKeyword;
   });
 
   const tbody = document.getElementById('payment-table-body');
   tbody.innerHTML = filtered.map((payment) => `
     <tr class="hover:bg-surface-container-low transition-colors cursor-pointer group" onclick="openModal(${payment.id})">
-      <td class="px-3 py-1.5 text-xs font-bold text-on-surface group-hover:text-primary transition-colors">${payment.projectName}</td>
-      <td class="px-3 py-1.5 text-xs text-on-surface-variant">${payment.category}</td>
-      <td class="px-3 py-1.5 text-xs text-on-surface-variant">${payment.vendor}</td>
-      <td class="px-3 py-1.5 text-xs text-right tabular-numbers">¥${payment.amount.toLocaleString()}</td>
-      <td class="px-3 py-1.5 text-xs text-on-surface-variant">${payment.method || '-'}</td>
-      <td class="px-3 py-1.5 text-xs text-center whitespace-nowrap">
-        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold ${getStatusColor(payment.status)}">${payment.status}</span>
+      <td class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant tabular-numbers">${String(payment.id).padStart(6, '0')}</td>
+      <td class="px-3 py-1.5 text-label-md font-label-md text-on-surface group-hover:text-primary transition-colors">${payment.projectName}</td>
+      <td class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant">${payment.category}</td>
+      <td class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant">${payment.vendor}</td>
+      <td class="px-3 py-1.5 text-label-md font-label-md text-right tabular-numbers">¥${payment.amount.toLocaleString()}</td>
+      <td class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant">${payment.method || '-'}</td>
+      <td class="px-3 py-1.5 text-label-md font-label-md text-center whitespace-nowrap">
+        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] ${getStatusColor(payment.status)}">${payment.status}</span>
       </td>
     </tr>
   `).join('');
 }
 </script>
+<script src="/notify.js"></script>
 </body>
 </html>

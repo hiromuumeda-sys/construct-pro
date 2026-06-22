@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html class="light" lang="ja">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>売上・入金管理 - WIN WIN様デモ</title>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script src="/theme.js"></script>
+<style>
+body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
+.material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+.custom-shadow { box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04); }
+.tabular-numbers { font-variant-numeric: tabular-nums; }
+</style>
+</head>
+<body class="bg-background text-on-surface">
+<!-- Sidebar Navigation -->
+<aside class="fixed left-0 top-0 h-screen w-64 z-50 bg-surface-container-lowest border-r border-outline-variant flex flex-col py-6">
+<div class="px-6 mb-10">
+<h1 class="text-headline-md font-display-lg font-bold text-primary">WIN WIN様</h1>
+<p class="text-label-sm text-on-surface-variant tracking-wider uppercase">デモ画面</p>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center gap-3 px-6 py-3 text-on-surface-variant hover:bg-surface-container-low transition-colors duration-200" href="/reporting.html">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-label-md text-label-md">ダッシュボード</span>
+</a>
+<a class="flex items-center gap-3 px-6 py-3 text-on-surface-variant hover:bg-surface-container-low transition-colors duration-200" href="/projects.html">
+<span class="material-symbols-outlined">engineering</span>
+<span class="font-label-md text-label-md">受注一覧</span>
+</a>
+<a class="flex items-center gap-3 px-6 py-3 text-on-surface-variant hover:bg-surface-container-low transition-colors duration-200" href="/customers.html">
+<span class="material-symbols-outlined">groups</span>
+<span class="font-label-md text-label-md">顧客マスタ</span>
+</a>
+<a class="flex items-center gap-3 px-6 py-3 text-on-surface-variant hover:bg-surface-container-low transition-colors duration-200" href="/vendors.html">
+<span class="material-symbols-outlined">store</span>
+<span class="font-label-md text-label-md">発注先マスタ</span>
+</a>
+<a class="flex items-center gap-3 px-6 py-3 text-on-surface-variant hover:bg-surface-container-low transition-colors duration-200" href="/categories.html">
+<span class="material-symbols-outlined">category</span>
+<span class="font-label-md text-label-md">工事区分マスタ</span>
+</a>
+<a class="flex items-center gap-3 px-6 py-3 text-secondary font-bold border-l-4 border-secondary bg-surface-container-low" href="/receipts.html">
+<span class="material-symbols-outlined">savings</span>
+<span class="font-label-md text-label-md">売上・入金管理</span>
+</a>
+<a class="flex items-center gap-3 px-6 py-3 text-on-surface-variant hover:bg-surface-container-low transition-colors duration-200" href="/payment.html">
+<span class="material-symbols-outlined">payments</span>
+<span class="font-label-md text-label-md">支払管理</span>
+</a>
+<a class="flex items-center gap-3 px-6 py-3 text-on-surface-variant hover:bg-surface-container-low transition-colors duration-200" href="/orders-list.html">
+<span class="material-symbols-outlined">receipt_long</span>
+<span class="font-label-md text-label-md">工事計画</span>
+</a>
+<a class="flex items-center gap-3 px-6 py-3 text-on-surface-variant hover:bg-surface-container-low transition-colors duration-200" href="/history.html">
+<span class="material-symbols-outlined">history</span>
+<span class="font-label-md text-label-md">履歴詳細</span>
+</a>
+</nav>
+</aside>
+<!-- Main Content Canvas -->
+<main class="ml-64 min-h-screen">
+<!-- Top App Bar -->
+<header class="sticky top-0 z-40 flex justify-between items-center h-20 px-margin-desktop bg-surface/80 backdrop-blur-md shadow-sm">
+<div class="flex items-center gap-4 bg-surface-container-low px-4 py-2 rounded-full w-96">
+<span class="material-symbols-outlined text-on-surface-variant">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-body-md w-full" id="header-search" placeholder="Search..." type="text"/>
+</div>
+<div class="flex items-center gap-md">
+<div class="flex items-center gap-4">
+<div class="relative" id="notif-wrap">
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary relative" onclick="toggleNotif(event)">notifications<span id="notif-badge" class="absolute -top-1 -right-1 bg-error text-on-error text-[9px] font-normal rounded-full min-w-[16px] h-4 px-1 flex items-center justify-center" style="display:none">0</span></button>
+<div id="notif-panel" class="absolute right-0 mt-2 w-96 max-h-[480px] overflow-y-auto bg-surface-container-lowest border border-outline-variant rounded-lg custom-shadow z-[200]" style="display:none" onclick="event.stopPropagation()">
+<div class="px-4 py-3 border-b border-outline-variant flex justify-between items-center sticky top-0 bg-surface-container-lowest">
+<span class="text-label-md font-label-md text-primary">通知</span>
+<span class="text-label-sm text-on-surface-variant" id="notif-count-label"></span>
+</div>
+<div id="notif-list"></div>
+</div>
+</div>
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary">help</button>
+</div>
+<div class="h-8 w-px bg-outline-variant"></div>
+<div class="flex items-center gap-3">
+<div class="text-right">
+<p class="text-label-md font-bold text-primary">Admin User</p>
+<p class="text-label-sm text-on-surface-variant">System</p>
+</div>
+<div class="w-10 h-10 rounded-full bg-surface-container-high border border-outline-variant"></div>
+</div>
+</div>
+</header>
+<!-- Page Content -->
+<div class="p-margin-desktop space-y-lg max-w-container-max mx-auto">
+<!-- Header Section -->
+<div class="flex justify-between items-end mb-lg">
+<div>
+<h2 class="text-[18px] font-label-md text-primary">売上・入金管理</h2>
+<p class="text-body-sm text-on-surface-variant mt-1">案件ごとの請負金額・入金累計・未収金を管理します</p>
+</div>
+<div class="flex items-center gap-3">
+<button class="px-4 py-1.5 border border-outline text-primary font-label-md rounded-lg hover:bg-surface-container transition-colors flex items-center gap-2" onclick="downloadTemplate()">
+<span class="material-symbols-outlined text-[18px]">description</span>フォーマット
+</button>
+<button class="px-4 py-1.5 border border-outline text-primary font-label-md rounded-lg hover:bg-surface-container transition-colors flex items-center gap-2" onclick="document.getElementById('csv-upload-input').click()">
+<span class="material-symbols-outlined text-[18px]">upload_file</span>CSV取込（消込）
+</button>
+<input type="file" id="csv-upload-input" accept=".csv,text/csv" style="display:none" onchange="importCSV(event)"/>
+<button class="px-4 py-1.5 border border-outline text-primary font-label-md rounded-lg hover:bg-surface-container transition-colors flex items-center gap-2" onclick="exportCSV()">
+<span class="material-symbols-outlined text-[18px]">download</span>CSV出力
+</button>
+</div>
+</div>
+
+<!-- Summary Cards -->
+<div class="grid grid-cols-3 gap-md">
+<div class="bg-surface-container-lowest border border-outline-variant rounded-lg p-5">
+<p class="text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">請負金額合計</p>
+<p class="text-2xl font-bold text-primary tabular-numbers" id="sum-contract">¥0</p>
+</div>
+<div class="bg-surface-container-lowest border border-outline-variant rounded-lg p-5">
+<p class="text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">入金累計</p>
+<p class="text-2xl font-bold text-secondary tabular-numbers" id="sum-received">¥0</p>
+</div>
+<div class="bg-surface-container-lowest border border-outline-variant rounded-lg p-5">
+<p class="text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">完成工事未収入金</p>
+<p class="text-2xl font-bold text-error tabular-numbers" id="sum-outstanding">¥0</p>
+</div>
+</div>
+
+<!-- Filter Section -->
+<div class="bg-surface-container-lowest p-md rounded-lg custom-shadow border border-outline-variant">
+<div class="grid grid-cols-1 md:grid-cols-3 gap-md items-end">
+<div>
+<label class="block text-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">入金ステータス</label>
+<select id="filter-pay-status" class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-body-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent" onchange="renderSales()">
+<option value="">すべて</option>
+<option value="未入金">未入金</option>
+<option value="一部入金">一部入金</option>
+<option value="入金済">入金済</option>
+</select>
+</div>
+<div>
+<label class="block text-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">入金期日（以降）</label>
+<input type="date" id="filter-due-start" class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-body-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent" onchange="renderSales()"/>
+</div>
+<div>
+<label class="block text-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">入金期日（以前）</label>
+<input type="date" id="filter-due-end" class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-body-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent" onchange="renderSales()"/>
+</div>
+</div>
+</div>
+
+<!-- Data Table（最大10件・以降スクロール） -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-lg overflow-hidden shadow-sm">
+<div class="overflow-y-auto" style="max-height: 600px;">
+<table class="w-full text-left border-separate border-spacing-0">
+<thead>
+<tr class="bg-surface-container-low sticky top-0 z-10">
+<th class="px-3 py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant w-28">工番</th>
+<th class="px-3 py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant">工事名</th>
+<th class="px-3 py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant">顧客</th>
+<th class="px-3 py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant text-right">請負金額</th>
+<th class="px-3 py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant text-right">入金累計</th>
+<th class="px-3 py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant text-right">未収金</th>
+<th class="px-3 py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant text-center w-24">入金期日</th>
+<th class="px-3 py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant text-center w-24">ステータス</th>
+<th class="px-3 py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant text-center w-20">入金登録</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant/20" id="sales-table-body">
+</tbody>
+</table>
+</div>
+</div>
+
+<!-- 入金明細 -->
+<div class="flex justify-between items-end mt-xl mb-md">
+<h2 class="text-[18px] font-label-md text-primary">入金明細</h2>
+</div>
+<div class="bg-surface-container-lowest border border-outline-variant rounded-lg overflow-hidden shadow-sm">
+<table class="w-full text-left border-separate border-spacing-0">
+<thead>
+<tr class="bg-surface-container-low">
+<th class="px-3 py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant w-32">入金日</th>
+<th class="px-3 py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant">工事名</th>
+<th class="px-3 py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant text-right">入金額</th>
+<th class="px-3 py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant w-24">対象月度</th>
+<th class="px-3 py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant">備考</th>
+<th class="px-3 py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant text-center w-16"></th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant/20" id="receipts-table-body">
+</tbody>
+</table>
+</div>
+</div>
+<!-- Footer -->
+<footer class="border-t border-outline-variant mt-xl py-lg px-margin-desktop text-center text-on-surface-variant">
+<p class="text-label-sm uppercase tracking-wider mb-2">WIN WIN様 デモ画面 v2.4.0</p>
+<p class="text-body-sm">© 2024 株式会社WIN WIN デモ環境</p>
+</footer>
+</main>
+
+<!-- 入金登録モーダル -->
+<div class="fixed inset-0 z-[100] bg-primary/20 backdrop-blur-md" id="receipt-modal" style="display:none" onclick="closeReceiptModal()">
+<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-lg max-h-[90vh] bg-surface-container-lowest rounded-lg custom-shadow overflow-hidden border border-outline-variant" onclick="event.stopPropagation()">
+<div class="px-lg py-md border-b border-outline-variant flex justify-between items-center bg-surface-container-low">
+<h3 class="text-label-md font-label-md text-primary">入金登録</h3>
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary" onclick="closeReceiptModal()">close</button>
+</div>
+<div class="p-lg space-y-md">
+<input id="receipt-project-id" type="hidden"/>
+<div>
+<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">工事名</label>
+<input class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2" id="receipt-project-name" type="text" readonly/>
+</div>
+<div class="bg-surface-container-low rounded-lg p-4 grid grid-cols-2 gap-2">
+<div><p class="text-label-sm text-on-surface-variant">請負金額</p><p class="text-label-md font-bold tabular-numbers" id="receipt-contract">¥0</p></div>
+<div><p class="text-label-sm text-on-surface-variant">現在の未収金</p><p class="text-label-md font-bold text-error tabular-numbers" id="receipt-outstanding">¥0</p></div>
+</div>
+<div class="grid grid-cols-2 gap-md">
+<div>
+<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">入金日</label>
+<input class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent" id="receipt-date" type="date"/>
+</div>
+<div>
+<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">対象月度</label>
+<input class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent" id="receipt-month" placeholder="例：6月" type="text"/>
+</div>
+</div>
+<div>
+<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">入金額</label>
+<input class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent tabular-numbers" id="receipt-amount" type="number"/>
+</div>
+<div>
+<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">備考</label>
+<textarea class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent" id="receipt-memo" rows="2"></textarea>
+</div>
+</div>
+<div class="px-lg py-md border-t border-outline-variant flex justify-end items-center gap-3 bg-surface-container-low">
+<button class="px-4 py-1.5 text-label-md font-normal text-on-surface border border-outline-variant rounded-lg hover:bg-surface-container transition-all" onclick="closeReceiptModal()">キャンセル</button>
+<button class="px-4 py-1.5 text-label-md font-normal text-on-primary bg-secondary rounded-lg hover:opacity-90 transition-all" onclick="saveReceipt()">入金を登録</button>
+</div>
+</div>
+</div>
+
+<script>
+let salesData = [];
+let receiptsData = [];
+
+function fmt(n) { return '¥' + (n || 0).toLocaleString(); }
+
+async function loadAll() {
+  const [salesRes, receiptsRes] = await Promise.all([
+    fetch('/api/sales-summary'),
+    fetch('/api/receipts')
+  ]);
+  salesData = await salesRes.json();
+  receiptsData = await receiptsRes.json();
+  renderSales();
+  renderReceipts();
+}
+
+function payStatusBadge(status) {
+  const map = {
+    '入金済': 'bg-secondary-container text-on-secondary-container',
+    '一部入金': 'bg-tertiary-fixed text-on-tertiary-fixed-variant',
+    '未入金': 'bg-error/10 text-error'
+  };
+  const cls = map[status] || 'bg-surface-container text-on-surface';
+  return `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold ${cls}">${status}</span>`;
+}
+
+function clearReceiptFilters() {
+  document.getElementById('filter-pay-status').value = '';
+  document.getElementById('filter-due-start').value = '';
+  document.getElementById('filter-due-end').value = '';
+  renderSales();
+}
+
+function renderSales() {
+  const fStatus = document.getElementById('filter-pay-status').value;
+  const fDueStart = document.getElementById('filter-due-start').value;
+  const fDueEnd = document.getElementById('filter-due-end').value;
+
+  const filtered = salesData.filter(s => {
+    if (fStatus && s.pay_status !== fStatus) return false;
+    if (fDueStart || fDueEnd) {
+      if (!s.due_date) return false; // 期日未設定（請求書未発行）は期日絞り込み時に除外
+      if (fDueStart && s.due_date < fDueStart) return false;
+      if (fDueEnd && s.due_date > fDueEnd) return false;
+    }
+    return true;
+  });
+
+  const tbody = document.getElementById('sales-table-body');
+  if (filtered.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="8" class="px-3 py-8 text-center text-on-surface-variant text-label-md">該当する案件がありません</td></tr>';
+  } else {
+    tbody.innerHTML = filtered.map(s => `
+    <tr class="hover:bg-surface-container-low transition-colors">
+      <td class="px-3 py-2.5 text-label-md font-label-md text-on-surface-variant tabular-numbers">${s.project_no || '-'}</td>
+      <td class="px-3 py-2.5 text-label-md font-label-md text-primary">${s.name}</td>
+      <td class="px-3 py-2.5 text-label-md font-label-md text-on-surface-variant">${s.client}</td>
+      <td class="px-3 py-2.5 text-label-md font-label-md text-right tabular-numbers">${fmt(s.contract_amount)}</td>
+      <td class="px-3 py-2.5 text-label-md font-label-md text-right tabular-numbers text-secondary">${fmt(s.received_amount)}</td>
+      <td class="px-3 py-2.5 text-label-md font-label-md text-right tabular-numbers ${s.outstanding > 0 ? 'text-error' : 'text-on-surface-variant'}">${fmt(s.outstanding)}</td>
+      <td class="px-3 py-2.5 text-label-md font-label-md text-center tabular-numbers text-on-surface-variant">${s.due_date || '-'}</td>
+      <td class="px-3 py-2.5 text-center">${payStatusBadge(s.pay_status)}</td>
+      <td class="px-3 py-2.5 text-center">
+        <button class="material-symbols-outlined text-secondary hover:bg-secondary/10 rounded-full w-8 h-8" onclick="openReceiptModal(${s.id})" title="入金登録">add_circle</button>
+      </td>
+    </tr>
+  `).join('');
+  }
+
+  // サマリは絞り込み結果ベースで集計
+  const totalContract = filtered.reduce((a, s) => a + s.contract_amount, 0);
+  const totalReceived = filtered.reduce((a, s) => a + s.received_amount, 0);
+  document.getElementById('sum-contract').textContent = fmt(totalContract);
+  document.getElementById('sum-received').textContent = fmt(totalReceived);
+  document.getElementById('sum-outstanding').textContent = fmt(totalContract - totalReceived);
+}
+
+function renderReceipts() {
+  const tbody = document.getElementById('receipts-table-body');
+  if (receiptsData.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6" class="px-3 py-8 text-center text-on-surface-variant text-label-md">入金実績がありません</td></tr>';
+    return;
+  }
+  tbody.innerHTML = receiptsData.map(r => {
+    const project = salesData.find(s => s.id === r.project_id);
+    return `
+    <tr class="hover:bg-surface-container-low transition-colors">
+      <td class="px-3 py-2.5 text-label-md font-label-md text-on-surface-variant tabular-numbers">${r.received_date}</td>
+      <td class="px-3 py-2.5 text-label-md font-label-md text-on-surface">${project ? project.name : '案件#' + r.project_id}</td>
+      <td class="px-3 py-2.5 text-label-md font-label-md text-right tabular-numbers text-secondary">${fmt(r.amount)}</td>
+      <td class="px-3 py-2.5 text-label-md font-label-md text-on-surface-variant">${r.month || '-'}</td>
+      <td class="px-3 py-2.5 text-label-md font-label-md text-on-surface-variant">${r.memo || '-'}</td>
+      <td class="px-3 py-2.5 text-center">
+        <button class="material-symbols-outlined text-error/70 hover:bg-error/10 rounded-full w-8 h-8 text-[20px]" onclick="deleteReceipt(${r.id})" title="削除">delete</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function openReceiptModal(projectId) {
+  const s = salesData.find(x => x.id === projectId);
+  if (!s) return;
+  document.getElementById('receipt-project-id').value = s.id;
+  document.getElementById('receipt-project-name').value = s.name;
+  document.getElementById('receipt-contract').textContent = fmt(s.contract_amount);
+  document.getElementById('receipt-outstanding').textContent = fmt(s.outstanding);
+  document.getElementById('receipt-date').value = '';
+  document.getElementById('receipt-month').value = '';
+  document.getElementById('receipt-amount').value = '';
+  document.getElementById('receipt-memo').value = '';
+  document.getElementById('receipt-modal').style.display = 'block';
+}
+
+function closeReceiptModal() {
+  document.getElementById('receipt-modal').style.display = 'none';
+}
+
+async function saveReceipt() {
+  const project_id = parseInt(document.getElementById('receipt-project-id').value);
+  const received_date = document.getElementById('receipt-date').value;
+  const amount = parseInt(document.getElementById('receipt-amount').value);
+  const month = document.getElementById('receipt-month').value;
+  const memo = document.getElementById('receipt-memo').value;
+
+  if (!received_date || !amount) {
+    alert('入金日と入金額は必須です');
+    return;
+  }
+
+  await fetch('/api/receipts', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ project_id, received_date, amount, month, memo })
+  });
+  closeReceiptModal();
+  loadAll();
+}
+
+async function deleteReceipt(id) {
+  if (!confirm('この入金記録を削除しますか？')) return;
+  await fetch('/api/receipts/' + id, { method: 'DELETE' });
+  loadAll();
+}
+
+function exportCSV() {
+  window.location.href = '/api/export/sales';
+}
+
+function downloadTemplate() {
+  window.location.href = '/api/receipts/template';
+}
+
+async function importCSV(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const text = await file.text();
+  try {
+    const res = await fetch('/api/receipts/import', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ csv: text })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || '取込失敗');
+    let msg = `${data.imported}件の入金を取り込みました（全${data.total}行）`;
+    if (data.errors && data.errors.length) {
+      msg += `\n\n■スキップ ${data.errors.length}件:\n` + data.errors.slice(0, 10).join('\n');
+      if (data.errors.length > 10) msg += `\n...他${data.errors.length - 10}件`;
+    }
+    alert(msg);
+    loadAll();
+  } catch (err) {
+    alert('CSV取込に失敗しました: ' + err.message);
+  } finally {
+    event.target.value = '';
+  }
+}
+
+loadAll();
+</script>
+
+<script src="/notify.js"></script>
+</body></html>

@@ -2,7 +2,7 @@
   "name": "construct-pro",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "server.js",
   "scripts": {
     "start": "node server.js",
     "dev": "node server.js"
@@ -12,10 +12,10 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
-    "better-sqlite3": "^12.11.1",
     "cors": "^2.8.6",
     "express": "^5.2.1",
     "nodemailer": "^9.0.1",
-    "pdfkit": "^0.19.1"
+    "pdfkit": "^0.19.1",
+    "pg": "^8.22.0"
   }
 }

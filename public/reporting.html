@@ -3,158 +3,278 @@
 <head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>レポーティング - WIN WIN様デモ</title>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
-<title>レポーティング - CONSTRUCT_PRO</title>
+<script src="/theme.js"></script>
 <style>
-body {
-  font-family: 'Inter', 'Noto Sans JP', sans-serif;
-  background-color: #faf9f7;
-}
-.material-symbols-outlined {
-  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-  vertical-align: middle;
-}
-.tabular-nums {
-  font-variant-numeric: tabular-nums;
-}
+body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
+.material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+.tabular-nums { font-variant-numeric: tabular-nums; }
+.custom-shadow { box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04); }
 </style>
-<script id="tailwind-config">
-tailwind.config = {
-  darkMode: "class",
-  theme: {
-    extend: {
-      "colors": {
-        "surface": "#faf9f7",
-        "outline-variant": "#c1c7cc",
-        "on-primary": "#ffffff",
-        "on-surface-variant": "#41484c",
-        "surface-container-low": "#f4f3f1",
-        "primary": "#104356",
-        "surface-container-lowest": "#ffffff",
-        "on-surface": "#1a1c1b"
-      },
-      "borderRadius": {
-        "DEFAULT": "0.25rem",
-        "xl": "12px",
-        "2xl": "16px",
-      },
-      "spacing": {
-        "xxl": "64px",
-        "container-padding": "32px",
-      }
-    },
-  },
-}
-</script>
 </head>
-<body class="bg-surface text-on-surface antialiased overflow-x-hidden">
-<div id="header-placeholder"></div>
-<script>
-fetch('/header.html')
-  .then(response => response.text())
-  .then(html => {
-    document.getElementById('header-placeholder').innerHTML = html;
-  });
-</script>
-<main class="pt-24 pb-16 w-full">
-<div class="w-full px-container-padding space-y-3">
-<!-- ページタイトル -->
-<div class="flex items-center gap-2">
-<button class="w-8 h-8 flex items-center justify-center rounded-lg border border-outline-variant bg-surface-container-lowest hover:bg-surface-container transition-colors text-on-surface-variant shrink-0" onclick="history.back()">
-<span class="material-symbols-outlined text-[18px]">arrow_back</span>
-</button>
-<h1 class="text-lg font-bold text-on-surface tracking-tight">レポーティング</h1>
+<body class="bg-background text-on-surface">
+<!-- Sidebar Navigation -->
+<aside class="fixed left-0 top-0 h-screen w-64 z-50 bg-surface-container-lowest border-r border-outline-variant flex flex-col py-6">
+<div class="px-6 mb-10">
+<h1 class="text-headline-md font-display-lg font-bold text-primary">WIN WIN様</h1>
+<p class="text-label-sm text-on-surface-variant tracking-wider uppercase">デモ画面</p>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center gap-3 px-6 py-3 text-secondary font-bold border-l-4 border-secondary bg-surface-container-low" href="/reporting.html">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-label-md text-label-md">ダッシュボード</span>
+</a>
+<a class="flex items-center gap-3 px-6 py-3 text-on-surface-variant hover:bg-surface-container-low transition-colors duration-200" href="/projects.html">
+<span class="material-symbols-outlined">engineering</span>
+<span class="font-label-md text-label-md">受注一覧</span>
+</a>
+<a class="flex items-center gap-3 px-6 py-3 text-on-surface-variant hover:bg-surface-container-low transition-colors duration-200" href="/customers.html">
+<span class="material-symbols-outlined">groups</span>
+<span class="font-label-md text-label-md">顧客マスタ</span>
+</a>
+<a class="flex items-center gap-3 px-6 py-3 text-on-surface-variant hover:bg-surface-container-low transition-colors duration-200" href="/vendors.html">
+<span class="material-symbols-outlined">store</span>
+<span class="font-label-md text-label-md">発注先マスタ</span>
+</a>
+<a class="flex items-center gap-3 px-6 py-3 text-on-surface-variant hover:bg-surface-container-low transition-colors duration-200" href="/categories.html">
+<span class="material-symbols-outlined">category</span>
+<span class="font-label-md text-label-md">工事区分マスタ</span>
+</a>
+<a class="flex items-center gap-3 px-6 py-3 text-on-surface-variant hover:bg-surface-container-low transition-colors duration-200" href="/receipts.html">
+<span class="material-symbols-outlined">savings</span>
+<span class="font-label-md text-label-md">売上・入金管理</span>
+</a>
+<a class="flex items-center gap-3 px-6 py-3 text-on-surface-variant hover:bg-surface-container-low transition-colors duration-200" href="/payment.html">
+<span class="material-symbols-outlined">payments</span>
+<span class="font-label-md text-label-md">支払管理</span>
+</a>
+<a class="flex items-center gap-3 px-6 py-3 text-on-surface-variant hover:bg-surface-container-low transition-colors duration-200" href="/orders-list.html">
+<span class="material-symbols-outlined">receipt_long</span>
+<span class="font-label-md text-label-md">工事計画</span>
+</a>
+<a class="flex items-center gap-3 px-6 py-3 text-on-surface-variant hover:bg-surface-container-low transition-colors duration-200" href="/history.html">
+<span class="material-symbols-outlined">history</span>
+<span class="font-label-md text-label-md">履歴詳細</span>
+</a>
+</nav>
+</aside>
+<!-- Main Content Canvas -->
+<main class="ml-64 min-h-screen">
+<!-- Top App Bar -->
+<header class="sticky top-0 z-40 flex justify-between items-center h-20 px-margin-desktop bg-surface/80 backdrop-blur-md shadow-sm">
+<div class="flex items-center gap-4 bg-surface-container-low px-4 py-2 rounded-full w-96">
+<span class="material-symbols-outlined text-on-surface-variant">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-body-md w-full" placeholder="Search project records..." type="text"/>
+</div>
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-4">
+<div class="relative" id="notif-wrap">
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary relative" onclick="toggleNotif(event)">notifications<span id="notif-badge" class="absolute -top-1 -right-1 bg-error text-on-error text-[9px] font-normal rounded-full min-w-[16px] h-4 px-1 flex items-center justify-center" style="display:none">0</span></button>
+<div id="notif-panel" class="absolute right-0 mt-2 w-96 max-h-[480px] overflow-y-auto bg-surface-container-lowest border border-outline-variant rounded-lg custom-shadow z-[200]" style="display:none" onclick="event.stopPropagation()">
+<div class="px-4 py-3 border-b border-outline-variant flex justify-between items-center sticky top-0 bg-surface-container-lowest">
+<span class="text-label-md font-label-md text-primary">通知</span>
+<span class="text-label-sm text-on-surface-variant" id="notif-count-label"></span>
+</div>
+<div id="notif-list"></div>
+</div>
+</div>
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary">help</button>
+</div>
+<div class="h-8 w-px bg-outline-variant"></div>
+<div class="flex items-center gap-3">
+<div class="text-right">
+<p class="text-label-md font-bold text-primary">Admin User</p>
+<p class="text-label-sm text-on-surface-variant">System</p>
+</div>
+<div class="w-10 h-10 rounded-full bg-surface-container-high border border-outline-variant"></div>
+</div>
+</div>
+</header>
+<!-- Page Content -->
+<div class="p-margin-desktop space-y-lg max-w-container-max mx-auto">
+<!-- Header Section -->
+<div class="flex justify-between items-center mb-md">
+<div>
+<h2 class="text-[18px] font-label-md text-primary">ダッシュボード</h2>
+</div>
+<!-- Tab Switcher -->
+<div class="inline-flex gap-xs bg-surface-container-low p-xs rounded-lg">
+<button id="tabbtn-overview" class="px-4 py-1.5 text-label-md font-label-md text-on-secondary bg-secondary rounded-lg shadow-lg hover:scale-[1.02] active:scale-95 transition-all" onclick="switchDashTab('overview')">予実・残高・当月予定</button>
+<button id="tabbtn-analysis" class="px-4 py-1.5 text-label-md font-label-md text-on-surface-variant bg-transparent rounded-lg hover:bg-surface-container transition-all" onclick="switchDashTab('analysis')">レポート分析</button>
+</div>
 </div>
 
-<!-- タブエリア -->
-<div class="bg-surface-container-low/50 p-0.5 rounded-xl border border-outline-variant/30 inline-flex gap-0.5">
-<button id="btn-customer" class="px-6 py-2 text-xs font-bold text-on-primary bg-primary rounded-lg transition-all shadow-md shadow-primary/10" onclick="setReportType('customer')">顧客別</button>
-<button id="btn-vendor" class="px-6 py-2 text-xs font-medium text-on-surface-variant bg-transparent rounded-lg hover:bg-surface-container-lowest transition-all" onclick="setReportType('vendor')">外注先別</button>
+<!-- ===== Tab: 概要 ===== -->
+<div id="tab-overview" class="space-y-md">
+
+<!-- 経営サマリー＋予実サマリー (F8) 今月 -->
+<div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-sm">
+<div class="bg-surface-container-lowest p-4 rounded-lg custom-shadow border border-outline-variant">
+<div class="flex items-center gap-1.5 mb-1"><span class="material-symbols-outlined text-error text-[16px]">account_balance_wallet</span><p class="text-label-sm text-on-surface-variant">完成工事未収入金</p></div>
+<p class="text-[20px] font-bold text-error tabular-nums" id="dash-receivable">¥-</p>
+</div>
+<div class="bg-surface-container-lowest p-4 rounded-lg custom-shadow border border-outline-variant">
+<div class="flex items-center gap-1.5 mb-1"><span class="material-symbols-outlined text-tertiary text-[16px]">payments</span><p class="text-label-sm text-on-surface-variant">未払残高</p></div>
+<p class="text-[20px] font-bold text-on-surface tabular-nums" id="dash-payable">¥-</p>
+</div>
+<div class="bg-surface-container-lowest p-4 rounded-lg custom-shadow border border-outline-variant">
+<div class="flex items-center gap-1.5 mb-1"><span class="material-symbols-outlined text-secondary text-[16px]">trending_up</span><p class="text-label-sm text-on-surface-variant">当月入金予定</p></div>
+<p class="text-[20px] font-bold text-secondary tabular-nums" id="dash-month-receipts">¥-</p>
+</div>
+<div class="bg-surface-container-lowest p-4 rounded-lg custom-shadow border border-outline-variant">
+<div class="flex items-center gap-1.5 mb-1"><span class="material-symbols-outlined text-tertiary text-[16px]">trending_down</span><p class="text-label-sm text-on-surface-variant">当月支払予定</p></div>
+<p class="text-[20px] font-bold text-on-surface tabular-nums" id="dash-month-payments">¥-</p>
+</div>
+<div class="bg-surface-container-lowest p-4 rounded-lg custom-shadow border border-outline-variant">
+<p class="text-label-sm text-on-surface-variant mb-1">売上（請負）</p>
+<p class="text-[20px] font-bold text-primary tabular-nums" id="dash-revenue">¥-</p>
+</div>
+<div class="bg-surface-container-lowest p-4 rounded-lg custom-shadow border border-outline-variant">
+<p class="text-label-sm text-on-surface-variant mb-1">外注原価</p>
+<p class="text-[20px] font-bold text-on-surface tabular-nums" id="dash-cost">¥-</p>
+</div>
+<div class="bg-surface-container-lowest p-4 rounded-lg custom-shadow border border-outline-variant">
+<p class="text-label-sm text-on-surface-variant mb-1">工事利益 / 利益率</p>
+<p class="text-[20px] font-bold text-secondary tabular-nums"><span id="dash-profit">¥-</span> <span class="text-body-sm text-on-surface-variant" id="dash-margin">-</span></p>
+</div>
 </div>
 
-<!-- フィルタエリア -->
-<div class="bg-surface-container-low p-3 rounded-2xl border border-outline-variant/30 space-y-2">
-<!-- 集計方法 -->
-<div>
-<p class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-1.5">集計方法</p>
-<div class="inline-flex gap-0.5 bg-surface-container-low/50 p-0.5 rounded-xl border border-outline-variant/30">
-<button id="btn-period" class="px-6 py-1.5 text-xs font-bold text-on-primary bg-primary rounded-lg transition-all shadow-md shadow-primary/10" onclick="setAggregateType('period')">期間</button>
-<button id="btn-project" class="px-6 py-1.5 text-xs font-medium text-on-surface-variant bg-transparent rounded-lg hover:bg-surface-container-lowest transition-all" onclick="setAggregateType('project')">案件</button>
+<!-- 案件別予実テーブル (F8-1) 今月稼働案件のみ・最大10件スクロール -->
+<div class="bg-surface-container-lowest rounded-lg custom-shadow border border-outline-variant overflow-hidden">
+<div class="px-lg py-2.5 border-b border-outline-variant bg-surface-container-low flex justify-between items-center">
+<h3 class="text-label-md font-label-md text-primary">案件別 予実・利益率（今月稼働）</h3>
+<span class="text-label-sm text-on-surface-variant" id="dash-profit-count"></span>
+</div>
+<div class="overflow-y-auto" style="max-height: 440px;">
+<table class="w-full text-left border-separate border-spacing-0">
+<thead><tr class="bg-surface-container-low sticky top-0 z-10">
+<th class="px-3 py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider w-28">工番</th>
+<th class="px-3 py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider">工事名</th>
+<th class="px-3 py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider text-right">売上</th>
+<th class="px-3 py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider text-right">原価</th>
+<th class="px-3 py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider text-right">利益</th>
+<th class="px-3 py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider text-right w-20">利益率</th>
+</tr></thead>
+<tbody class="divide-y divide-outline-variant/20" id="dash-profit-body"></tbody>
+</table>
 </div>
 </div>
 
-<!-- 期間モードのフィルタ -->
-<div id="period-filters" class="grid grid-cols-1 md:grid-cols-3 gap-3">
+</div>
+<!-- ===== /Tab: 概要 ===== -->
+
+<!-- ===== Tab: レポート分析 ===== -->
+<div id="tab-analysis" class="hidden space-y-md">
+
+<!-- Tabs Section -->
+<div class="bg-surface-container-lowest p-4 rounded-lg border border-outline-variant custom-shadow">
+<div class="flex flex-wrap items-end gap-x-lg gap-y-3">
 <div>
-<label class="block text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-1">期間開始</label>
-<input type="date" id="dateStart" class="w-full bg-surface-container-lowest border-outline-variant/50 rounded-lg text-xs px-3 py-1.5 focus:ring-2 focus:ring-primary/20" onchange="updateReports()"/>
+<p class="text-label-sm text-on-surface-variant uppercase tracking-wider font-bold mb-1.5">レポートタイプ</p>
+<div class="inline-flex gap-xs bg-surface-container-low p-xs rounded-lg">
+<button id="btn-customer" class="px-4 py-1.5 text-label-md font-label-md text-on-secondary bg-secondary rounded-lg shadow-lg hover:scale-[1.02] active:scale-95 transition-all" onclick="setReportType('customer')">顧客別</button>
+<button id="btn-vendor" class="px-4 py-1.5 text-label-md font-label-md text-on-surface-variant bg-transparent rounded-lg hover:bg-surface-container transition-all" onclick="setReportType('vendor')">発注先別</button>
+</div>
 </div>
 <div>
-<label class="block text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-1">期間終了</label>
-<input type="date" id="dateEnd" class="w-full bg-surface-container-lowest border-outline-variant/50 rounded-lg text-xs px-3 py-1.5 focus:ring-2 focus:ring-primary/20" onchange="updateReports()"/>
+<p class="text-label-sm text-on-surface-variant uppercase tracking-wider font-bold mb-1.5">集計方法</p>
+<div class="inline-flex gap-xs bg-surface-container-low p-xs rounded-lg">
+<button id="btn-period" class="px-4 py-1.5 text-label-md font-label-md text-on-secondary bg-secondary rounded-lg shadow-lg hover:scale-[1.02] active:scale-95 transition-all" onclick="setAggregateType('period')">期間</button>
+<button id="btn-project" class="px-4 py-1.5 text-label-md font-label-md text-on-surface-variant bg-transparent rounded-lg hover:bg-surface-container transition-all" onclick="setAggregateType('project')">案件</button>
+</div>
+</div>
+</div>
+
+<!-- Period Mode Filters -->
+<div id="period-filters" class="grid grid-cols-1 md:grid-cols-3 gap-md mt-md">
+<div>
+<label class="block text-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">期間開始</label>
+<input type="date" id="dateStart" class="w-full bg-surface-container-lowest border border-outline-variant rounded-lg text-body-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent" onchange="updateReports()"/>
 </div>
 <div>
-<label class="block text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-1">会社を選択</label>
-<select id="companySelect" class="w-full bg-surface-container-lowest border-outline-variant/50 rounded-lg text-xs px-3 py-1.5 focus:ring-2 focus:ring-primary/20" onchange="updateReports()">
+<label class="block text-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">期間終了</label>
+<input type="date" id="dateEnd" class="w-full bg-surface-container-lowest border border-outline-variant rounded-lg text-body-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent" onchange="updateReports()"/>
+</div>
+<div>
+<label class="block text-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">会社を選択</label>
+<select id="companySelect" class="w-full bg-surface-container-lowest border border-outline-variant rounded-lg text-body-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent" onchange="updateReports()">
 <option value="">全社</option>
 </select>
 </div>
 </div>
 
-<!-- 案件モードのフィルタ -->
-<div id="project-filters" class="grid grid-cols-1 md:grid-cols-3 gap-3 hidden">
+<!-- Project Mode Filters -->
+<div id="project-filters" class="grid grid-cols-1 md:grid-cols-3 gap-md mt-md hidden">
 <div>
-<label class="block text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-1">案件を選択</label>
-<select id="projectSelect" class="w-full bg-surface-container-lowest border-outline-variant/50 rounded-lg text-xs px-3 py-1.5 focus:ring-2 focus:ring-primary/20" onchange="updateReports()">
-<option value="">全案件</option>
+<label id="filter-primary-label" class="block text-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">会社を選択</label>
+<select id="filter-primary" class="w-full bg-surface-container-lowest border border-outline-variant rounded-lg text-body-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent" onchange="onPrimaryFilterChange()">
+<option value="">全て</option>
 </select>
 </div>
 <div>
-<label class="block text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-1">会社を選択</label>
-<select id="projectCompanySelect" class="w-full bg-surface-container-lowest border-outline-variant/50 rounded-lg text-xs px-3 py-1.5 focus:ring-2 focus:ring-primary/20" onchange="updateReports()">
-<option value="">全社</option>
+<label id="filter-secondary-label" class="block text-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">案件を選択</label>
+<select id="filter-secondary" class="w-full bg-surface-container-lowest border border-outline-variant rounded-lg text-body-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent" onchange="updateReports()">
+<option value="">全て</option>
 </select>
 </div>
 </div>
 </div>
 
-<!-- メインエリア -->
-<div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-<!-- 左側：サマリーカード（2x2） -->
-<div class="grid grid-cols-2 gap-3">
-<div class="bg-surface-container-lowest rounded-xl p-3 border border-outline-variant/30">
-<p class="text-[10px] text-on-surface-variant font-bold uppercase tracking-widest mb-1">売上合計</p>
-<p class="text-lg font-bold text-primary tabular-nums" id="summary-revenue">¥-</p>
+<!-- Summary Stats Grid -->
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-sm">
+<div class="bg-surface-container-lowest p-4 rounded-lg custom-shadow border border-outline-variant">
+<p class="text-label-sm text-on-surface-variant uppercase tracking-wider mb-1">売上合計</p>
+<p class="text-[20px] font-bold text-primary tabular-nums" id="summary-revenue">¥-</p>
 </div>
-<div class="bg-surface-container-lowest rounded-xl p-3 border border-outline-variant/30">
-<p class="text-[10px] text-on-surface-variant font-bold uppercase tracking-widest mb-1">平均粗利率</p>
-<p class="text-xl font-bold text-on-surface" id="summary-gross-margin">-</p>
+<div class="bg-surface-container-lowest p-4 rounded-lg custom-shadow border border-outline-variant">
+<p class="text-label-sm text-on-surface-variant uppercase tracking-wider mb-1">平均粗利率</p>
+<p class="text-[20px] font-bold text-on-surface" id="summary-gross-margin">-</p>
 </div>
-<div class="bg-surface-container-lowest rounded-xl p-3 border border-outline-variant/30">
-<p class="text-[10px] text-on-surface-variant font-bold uppercase tracking-widest mb-1">想定利益率</p>
-<p class="text-xl font-bold text-on-surface" id="summary-expected-profit">-</p>
+<div class="bg-surface-container-lowest p-4 rounded-lg custom-shadow border border-outline-variant">
+<p class="text-label-sm text-on-surface-variant uppercase tracking-wider mb-1">想定利益率</p>
+<p class="text-[20px] font-bold text-on-surface" id="summary-expected-profit">-</p>
 </div>
-<div class="bg-surface-container-lowest rounded-xl p-3 border border-outline-variant/30">
-<p class="text-[10px] text-on-surface-variant font-bold uppercase tracking-widest mb-1">実利益合計</p>
-<p class="text-lg font-bold text-primary tabular-nums" id="summary-actual-profit">¥-</p>
+<div class="bg-surface-container-lowest p-4 rounded-lg custom-shadow border border-outline-variant">
+<p class="text-label-sm text-on-surface-variant uppercase tracking-wider mb-1">実利益合計</p>
+<p class="text-[20px] font-bold text-primary tabular-nums" id="summary-actual-profit">¥-</p>
 </div>
 </div>
 
-<!-- 右側：グラフ -->
-<div class="bg-surface-container-lowest rounded-2xl p-4 border border-outline-variant/30 w-80 h-80">
-<h2 class="text-sm font-bold text-on-surface mb-3">ステータス分布</h2>
-<canvas id="chartStatus"></canvas>
+<!-- 明細レコードテーブル（サマリの根拠・最大15件スクロール） -->
+<div class="bg-surface-container-lowest rounded-lg custom-shadow border border-outline-variant overflow-hidden">
+<div class="px-lg py-2.5 border-b border-outline-variant bg-surface-container-low flex justify-between items-center">
+<h3 class="text-label-md font-label-md text-primary">明細レコード（サマリ根拠）</h3>
+<span class="text-label-sm text-on-surface-variant" id="detail-count"></span>
+</div>
+<div class="overflow-y-auto" style="max-height: 560px;">
+<table class="w-full text-left border-separate border-spacing-0">
+<thead><tr class="bg-surface-container-low sticky top-0 z-10">
+<th class="px-3 py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider w-24">工番</th>
+<th class="px-3 py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider">案件名</th>
+<th class="px-3 py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider">工事区分</th>
+<th class="px-3 py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider">発注先</th>
+<th class="px-3 py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider text-right">売上</th>
+<th class="px-3 py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider text-right">原価</th>
+<th class="px-3 py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider text-right">利益</th>
+</tr></thead>
+<tbody class="divide-y divide-outline-variant/20" id="detail-table-body"></tbody>
+</table>
 </div>
 </div>
 
-<footer class="pt-16 pb-8 border-t border-outline-variant text-center">
-<p class="text-[11px] text-on-surface-variant font-bold uppercase tracking-[0.3em] mb-2">CONSTRUCT_PRO ENTERPRISE SYSTEMS v2.4.0</p>
-<p class="text-[11px] text-on-surface-variant/50">© 2024 CONSTRUCT_PRO Systems. All Rights Reserved.</p>
+</div>
+<!-- ===== /Tab: レポート分析 ===== -->
+
+</div>
+<!-- Footer -->
+<footer class="border-t border-outline-variant mt-xl py-lg px-margin-desktop text-center text-on-surface-variant">
+<p class="text-label-sm uppercase tracking-wider mb-2">WIN WIN様 デモ画面 v2.4.0</p>
+<p class="text-body-sm">© 2024 株式会社WIN WIN デモ環境</p>
 </footer>
-</div>
 </main>
 
 <script>
@@ -189,22 +309,16 @@ function setAggregateType(type) {
   const btnPeriod = document.getElementById('btn-period');
   const btnProject = document.getElementById('btn-project');
 
+  const ACT = ['bg-secondary', 'text-on-secondary', 'shadow-lg'];
+  const INA = ['bg-transparent', 'text-on-surface-variant', 'hover:bg-surface-container'];
   if (type === 'period') {
-    btnPeriod.classList.remove('bg-transparent', 'text-on-surface-variant', 'font-medium');
-    btnPeriod.classList.add('bg-primary', 'text-on-primary', 'font-bold', 'shadow-lg', 'shadow-primary/10');
-
-    btnProject.classList.remove('bg-primary', 'text-on-primary', 'font-bold', 'shadow-lg', 'shadow-primary/10');
-    btnProject.classList.add('bg-transparent', 'text-on-surface-variant', 'font-medium');
-
+    btnPeriod.classList.remove(...INA); btnPeriod.classList.add(...ACT);
+    btnProject.classList.remove(...ACT); btnProject.classList.add(...INA);
     document.getElementById('period-filters').classList.remove('hidden');
     document.getElementById('project-filters').classList.add('hidden');
   } else {
-    btnProject.classList.remove('bg-transparent', 'text-on-surface-variant', 'font-medium');
-    btnProject.classList.add('bg-primary', 'text-on-primary', 'font-bold', 'shadow-lg', 'shadow-primary/10');
-
-    btnPeriod.classList.remove('bg-primary', 'text-on-primary', 'font-bold', 'shadow-lg', 'shadow-primary/10');
-    btnPeriod.classList.add('bg-transparent', 'text-on-surface-variant', 'font-medium');
-
+    btnProject.classList.remove(...INA); btnProject.classList.add(...ACT);
+    btnPeriod.classList.remove(...ACT); btnPeriod.classList.add(...INA);
     document.getElementById('period-filters').classList.add('hidden');
     document.getElementById('project-filters').classList.remove('hidden');
   }
@@ -254,18 +368,14 @@ function setReportType(type) {
   const btnCustomer = document.getElementById('btn-customer');
   const btnVendor = document.getElementById('btn-vendor');
 
+  const ACT = ['bg-secondary', 'text-on-secondary', 'shadow-lg'];
+  const INA = ['bg-transparent', 'text-on-surface-variant', 'hover:bg-surface-container'];
   if (type === 'customer') {
-    btnCustomer.classList.remove('bg-transparent', 'text-on-surface-variant', 'font-medium');
-    btnCustomer.classList.add('bg-primary', 'text-on-primary', 'font-bold', 'shadow-lg', 'shadow-primary/10');
-
-    btnVendor.classList.remove('bg-primary', 'text-on-primary', 'font-bold', 'shadow-lg', 'shadow-primary/10');
-    btnVendor.classList.add('bg-transparent', 'text-on-surface-variant', 'font-medium');
+    btnCustomer.classList.remove(...INA); btnCustomer.classList.add(...ACT);
+    btnVendor.classList.remove(...ACT); btnVendor.classList.add(...INA);
   } else {
-    btnVendor.classList.remove('bg-transparent', 'text-on-surface-variant', 'font-medium');
-    btnVendor.classList.add('bg-primary', 'text-on-primary', 'font-bold', 'shadow-lg', 'shadow-primary/10');
-
-    btnCustomer.classList.remove('bg-primary', 'text-on-primary', 'font-bold', 'shadow-lg', 'shadow-primary/10');
-    btnCustomer.classList.add('bg-transparent', 'text-on-surface-variant', 'font-medium');
+    btnVendor.classList.remove(...INA); btnVendor.classList.add(...ACT);
+    btnCustomer.classList.remove(...ACT); btnCustomer.classList.add(...INA);
   }
 
   populateCompanySelect();
@@ -301,42 +411,68 @@ function populateCompanySelect() {
 
     companySelect.value = currentValue;
   } else {
-    // Project mode
-    const projectSelect = document.getElementById('projectSelect');
-    const projectCompanySelect = document.getElementById('projectCompanySelect');
-    const currentProject = projectSelect.value;
-    const currentCompany = projectCompanySelect.value;
-
-    projectSelect.innerHTML = '<option value="">全案件</option>';
-    const projects = [...new Set(window.appCache.projects.map(p => ({ id: p.id, name: p.name })))];
-    projects.forEach(project => {
-      const option = document.createElement('option');
-      option.value = project.id;
-      option.textContent = project.name;
-      projectSelect.appendChild(option);
-    });
-    projectSelect.value = currentProject;
-
-    projectCompanySelect.innerHTML = '<option value="">全社</option>';
-    if (reportType === 'customer') {
-      const companies = [...new Set(window.appCache.projects.map(p => p.clientCompany || p.client).filter(Boolean))].sort();
-      companies.forEach(company => {
-        const option = document.createElement('option');
-        option.value = company;
-        option.textContent = company;
-        projectCompanySelect.appendChild(option);
-      });
-    } else {
-      const vendors = [...new Set(window.appCache.orders.map(o => o.vendor).filter(Boolean))].sort();
-      vendors.forEach(vendor => {
-        const option = document.createElement('option');
-        option.value = vendor;
-        option.textContent = vendor;
-        projectCompanySelect.appendChild(option);
-      });
-    }
-    projectCompanySelect.value = currentCompany;
+    // Project mode — モード別の2段カスケード
+    //   顧客別: 会社(顧客) → その顧客が発注した案件
+    //   発注先別: 案件 → その案件を担当した発注先
+    populateProjectModeFilters();
   }
+}
+
+// 親プルダウン（filter-primary）を構築。顧客別=会社／発注先別=案件
+function populateProjectModeFilters() {
+  const reportType = document.getElementById('reportType')?.value || 'customer';
+  const primary = document.getElementById('filter-primary');
+  const primaryLabel = document.getElementById('filter-primary-label');
+  const secondaryLabel = document.getElementById('filter-secondary-label');
+  if (!primary) return;
+  const cur = primary.value;
+
+  if (reportType === 'customer') {
+    primaryLabel.textContent = '会社を選択';
+    secondaryLabel.textContent = '案件を選択';
+    primary.innerHTML = '<option value="">全社</option>';
+    [...new Set(window.appCache.projects.map(p => p.clientCompany || p.client).filter(Boolean))].sort()
+      .forEach(c => primary.appendChild(new Option(c, c)));
+  } else {
+    primaryLabel.textContent = '案件を選択';
+    secondaryLabel.textContent = '発注先を選択';
+    primary.innerHTML = '<option value="">全案件</option>';
+    window.appCache.projects.forEach(p => primary.appendChild(new Option(p.name, p.id)));
+  }
+  primary.value = [...primary.options].some(o => o.value === cur) ? cur : '';
+
+  populateSecondaryFilter();
+}
+
+// 子プルダウン（filter-secondary）を親選択で絞り込み。顧客別=案件／発注先別=発注先
+function populateSecondaryFilter() {
+  const reportType = document.getElementById('reportType')?.value || 'customer';
+  const primaryVal = document.getElementById('filter-primary').value;
+  const secondary = document.getElementById('filter-secondary');
+  if (!secondary) return;
+  const cur = secondary.value;
+
+  if (reportType === 'customer') {
+    // 案件：選択した顧客が発注した案件のみ
+    secondary.innerHTML = '<option value="">全案件</option>';
+    let projects = window.appCache.projects;
+    if (primaryVal) projects = projects.filter(p => (p.clientCompany || p.client) === primaryVal);
+    projects.forEach(p => secondary.appendChild(new Option(p.name, p.id)));
+  } else {
+    // 発注先：選択した案件の工程を担当した発注先のみ
+    secondary.innerHTML = '<option value="">全発注先</option>';
+    let orders = window.appCache.orders;
+    if (primaryVal) orders = orders.filter(o => o.project_id === parseInt(primaryVal));
+    [...new Set(orders.map(o => o.vendor).filter(Boolean))].sort()
+      .forEach(v => secondary.appendChild(new Option(v, v)));
+  }
+  secondary.value = [...secondary.options].some(o => o.value === cur) ? cur : '';
+}
+
+// 親が変わったら子を再構築して再集計
+function onPrimaryFilterChange() {
+  populateSecondaryFilter();
+  updateReports();
 }
 
 function updateReports() {
@@ -371,15 +507,16 @@ function generateCustomerReport() {
       return date >= startDate && date <= endDate;
     });
   } else {
-    const selectedProject = document.getElementById('projectSelect').value;
-    const selectedCompany = document.getElementById('projectCompanySelect').value;
-
-    if (selectedProject) {
-      projects = projects.filter(p => p.id === parseInt(selectedProject));
-    }
+    // 顧客別・案件集計：親=会社(顧客)、子=案件
+    const selectedCompany = document.getElementById('filter-primary').value;
+    const selectedProject = document.getElementById('filter-secondary').value;
 
     if (selectedCompany) {
       projects = projects.filter(p => (p.clientCompany || p.client) === selectedCompany);
+    }
+
+    if (selectedProject) {
+      projects = projects.filter(p => p.id === parseInt(selectedProject));
     }
 
     const projectIds = projects.map(p => p.id);
@@ -413,7 +550,8 @@ function generateCustomerReport() {
   const sorted = Object.entries(customerMap)
     .sort((a, b) => b[1].revenue - a[1].revenue);
 
-  renderCharts(sorted, projects, customerMap);
+  updateSummary(sorted, customerMap);
+  renderDetailTable(orders);
 }
 
 function generateVendorReport() {
@@ -434,15 +572,16 @@ function generateVendorReport() {
       orders = orders.filter(o => o.vendor === selectedCompany);
     }
   } else {
-    const selectedProject = document.getElementById('projectSelect').value;
-    const selectedCompany = document.getElementById('projectCompanySelect').value;
+    // 発注先別・案件集計：親=案件、子=発注先
+    const selectedProject = document.getElementById('filter-primary').value;
+    const selectedVendor = document.getElementById('filter-secondary').value;
 
     if (selectedProject) {
       orders = orders.filter(o => o.project_id === parseInt(selectedProject));
     }
 
-    if (selectedCompany) {
-      orders = orders.filter(o => o.vendor === selectedCompany);
+    if (selectedVendor) {
+      orders = orders.filter(o => o.vendor === selectedVendor);
     }
   }
 
@@ -465,57 +604,42 @@ function generateVendorReport() {
   const sorted = Object.entries(vendorMap)
     .sort((a, b) => b[1].revenue - a[1].revenue);
 
-  renderCharts(sorted, orders, vendorMap);
+  updateSummary(sorted, vendorMap);
+  renderDetailTable(orders);
 }
 
-function renderCharts(sorted, allItems, dataMap) {
-  const reportType = document.getElementById('reportType')?.value || 'customer';
-  const names = sorted.map(([name]) => name);
+// サマリの根拠となった明細レコード（絞り込み後の注文明細）をテーブル表示
+function renderDetailTable(orders) {
+  const tbody = document.getElementById('detail-table-body');
+  const countLabel = document.getElementById('detail-count');
+  const yen = (n) => '¥' + (n || 0).toLocaleString();
 
-  updateSummary(sorted, dataMap);
-
-  // ステータス分布 または 見積vs決定
-  const ctxStatus = document.getElementById('chartStatus').getContext('2d');
-  if (chartStatus) chartStatus.destroy();
-
-  if (reportType === 'customer') {
-    const statusMap = {};
-    window.appCache.projects.forEach(p => {
-      const status = p.status || '未対応';
-      statusMap[status] = (statusMap[status] || 0) + 1;
-    });
-
-    chartStatus = new Chart(ctxStatus, {
-      type: 'doughnut',
-      data: {
-        labels: Object.keys(statusMap),
-        datasets: [{
-          data: Object.values(statusMap),
-          backgroundColor: ['#104356', '#a33c2d', '#f0bd89', '#2d5a6e', '#ffb4a7'],
-        }]
-      },
-      options: { responsive: true }
-    });
-  } else {
-    const counts = sorted.map(([, data]) => data.count || 0);
-
-    chartStatus = new Chart(ctxStatus, {
-      type: 'bar',
-      data: {
-        labels: names,
-        datasets: [{
-          label: '依頼件数',
-          data: counts,
-          backgroundColor: '#104356',
-          borderRadius: 4,
-        }]
-      },
-      options: {
-        responsive: true,
-        scales: { y: { beginAtZero: true } }
-      }
-    });
+  if (!orders || orders.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7" class="px-3 py-8 text-center text-on-surface-variant text-label-md">該当するレコードがありません</td></tr>';
+    if (countLabel) countLabel.textContent = '0件';
+    return;
   }
+
+  // 売上の大きい順
+  const rows = orders.slice().sort((a, b) => (b.decided || b.planned || 0) - (a.decided || a.planned || 0));
+  if (countLabel) countLabel.textContent = `${rows.length}件` + (rows.length > 15 ? '（スクロール）' : '');
+
+  tbody.innerHTML = rows.map(o => {
+    const project = window.appCache.projects.find(p => p.id === o.project_id);
+    const revenue = o.decided || o.planned || 0;
+    const cost = o.estimate || 0;
+    const profit = revenue - cost;
+    return `
+    <tr class="hover:bg-surface-container-low transition-colors">
+      <td class="px-3 py-2 text-label-md font-label-md text-on-surface-variant tabular-nums">${project?.project_no || '-'}</td>
+      <td class="px-3 py-2 text-label-md font-label-md text-primary">${project?.name || '案件#' + o.project_id}</td>
+      <td class="px-3 py-2 text-label-md font-label-md text-on-surface-variant">${o.category || '-'}</td>
+      <td class="px-3 py-2 text-label-md font-label-md text-on-surface-variant">${o.vendor || '-'}</td>
+      <td class="px-3 py-2 text-label-md font-label-md text-right tabular-nums">${yen(revenue)}</td>
+      <td class="px-3 py-2 text-label-md font-label-md text-right tabular-nums text-on-surface-variant">${yen(cost)}</td>
+      <td class="px-3 py-2 text-label-md font-label-md text-right tabular-nums ${profit >= 0 ? 'text-secondary' : 'text-error'}">${yen(profit)}</td>
+    </tr>`;
+  }).join('');
 }
 
 function updateSummary(sorted, dataMap) {
@@ -545,11 +669,69 @@ function updateSummary(sorted, dataMap) {
   document.getElementById('summary-actual-profit').textContent = '¥' + totalProfit.toLocaleString();
 }
 
+async function loadDashboard() {
+  try {
+    const res = await fetch('/api/dashboard');
+    const d = await res.json();
+    const yen = (n) => '¥' + (n || 0).toLocaleString();
+    document.getElementById('dash-receivable').textContent = yen(d.totalReceivable);
+    document.getElementById('dash-payable').textContent = yen(d.totalPayable);
+    document.getElementById('dash-month-receipts').textContent = yen(d.thisMonthReceipts);
+    document.getElementById('dash-month-payments').textContent = yen(d.thisMonthPayments);
+    document.getElementById('dash-revenue').textContent = yen(d.totalRevenue);
+    document.getElementById('dash-cost').textContent = yen(d.totalCost);
+    document.getElementById('dash-profit').textContent = yen(d.totalProfit);
+    document.getElementById('dash-margin').textContent = '(' + d.avgMargin + '%)';
+    // 案件別予実は当月稼働案件（バックエンドで絞込済み）
+    const thisMonth = d.projectProfit;
+
+    const tbody = document.getElementById('dash-profit-body');
+    const countLabel = document.getElementById('dash-profit-count');
+    if (thisMonth.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="6" class="px-3 py-8 text-center text-on-surface-variant text-label-md">今月稼働中の案件はありません</td></tr>';
+      if (countLabel) countLabel.textContent = '0件';
+    } else {
+      if (countLabel) countLabel.textContent = `${thisMonth.length}件` + (thisMonth.length > 10 ? '（スクロール）' : '');
+      tbody.innerHTML = thisMonth.map(p => `
+      <tr class="hover:bg-surface-container-low transition-colors">
+        <td class="px-3 py-2 text-label-md font-label-md text-on-surface-variant tabular-nums">${p.project_no || '-'}</td>
+        <td class="px-3 py-2 text-label-md font-label-md text-primary">${p.name}</td>
+        <td class="px-3 py-2 text-label-md font-label-md text-right tabular-nums">${yen(p.revenue)}</td>
+        <td class="px-3 py-2 text-label-md font-label-md text-right tabular-nums text-on-surface-variant">${yen(p.cost)}</td>
+        <td class="px-3 py-2 text-label-md font-label-md text-right tabular-nums ${p.profit >= 0 ? 'text-secondary' : 'text-error'}">${yen(p.profit)}</td>
+        <td class="px-3 py-2 text-label-md font-label-md text-right tabular-nums ${p.margin >= 0 ? 'text-on-surface' : 'text-error'}">${p.margin}%</td>
+      </tr>`).join('');
+    }
+  } catch (e) { /* noop */ }
+}
+
+function switchDashTab(tab) {
+  const overview = document.getElementById('tab-overview');
+  const analysis = document.getElementById('tab-analysis');
+  const btnO = document.getElementById('tabbtn-overview');
+  const btnA = document.getElementById('tabbtn-analysis');
+  const active = ['text-on-secondary', 'bg-secondary', 'shadow-lg'];
+  const inactive = ['text-on-surface-variant', 'bg-transparent', 'hover:bg-surface-container'];
+  if (tab === 'overview') {
+    overview.classList.remove('hidden');
+    analysis.classList.add('hidden');
+    btnO.classList.add(...active); btnO.classList.remove(...inactive);
+    btnA.classList.add(...inactive); btnA.classList.remove(...active);
+  } else {
+    overview.classList.add('hidden');
+    analysis.classList.remove('hidden');
+    btnA.classList.add(...active); btnA.classList.remove(...inactive);
+    btnO.classList.add(...inactive); btnO.classList.remove(...active);
+  }
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
   await initializeCache();
+  await loadDashboard();
   setAggregateType('period');
   setReportType('customer');
 });
 </script>
+<script src="/notify.js"></script>
 </body>
 </html>

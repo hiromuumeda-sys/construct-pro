@@ -1,554 +1,398 @@
 <!DOCTYPE html>
-
-<html class="light" lang="ja"><head>
+<html class="light" lang="ja">
+<head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>発注先マスタ - WIN WIN様デモ</title>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Noto+Sans+JP:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-<title>外注先マスタ - CONSTRUCT_PRO</title>
+<script src="/theme.js"></script>
 <style>
-        body {
-            font-family: 'Inter', 'Noto Sans JP', sans-serif;
-            background-color: #faf9f7;
-        }
-        .material-symbols-outlined {
-            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-            vertical-align: middle;
-        }
-        .custom-scrollbar::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-track {
-            background: #f4f3f1;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-            background: #dadad8;
-            border-radius: 10px;
-        }
-        .tabular-nums {
-            font-variant-numeric: tabular-nums;
-        }
-    </style>
-<script id="tailwind-config">
-        tailwind.config = {
-            darkMode: "class",
-            theme: {
-                extend: {
-                    "colors": {
-                        "surface": "#faf9f7",
-                        "surface-bright": "#faf9f7",
-                        "on-secondary-fixed": "#400100",
-                        "outline-variant": "#c1c7cc",
-                        "on-primary-fixed-variant": "#1d4c5f",
-                        "on-secondary-fixed-variant": "#832519",
-                        "on-tertiary-fixed": "#2c1700",
-                        "on-primary": "#ffffff",
-                        "tertiary-container": "#724d23",
-                        "outline": "#71787c",
-                        "error-container": "#ffdad6",
-                        "on-primary-fixed": "#001f2a",
-                        "surface-tint": "#376478",
-                        "surface-dim": "#dadad8",
-                        "on-surface-variant": "#41484c",
-                        "surface-variant": "#e3e2e0",
-                        "primary-fixed-dim": "#a0cde4",
-                        "secondary-container": "#ff816d",
-                        "on-tertiary-fixed-variant": "#623f16",
-                        "inverse-primary": "#a0cde4",
-                        "secondary-fixed": "#ffdad4",
-                        "on-error-container": "#93000a",
-                        "surface-container": "#efeeec",
-                        "inverse-surface": "#2f3130",
-                        "tertiary-fixed-dim": "#f0bd89",
-                        "on-secondary-container": "#731a0f",
-                        "background": "#faf9f7",
-                        "surface-container-highest": "#e3e2e0",
-                        "on-tertiary-container": "#f3c08c",
-                        "surface-container-low": "#f4f3f1",
-                        "secondary": "#a33c2d",
-                        "surface-container-high": "#e9e8e6",
-                        "primary-container": "#2d5a6e",
-                        "primary": "#104356",
-                        "tertiary": "#57360e",
-                        "inverse-on-surface": "#f1f1ef",
-                        "error": "#ba1a1a",
-                        "secondary-fixed-dim": "#ffb4a7",
-                        "on-background": "#1a1c1b",
-                        "on-secondary": "#ffffff",
-                        "surface-container-lowest": "#ffffff",
-                        "on-tertiary": "#ffffff",
-                        "tertiary-fixed": "#ffdcbc",
-                        "on-error": "#ffffff",
-                        "primary-fixed": "#bfe9ff",
-                        "on-primary-container": "#a3d0e7",
-                        "on-surface": "#1a1c1b"
-                    },
-                    "borderRadius": {
-                        "DEFAULT": "0.25rem",
-                        "lg": "0.5rem",
-                        "xl": "12px",
-                        "2xl": "16px",
-                        "full": "9999px"
-                    },
-                    "spacing": {
-                        "xxl": "64px",
-                        "xl": "40px",
-                        "gutter": "24px",
-                        "md": "16px",
-                        "container-padding": "32px",
-                        "sm": "8px",
-                        "lg": "24px",
-                        "xs": "4px",
-                        "base": "4px"
-                    },
-                    "fontFamily": {
-                        "sans": ["Inter", "Noto Sans JP", "sans-serif"]
-                    }
-                },
-            },
-        }
-    </script>
+body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
+.material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+.custom-shadow { box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04); }
+.tabular-nums { font-variant-numeric: tabular-nums; }
+</style>
 </head>
-<body class="bg-surface text-on-surface antialiased overflow-x-hidden">
-<div id="header-placeholder"></div>
-<script>
-fetch('/header.html')
-  .then(response => response.text())
-  .then(html => {
-    document.getElementById('header-placeholder').innerHTML = html;
-  });
-</script>
-<main class="pt-24 pb-xxl w-full">
-<div class="w-full px-container-padding space-y-lg">
-<!-- ページタイトルエリア -->
-<div class="flex justify-between items-center">
-<div class="flex items-center gap-3">
-<button class="w-9 h-9 flex items-center justify-center rounded-xl border border-outline-variant bg-surface-container-lowest hover:bg-surface-container transition-colors text-on-surface-variant shrink-0" onclick="history.back()">
-<span class="material-symbols-outlined text-[20px]">arrow_back</span>
-</button>
-<h1 class="text-xl font-bold text-on-surface tracking-tight">外注先マスタ</h1>
+<body class="bg-background text-on-surface">
+<!-- Sidebar Navigation -->
+<aside class="fixed left-0 top-0 h-screen w-64 z-50 bg-surface-container-lowest border-r border-outline-variant flex flex-col py-6">
+<div class="px-6 mb-10">
+<h1 class="text-headline-md font-display-lg font-bold text-primary">WIN WIN様</h1>
+<p class="text-label-sm text-on-surface-variant tracking-wider uppercase">デモ画面</p>
 </div>
-<div class="flex items-center gap-3">
-<button class="bg-surface-container-lowest border border-outline-variant text-on-surface px-5 py-2.5 text-sm font-semibold rounded-xl flex items-center gap-2 hover:bg-surface-container-high transition-all" id="btn-export-csv">
-<span class="material-symbols-outlined text-[20px]">download</span>
-                        CSV出力
-                    </button>
-<button class="bg-primary text-on-primary px-6 py-2.5 text-sm font-bold rounded-xl flex items-center gap-2 shadow-lg shadow-primary/10 hover:opacity-90 transition-all" id="btn-new-registration">
-<span class="material-symbols-outlined text-[20px]">add</span>
-                        新規外注先登録
-                    </button>
-</div>
-</div>
-<!-- フィルタエリア -->
-<div class="bg-surface-container-low p-5 rounded-2xl border border-outline-variant/30 flex flex-wrap items-center gap-4">
-<div class="relative min-w-[220px]">
-<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant text-xl">search</span>
-<input class="w-full bg-surface-container-lowest border-outline-variant/50 text-sm pl-12 pr-4 py-2.5 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" id="search-keyword" placeholder="会社名、担当者名で検索..." type="text"/>
-</div>
-<div class="relative w-64">
-<select class="w-full bg-surface-container-lowest border-outline-variant/50 text-sm py-2.5 px-4 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary appearance-none transition-all cursor-pointer" id="filter-area">
-<option value="">すべてのエリア</option>
-<option value="大阪府">大阪府</option>
-<option value="京都府">京都府</option>
-<option value="兵庫県">兵庫県</option>
-<option value="奈良県">奈良県</option>
-<option value="滋賀県">滋賀県</option>
-<option value="和歌山県">和歌山県</option>
-</select>
-<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-on-surface-variant">keyboard_arrow_down</span>
-</div>
-</div>
-<!-- データテーブル -->
-<div class="bg-surface-container-lowest border border-outline-variant/30 rounded-2xl overflow-hidden shadow-sm">
-<div class="overflow-x-auto custom-scrollbar">
-<table class="w-full text-left border-separate border-spacing-0" id="main-table">
-<thead>
-<tr class="bg-surface-container-low/50">
-<th class="px-3 py-1.5 text-[11px] font-bold text-on-surface-variant uppercase tracking-widest border-b border-outline-variant/30 w-16 text-center">#</th>
-<th class="px-3 py-1.5 text-[11px] font-bold text-on-surface-variant uppercase tracking-widest border-b border-outline-variant/30 min-w-[240px]">
-<div class="flex items-center gap-2 cursor-pointer hover:text-primary transition-colors">
-会社名
-<span class="material-symbols-outlined text-[18px]">unfold_more</span>
-</div>
-</th>
-<th class="px-3 py-1.5 text-[11px] font-bold text-on-surface-variant uppercase tracking-widest border-b border-outline-variant/30 min-w-[160px]">部署名</th>
-<th class="px-3 py-1.5 text-[11px] font-bold text-on-surface-variant uppercase tracking-widest border-b border-outline-variant/30 min-w-[140px]">担当者名</th>
-<th class="px-3 py-1.5 text-[11px] font-bold text-on-surface-variant uppercase tracking-widest border-b border-outline-variant/30 min-w-[220px]">メールアドレス</th>
-<th class="px-3 py-1.5 text-[11px] font-bold text-on-surface-variant uppercase tracking-widest border-b border-outline-variant/30 min-w-[150px]">電話番号</th>
-<th class="px-3 py-1.5 text-[11px] font-bold text-on-surface-variant uppercase tracking-widest border-b border-outline-variant/30 min-w-[120px]">エリア</th>
-<th class="px-3 py-1.5 text-[11px] font-bold text-on-surface-variant uppercase tracking-widest border-b border-outline-variant/30 min-w-[300px]">所在地</th>
-</tr>
-</thead>
-<tbody class="divide-y divide-outline-variant/20" id="vendor-table-body">
-<!-- JavaScriptで動的に生成される -->
-</tbody>
-</table>
-</div>
-<!-- ページネーション -->
-<div class="px-6 py-4 border-t border-outline-variant flex items-center justify-between bg-surface-container-low">
-<span class="text-sm font-medium text-on-surface-variant" id="pagination-info">全 <span class="text-on-surface font-bold">30</span> 件中 1-20 件を表示</span>
-<div class="flex items-center gap-2" id="pagination-controls">
-<button class="w-10 h-10 flex items-center justify-center border border-outline-variant rounded-xl hover:bg-surface-container-lowest disabled:opacity-30 transition-all" disabled="">
-<span class="material-symbols-outlined">chevron_left</span>
-</button>
-<button class="w-10 h-10 flex items-center justify-center bg-primary text-on-primary rounded-xl font-bold tabular-nums">1</button>
-<button class="w-10 h-10 flex items-center justify-center border border-outline-variant rounded-xl hover:bg-surface-container-lowest transition-all">
-<span class="material-symbols-outlined">chevron_right</span>
-</button>
-</div>
-</div>
-</div>
-<!-- 操作履歴 -->
-<div class="bg-surface-container-low border border-outline-variant rounded-xl overflow-hidden">
-<div class="px-6 py-4 border-b border-outline-variant flex items-center justify-between">
-<h2 class="text-title-md text-on-surface flex items-center gap-3">
-<span class="material-symbols-outlined text-primary text-[24px]">history</span>
-                        操作履歴
-                    </h2>
-</div>
-<div class="max-h-[300px] overflow-y-auto custom-scrollbar bg-surface-container-lowest">
-<table class="w-full text-left">
-<thead class="sticky top-0 z-10 bg-surface-container-low border-b border-outline-variant">
-<tr>
-<th class="px-4 py-2 text-[11px] font-bold text-on-surface-variant uppercase tracking-widest">日時</th>
-<th class="px-4 py-2 text-[11px] font-bold text-on-surface-variant uppercase tracking-widest">操作者</th>
-<th class="px-4 py-2 text-[11px] font-bold text-on-surface-variant uppercase tracking-widest">内容</th>
-</tr>
-</thead>
-<tbody class="divide-y divide-surface-container-low" id="history-table-body">
-<tr class="hover:bg-surface-container-low transition-colors cursor-pointer" onclick="location.href='history.html?type=vendor'">
-<td class="px-4 py-2 tabular-nums text-xs text-on-surface-variant">2024/11/15 09:15:33</td>
-<td class="px-4 py-2 text-xs font-medium text-on-surface">管理者 太郎</td>
-<td class="px-4 py-2 text-xs text-on-surface-variant">関西エリアの外注先30件を一括インポートしました</td>
-</tr>
-<tr class="hover:bg-surface-container-low transition-colors cursor-pointer" onclick="location.href='history.html?type=vendor'">
-<td class="px-4 py-2 tabular-nums text-xs text-on-surface-variant">2024/10/24 15:30:45</td>
-<td class="px-4 py-2 text-xs font-medium text-on-surface">管理者 太郎</td>
-<td class="px-4 py-2 text-xs text-on-surface-variant">外注先「株式会社タカハシ工業」の情報を更新しました</td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="px-4 py-2 bg-surface-container-low text-center flex justify-center">
-<a href="history.html?type=vendor" class="text-[11px] font-bold text-primary hover:underline transition-all flex items-center gap-2 uppercase tracking-widest group">
-                        もっと見る
-                        <span class="material-symbols-outlined text-[18px] group-hover:translate-x-1 transition-transform">arrow_forward</span>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center gap-3 px-6 py-3 text-on-surface-variant hover:bg-surface-container-low transition-colors duration-200" href="/reporting.html">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-label-md text-label-md">ダッシュボード</span>
 </a>
+<a class="flex items-center gap-3 px-6 py-3 text-on-surface-variant hover:bg-surface-container-low transition-colors duration-200" href="/projects.html">
+<span class="material-symbols-outlined">engineering</span>
+<span class="font-label-md text-label-md">受注一覧</span>
+</a>
+<a class="flex items-center gap-3 px-6 py-3 text-on-surface-variant hover:bg-surface-container-low transition-colors duration-200" href="/customers.html">
+<span class="material-symbols-outlined">groups</span>
+<span class="font-label-md text-label-md">顧客マスタ</span>
+</a>
+<a class="flex items-center gap-3 px-6 py-3 text-secondary font-bold border-l-4 border-secondary bg-surface-container-low" href="/vendors.html">
+<span class="material-symbols-outlined">store</span>
+<span class="font-label-md text-label-md">発注先マスタ</span>
+</a>
+<a class="flex items-center gap-3 px-6 py-3 text-on-surface-variant hover:bg-surface-container-low transition-colors duration-200" href="/categories.html">
+<span class="material-symbols-outlined">category</span>
+<span class="font-label-md text-label-md">工事区分マスタ</span>
+</a>
+<a class="flex items-center gap-3 px-6 py-3 text-on-surface-variant hover:bg-surface-container-low transition-colors duration-200" href="/receipts.html">
+<span class="material-symbols-outlined">savings</span>
+<span class="font-label-md text-label-md">売上・入金管理</span>
+</a>
+<a class="flex items-center gap-3 px-6 py-3 text-on-surface-variant hover:bg-surface-container-low transition-colors duration-200" href="/payment.html">
+<span class="material-symbols-outlined">payments</span>
+<span class="font-label-md text-label-md">支払管理</span>
+</a>
+<a class="flex items-center gap-3 px-6 py-3 text-on-surface-variant hover:bg-surface-container-low transition-colors duration-200" href="/orders-list.html">
+<span class="material-symbols-outlined">receipt_long</span>
+<span class="font-label-md text-label-md">工事計画</span>
+</a>
+<a class="flex items-center gap-3 px-6 py-3 text-on-surface-variant hover:bg-surface-container-low transition-colors duration-200" href="/history.html">
+<span class="material-symbols-outlined">history</span>
+<span class="font-label-md text-label-md">履歴詳細</span>
+</a>
+</nav>
+</aside>
+<!-- Main Content Canvas -->
+<main class="ml-64 min-h-screen">
+<!-- Top App Bar -->
+<header class="sticky top-0 z-40 flex justify-between items-center h-20 px-margin-desktop bg-surface/80 backdrop-blur-md shadow-sm">
+<div class="flex items-center gap-4 bg-surface-container-low px-4 py-2 rounded-full w-96">
+<span class="material-symbols-outlined text-on-surface-variant">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-body-md w-full" id="search-keyword" placeholder="Search vendors..." type="text"/>
 </div>
-</div>
-<footer class="pt-16 pb-8 border-t border-outline-variant text-center">
-<p class="text-[11px] text-on-surface-variant font-bold uppercase tracking-[0.3em] mb-2">CONSTRUCT_PRO ENTERPRISE SYSTEMS v2.4.0</p>
-<p class="text-[11px] text-on-surface-variant/50">© 2024 CONSTRUCT_PRO Systems. All Rights Reserved.</p>
-</footer>
-</div>
-</main>
-<!-- 編集モーダル -->
-<div class="fixed inset-0 z-[100] hidden" id="edit-modal">
-<div class="absolute inset-0 bg-primary/20 backdrop-blur-md transition-opacity" id="edit-modal-overlay"></div>
-<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl bg-surface-container-lowest rounded-2xl shadow-2xl overflow-hidden transform transition-all scale-95 opacity-0 duration-300" id="edit-modal-content">
-<div class="px-6 py-4 border-b border-outline-variant/30 flex justify-between items-center bg-surface-container-low/50">
-<h3 class="text-lg font-bold text-on-surface">外注先情報の編集</h3>
-<button class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-surface-container transition-colors text-on-surface-variant" id="btn-close-edit-modal">
-<span class="material-symbols-outlined">close</span>
-</button>
-</div>
-<div class="p-5">
-<form class="space-y-4" id="edit-vendor-form">
-<input id="modal-vendor-id" type="hidden"/>
-<div class="grid grid-cols-2 gap-4">
-<div class="col-span-2">
-<label class="block text-[11px] font-bold text-on-surface-variant mb-1.5">会社名</label>
-<input class="w-full bg-surface-container-low border-outline-variant focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm px-4 py-2.5 rounded-xl transition-all" id="modal-company-name" required="" type="text"/>
-</div>
-<div>
-<label class="block text-[11px] font-bold text-on-surface-variant mb-1.5">部署名</label>
-<input class="w-full bg-surface-container-low border-outline-variant focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm px-4 py-2.5 rounded-xl transition-all" id="modal-dept-name" type="text"/>
-</div>
-<div>
-<label class="block text-[11px] font-bold text-on-surface-variant mb-1.5">担当者名</label>
-<input class="w-full bg-surface-container-low border-outline-variant focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm px-4 py-2.5 rounded-xl transition-all" id="modal-contact-name" required="" type="text"/>
-</div>
-<div>
-<label class="block text-[11px] font-bold text-on-surface-variant mb-1.5">メールアドレス</label>
-<input class="w-full bg-surface-container-low border-outline-variant focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm px-4 py-2.5 rounded-xl transition-all" id="modal-email" required="" type="email"/>
-</div>
-<div>
-<label class="block text-[11px] font-bold text-on-surface-variant mb-1.5">電話番号</label>
-<input class="w-full bg-surface-container-low border-outline-variant focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm px-4 py-2.5 rounded-xl transition-all" id="modal-phone" type="tel"/>
-</div>
-<div class="col-span-2">
-<label class="block text-[11px] font-bold text-on-surface-variant mb-1.5">所在地</label>
-<input class="w-full bg-surface-container-low border-outline-variant focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm px-4 py-2.5 rounded-xl transition-all" id="modal-address" type="text"/>
-</div>
-</div>
-</form>
-</div>
-<div class="px-6 py-4 border-t border-outline-variant/30 bg-surface-container-low/50 flex justify-between items-center">
-<button class="text-error hover:bg-error/5 px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 transition-all" id="btn-delete-vendor">
-<span class="material-symbols-outlined text-xl">delete</span>
-                    削除
-                </button>
+<div class="flex items-center gap-6">
 <div class="flex items-center gap-4">
-<button class="px-6 py-2.5 text-sm font-bold text-on-surface-variant hover:bg-surface-container rounded-xl transition-all" id="btn-cancel-edit">キャンセル</button>
-<button class="bg-primary text-on-primary px-8 py-2.5 text-sm font-bold rounded-xl hover:brightness-110 transition-all flex items-center gap-2 shadow-lg shadow-primary/10" id="btn-save-edit">
-<span class="material-symbols-outlined text-xl">save</span>
-                        変更を保存
-                    </button>
+<div class="relative" id="notif-wrap">
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary relative" onclick="toggleNotif(event)">notifications<span id="notif-badge" class="absolute -top-1 -right-1 bg-error text-on-error text-[9px] font-normal rounded-full min-w-[16px] h-4 px-1 flex items-center justify-center" style="display:none">0</span></button>
+<div id="notif-panel" class="absolute right-0 mt-2 w-96 max-h-[480px] overflow-y-auto bg-surface-container-lowest border border-outline-variant rounded-lg custom-shadow z-[200]" style="display:none" onclick="event.stopPropagation()">
+<div class="px-4 py-3 border-b border-outline-variant flex justify-between items-center sticky top-0 bg-surface-container-lowest">
+<span class="text-label-md font-label-md text-primary">通知</span>
+<span class="text-label-sm text-on-surface-variant" id="notif-count-label"></span>
+</div>
+<div id="notif-list"></div>
 </div>
 </div>
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary">help</button>
+</div>
+<div class="h-8 w-px bg-outline-variant"></div>
+<div class="flex items-center gap-3">
+<div class="text-right">
+<p class="text-label-md font-bold text-primary">Admin User</p>
+<p class="text-label-sm text-on-surface-variant">System</p>
+</div>
+<div class="w-10 h-10 rounded-full bg-surface-container-high border border-outline-variant"></div>
 </div>
 </div>
-<!-- 新規登録モーダル -->
-<div class="fixed inset-0 z-[100] hidden" id="new-registration-modal">
-<div class="absolute inset-0 bg-primary/20 backdrop-blur-md" id="new-modal-overlay"></div>
-<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl bg-surface-container-lowest rounded-2xl shadow-2xl overflow-hidden transform transition-all scale-95 opacity-0 duration-300" id="new-modal-content">
-<div class="px-6 py-4 border-b border-outline-variant/30 flex justify-between items-center bg-surface-container-low/50">
-<h3 class="text-lg font-bold text-on-surface">新規外注先登録</h3>
-<button class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-surface-container transition-colors text-on-surface-variant" id="btn-close-new-modal">
-<span class="material-symbols-outlined">close</span>
+</header>
+<!-- Page Content -->
+<div class="p-margin-desktop space-y-lg max-w-container-max mx-auto">
+<!-- Header Section -->
+<div class="flex justify-between items-end mb-lg">
+<div>
+<h2 class="text-[18px] font-label-md text-primary">発注先マスタ</h2>
+</div>
+<button class="px-4 py-1.5 bg-secondary text-on-secondary font-label-md rounded-lg shadow-lg hover:scale-[1.02] active:scale-95 transition-all flex items-center gap-2" id="btn-new-registration">
+<span class="material-symbols-outlined">add</span>
+新規発注先登録
 </button>
 </div>
-<div class="p-5">
-<form class="space-y-4" id="new-vendor-form">
-<div class="grid grid-cols-2 gap-4">
+
+<!-- Data Table -->
+<div class="bg-surface-container-lowest rounded-lg custom-shadow border border-outline-variant overflow-hidden">
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse" id="main-table">
+<thead class="bg-surface">
+<tr>
+<th class="px-lg py-4 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider">#</th>
+<th class="px-lg py-4 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider">会社名</th>
+<th class="px-lg py-4 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider">部署名</th>
+<th class="px-lg py-4 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider">担当者名</th>
+<th class="px-lg py-4 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider">メールアドレス</th>
+<th class="px-lg py-4 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider">電話番号</th>
+<th class="px-lg py-4 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider">所在地</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant" id="vendor-table-body">
+</tbody>
+</table>
+</div>
+<div class="p-4 bg-surface text-center">
+<button class="text-label-md font-normal text-secondary">View Complete List</button>
+</div>
+</div>
+</div>
+<!-- Footer -->
+<footer class="border-t border-outline-variant mt-xl py-lg px-margin-desktop text-center text-on-surface-variant">
+<p class="text-label-sm uppercase tracking-wider mb-2">WIN WIN様 デモ画面 v2.4.0</p>
+<p class="text-body-sm">© 2024 株式会社WIN WIN デモ環境</p>
+</footer>
+</main>
+<!-- Edit Modal -->
+<div class="fixed inset-0 z-[100] bg-primary/20 backdrop-blur-md" id="edit-modal" style="display:none" onclick="closeModal('edit-modal')">
+<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl max-h-[90vh] bg-surface-container-lowest rounded-lg custom-shadow border border-outline-variant overflow-hidden" onclick="event.stopPropagation()">
+<div class="px-lg py-md flex justify-between items-center border-b border-outline-variant bg-surface-container-low">
+<h3 class="text-label-md font-label-md text-primary">発注先情報の編集</h3>
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary" id="btn-close-edit-modal">close</button>
+</div>
+<div class="p-lg space-y-md overflow-y-auto flex-1">
+<form class="space-y-md" id="edit-vendor-form">
+<input id="modal-vendor-id" type="hidden"/>
+<div class="grid grid-cols-2 gap-md">
 <div class="col-span-2">
-<label class="block text-[11px] font-bold text-on-surface-variant mb-1.5">会社名</label>
-<input class="w-full bg-surface-container-low border-outline-variant focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm px-4 py-2.5 rounded-xl transition-all" name="company" placeholder="株式会社〇〇" required="" type="text"/>
+<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">会社名</label>
+<input class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent" id="modal-company-name" required type="text"/>
 </div>
 <div>
-<label class="block text-[11px] font-bold text-on-surface-variant mb-1.5">部署名</label>
-<input class="w-full bg-surface-container-low border-outline-variant focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm px-4 py-2.5 rounded-xl transition-all" name="dept" placeholder="営業部" type="text"/>
+<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">部署名</label>
+<input class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent" id="modal-dept-name" type="text"/>
 </div>
 <div>
-<label class="block text-[11px] font-bold text-on-surface-variant mb-1.5">担当者名</label>
-<input class="w-full bg-surface-container-low border-outline-variant focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm px-4 py-2.5 rounded-xl transition-all" name="contact" placeholder="山田 太郎" required="" type="text"/>
+<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">担当者名</label>
+<input class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent" id="modal-contact-name" required type="text"/>
 </div>
 <div>
-<label class="block text-[11px] font-bold text-on-surface-variant mb-1.5">メールアドレス</label>
-<input class="w-full bg-surface-container-low border-outline-variant focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm px-4 py-2.5 rounded-xl transition-all" name="email" placeholder="example@domain.com" required="" type="email"/>
+<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">メールアドレス</label>
+<input class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent" id="modal-email" required type="email"/>
 </div>
 <div>
-<label class="block text-[11px] font-bold text-on-surface-variant mb-1.5">電話番号</label>
-<input class="w-full bg-surface-container-low border-outline-variant focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm px-4 py-2.5 rounded-xl transition-all" name="phone" placeholder="03-0000-0000" type="tel"/>
+<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">電話番号</label>
+<input class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent" id="modal-phone" type="tel"/>
 </div>
 <div class="col-span-2">
-<label class="block text-[11px] font-bold text-on-surface-variant mb-1.5">所在地</label>
-<input class="w-full bg-surface-container-low border-outline-variant focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm px-4 py-2.5 rounded-xl transition-all" name="address" placeholder="大阪府..." type="text"/>
+<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">所在地</label>
+<input class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent" id="modal-address" type="text"/>
 </div>
 </div>
 </form>
 </div>
-<div class="px-6 py-4 border-t border-outline-variant/30 bg-surface-container-low/50 flex justify-end gap-4">
-<button class="px-6 py-2.5 text-sm font-bold text-on-surface-variant hover:bg-surface-container rounded-xl transition-all" id="btn-cancel-new">キャンセル</button>
-<button class="bg-primary text-on-primary px-8 py-2.5 text-sm font-bold rounded-xl hover:brightness-110 transition-all flex items-center gap-2 shadow-lg shadow-primary/10" id="btn-submit-new">
-<span class="material-symbols-outlined text-xl">add</span>
-                    登録する
-                </button>
+<div class="px-lg py-md bg-surface-container-low border-t border-outline-variant flex justify-between items-center">
+<button class="text-error font-normal text-label-md flex items-center gap-2 hover:bg-error/5 px-4 py-1.5 rounded-lg transition-all" id="btn-delete-vendor">
+<span class="material-symbols-outlined text-label-md">delete</span>
+削除
+</button>
+<div class="flex items-center gap-md">
+<button class="px-4 py-1.5 text-label-md font-label-md font-normal text-on-surface-variant hover:bg-surface-container rounded-lg transition-all" id="btn-cancel-edit">キャンセル</button>
+<button class="bg-secondary text-on-secondary px-4 py-1.5 text-label-md font-label-md font-normal rounded-lg shadow-lg hover:scale-[1.02] transition-all" id="btn-save-edit">保存</button>
+</div>
+</div>
+</div>
+</div>
+
+<!-- Register Modal -->
+<div class="fixed inset-0 z-[100] bg-primary/20 backdrop-blur-md" id="new-registration-modal" style="display:none" onclick="closeModal('new-registration-modal')">
+<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl max-h-[90vh] bg-surface-container-lowest rounded-lg custom-shadow border border-outline-variant overflow-hidden" onclick="event.stopPropagation()">
+<div class="px-lg py-md flex justify-between items-center border-b border-outline-variant bg-surface-container-low">
+<h3 class="text-label-md font-label-md text-primary">新規発注先登録</h3>
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary" id="btn-close-new-modal">close</button>
+</div>
+<div class="p-lg space-y-md overflow-y-auto flex-1">
+<form class="space-y-md" id="new-vendor-form">
+<div class="grid grid-cols-2 gap-md">
+<div class="col-span-2">
+<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">会社名</label>
+<input class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent" name="company" placeholder="株式会社〇〇" required type="text"/>
+</div>
+<div>
+<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">部署名</label>
+<input class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent" name="dept" placeholder="営業部" type="text"/>
+</div>
+<div>
+<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">担当者名</label>
+<input class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent" name="contact" placeholder="山田 太郎" required type="text"/>
+</div>
+<div>
+<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">メールアドレス</label>
+<input class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent" name="email" placeholder="example@domain.com" required type="email"/>
+</div>
+<div>
+<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">電話番号</label>
+<input class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent" name="phone" placeholder="03-0000-0000" type="tel"/>
+</div>
+<div class="col-span-2">
+<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">所在地</label>
+<input class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent" name="address" placeholder="大阪府..." type="text"/>
+</div>
+</div>
+</form>
+</div>
+<div class="px-lg py-md bg-surface-container-low border-t border-outline-variant flex justify-end gap-md">
+<button class="px-4 py-1.5 text-label-md font-label-md font-normal text-on-surface-variant hover:bg-surface-container rounded-lg transition-all" id="btn-cancel-new">キャンセル</button>
+<button class="bg-secondary text-on-secondary px-4 py-1.5 text-label-md font-label-md font-normal rounded-lg shadow-lg hover:scale-[1.02] transition-all" id="btn-submit-new">登録する</button>
 </div>
 </div>
 </div>
 <script>
-        function toggleModal(id, show) {
-            const modal = document.getElementById(id);
-            let content;
-            if (id === 'edit-modal') {
-                content = document.getElementById('edit-modal-content');
-            } else if (id === 'new-registration-modal') {
-                content = document.getElementById('new-modal-content');
-            }
+function openModal(id) {
+  const el = document.getElementById(id);
+  if(el) el.style.display = 'block';
+}
 
-            if (!modal || !content) {
-                console.error('Modal or content not found:', id);
-                return;
-            }
+function closeModal(id) {
+  const el = document.getElementById(id);
+  if(el) el.style.display = 'none';
+}
 
-            if (show) {
-                modal.classList.remove('hidden');
-                setTimeout(() => {
-                    content.classList.remove('scale-95', 'opacity-0');
-                    content.classList.add('scale-100', 'opacity-100');
-                }, 10);
-                document.body.style.overflow = 'hidden';
-            } else {
-                content.classList.add('scale-95', 'opacity-0');
-                content.classList.remove('scale-100', 'opacity-100');
-                setTimeout(() => {
-                    modal.classList.add('hidden');
-                }, 300);
-                document.body.style.overflow = '';
-            }
-        }
+function toggleModal(id, show) {
+  if (show) openModal(id);
+  else closeModal(id);
+}
 
-        let editingId = null;
+let editingId = null;
 
-        // グローバルキャッシュの初期化
-        if (!window.appCache) {
-            window.appCache = { projects: [], vendors: [], categories: [], orders: [] };
-        }
+if (!window.appCache) {
+  window.appCache = { projects: [], vendors: [], categories: [], orders: [], customers: [] };
+}
 
-        function loadVendors() {
-            renderTable(window.appCache.vendors);
-        }
+let vendorList = [];
 
-        function renderTable(vendors) {
-            const tbody = document.getElementById('vendor-table-body');
-            tbody.innerHTML = vendors.map(v => `
-                <tr class="hover:bg-surface-container-low transition-colors cursor-pointer group" onclick="openEditModal('${v.id}')">
-                    <td class="px-3 py-1.5 text-xs text-center tabular-nums text-on-surface-variant font-medium">${v.id}</td>
-                    <td class="px-3 py-1.5 text-xs font-bold text-on-surface group-hover:text-primary transition-colors">${v.company}</td>
-                    <td class="px-3 py-1.5 text-xs text-on-surface-variant">${v.dept || '-'}</td>
-                    <td class="px-3 py-1.5 text-xs font-medium text-on-surface">${v.contact}</td>
-                    <td class="px-3 py-1.5 text-xs tabular-nums text-on-surface-variant">${v.email}</td>
-                    <td class="px-3 py-1.5 text-xs tabular-nums text-on-surface-variant">${v.phone}</td>
-                    <td class="px-3 py-1.5 text-xs text-primary font-medium">${v.area || '-'}</td>
-                    <td class="px-3 py-1.5 text-xs text-on-surface-variant">${v.address}</td>
-                </tr>
-            `).join('');
-        }
+function loadVendors() {
+  renderTable(window.appCache.vendors);
+}
 
-        function openEditModal(id) {
-            editingId = id;
-            const v = window.appCache.vendors.find(x => x.id === id);
-            if(v) {
-                document.getElementById('modal-vendor-id').value = v.id;
-                document.getElementById('modal-company-name').value = v.company;
-                document.getElementById('modal-dept-name').value = v.dept || '';
-                document.getElementById('modal-contact-name').value = v.contact;
-                document.getElementById('modal-email').value = v.email;
-                document.getElementById('modal-phone').value = v.phone || '';
-                document.getElementById('modal-address').value = v.address || '';
-                toggleModal('edit-modal', true);
-            }
-        }
+function renderTable(vendors) {
+  vendorList = vendors;
+  const tbody = document.getElementById('vendor-table-body');
+  tbody.innerHTML = vendors.map(v => `
+    <tr class="hover:bg-surface-container-low transition-colors cursor-pointer group" onclick="openEditModal('${v.id}')">
+      <td class="px-lg py-5 text-label-md font-label-md text-on-surface-variant tabular-nums">${String(v.id).padStart(4, '0')}</td>
+      <td class="px-lg py-5 text-label-md font-label-md text-primary">${v.company}</td>
+      <td class="px-lg py-5 text-label-md font-label-md text-on-surface-variant">${v.dept || '-'}</td>
+      <td class="px-lg py-5 text-label-md font-label-md text-on-surface">${v.contact}</td>
+      <td class="px-lg py-5 text-label-md font-label-md tabular-nums text-on-surface-variant">${v.email}</td>
+      <td class="px-lg py-5 text-label-md font-label-md tabular-nums text-on-surface-variant">${v.phone || '-'}</td>
+      <td class="px-lg py-5 text-label-md font-label-md text-on-surface-variant">${v.address || '-'}</td>
+    </tr>
+  `).join('');
+}
 
-        document.addEventListener('DOMContentLoaded', async () => {
-            // Initialize global cache if empty
-            if (window.appCache.vendors.length === 0) {
-                const res = await fetch('/api/cache');
-                window.appCache = await res.json();
-            }
-            loadVendors();
+function openEditModal(id) {
+  editingId = id;
+  const v = vendorList.find(x => x.id === id);
+  if(v) {
+    document.getElementById('modal-vendor-id').value = v.id;
+    document.getElementById('modal-company-name').value = v.company;
+    document.getElementById('modal-dept-name').value = v.dept || '';
+    document.getElementById('modal-contact-name').value = v.contact;
+    document.getElementById('modal-email').value = v.email;
+    document.getElementById('modal-phone').value = v.phone || '';
+    document.getElementById('modal-address').value = v.address || '';
+    openModal('edit-modal');
+  }
+}
 
-            document.getElementById('btn-new-registration').addEventListener('click', () => {
-                editingId = null;
-                document.querySelector('[name="company"]').value = '';
-                document.querySelector('[name="dept"]').value = '';
-                document.querySelector('[name="contact"]').value = '';
-                document.querySelector('[name="email"]').value = '';
-                document.querySelector('[name="phone"]').value = '';
-                document.querySelector('[name="address"]').value = '';
-                toggleModal('new-registration-modal', true);
-            });
+document.addEventListener('DOMContentLoaded', async () => {
+  if (window.appCache.vendors.length === 0) {
+    const res = await fetch('/api/cache');
+    window.appCache = await res.json();
+  }
+  loadVendors();
 
-            document.getElementById('btn-close-new-modal').addEventListener('click', () => toggleModal('new-registration-modal', false));
-            document.getElementById('btn-cancel-new').addEventListener('click', () => toggleModal('new-registration-modal', false));
-            document.getElementById('new-modal-overlay').addEventListener('click', () => toggleModal('new-registration-modal', false));
+  document.getElementById('btn-new-registration').addEventListener('click', () => {
+    editingId = null;
+    document.querySelector('[name="company"]').value = '';
+    document.querySelector('[name="dept"]').value = '';
+    document.querySelector('[name="contact"]').value = '';
+    document.querySelector('[name="email"]').value = '';
+    document.querySelector('[name="phone"]').value = '';
+    document.querySelector('[name="address"]').value = '';
+    openModal('new-registration-modal');
+  });
 
-            document.getElementById('btn-close-edit-modal').addEventListener('click', () => toggleModal('edit-modal', false));
-            document.getElementById('btn-cancel-edit').addEventListener('click', () => toggleModal('edit-modal', false));
-            document.getElementById('edit-modal-overlay').addEventListener('click', () => toggleModal('edit-modal', false));
+  document.getElementById('btn-close-new-modal').addEventListener('click', () => closeModal('new-registration-modal'));
+  document.getElementById('btn-cancel-new').addEventListener('click', () => closeModal('new-registration-modal'));
 
-            document.getElementById('btn-save-edit').addEventListener('click', async () => {
-                if(!editingId) return;
-                const company = document.getElementById('modal-company-name').value;
-                const dept = document.getElementById('modal-dept-name').value;
-                const contact = document.getElementById('modal-contact-name').value;
-                const email = document.getElementById('modal-email').value;
-                const phone = document.getElementById('modal-phone').value;
-                const address = document.getElementById('modal-address').value;
+  document.getElementById('btn-close-edit-modal').addEventListener('click', () => closeModal('edit-modal'));
+  document.getElementById('btn-cancel-edit').addEventListener('click', () => closeModal('edit-modal'));
 
-                try {
-                    await fetch(`/api/vendors/${editingId}`, {
-                        method: 'PUT',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ company, dept, contact, email, phone, address })
-                    });
-                    const vendorRes = await fetch('/api/vendors');
-                    window.appCache.vendors = await vendorRes.json();
-                    loadVendors();
-                    toggleModal('edit-modal', false);
-                } catch(e) {
-                    alert('更新に失敗しました');
-                }
-            });
+  document.getElementById('btn-save-edit').addEventListener('click', async () => {
+    if(!editingId) return;
+    const company = document.getElementById('modal-company-name').value;
+    const dept = document.getElementById('modal-dept-name').value;
+    const contact = document.getElementById('modal-contact-name').value;
+    const email = document.getElementById('modal-email').value;
+    const phone = document.getElementById('modal-phone').value;
+    const address = document.getElementById('modal-address').value;
 
-            document.getElementById('btn-delete-vendor').addEventListener('click', async () => {
-                if(!editingId) return;
-                if(confirm('この外注先を削除してもよろしいですか？')) {
-                    try {
-                        await fetch(`/api/vendors/${editingId}`, { method: 'DELETE' });
-                        const vendorRes = await fetch('/api/vendors');
-                        window.appCache.vendors = await vendorRes.json();
-                        loadVendors();
-                        toggleModal('edit-modal', false);
-                    } catch(e) {
-                        alert('削除に失敗しました');
-                    }
-                }
-            });
+    try {
+      await fetch(`/api/vendors/${editingId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ company, dept, contact, email, phone, address })
+      });
+      const vendorRes = await fetch('/api/vendors');
+      window.appCache.vendors = await vendorRes.json();
+      loadVendors();
+      toggleModal('edit-modal', false);
+    } catch(e) {
+      alert('更新に失敗しました');
+    }
+  });
 
-            document.getElementById('btn-submit-new').addEventListener('click', async () => {
-                const company = document.querySelector('[name="company"]').value;
-                const dept = document.querySelector('[name="dept"]').value;
-                const contact = document.querySelector('[name="contact"]').value;
-                const email = document.querySelector('[name="email"]').value;
-                const phone = document.querySelector('[name="phone"]').value;
-                const address = document.querySelector('[name="address"]').value;
+  document.getElementById('btn-delete-vendor').addEventListener('click', async () => {
+    if(!editingId) return;
+    if(confirm('この発注先を削除してもよろしいですか？')) {
+      try {
+        await fetch(`/api/vendors/${editingId}`, { method: 'DELETE' });
+        const vendorRes = await fetch('/api/vendors');
+        window.appCache.vendors = await vendorRes.json();
+        loadVendors();
+        toggleModal('edit-modal', false);
+      } catch(e) {
+        alert('削除に失敗しました');
+      }
+    }
+  });
 
-                if(!company || !contact) return alert('必須項目を入力してください');
+  document.getElementById('btn-submit-new').addEventListener('click', async () => {
+    const company = document.querySelector('[name="company"]').value;
+    const dept = document.querySelector('[name="dept"]').value;
+    const contact = document.querySelector('[name="contact"]').value;
+    const email = document.querySelector('[name="email"]').value;
+    const phone = document.querySelector('[name="phone"]').value;
+    const address = document.querySelector('[name="address"]').value;
 
-                try {
-                    await fetch('/api/vendors', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ company, dept, contact, email, phone, address })
-                    });
-                    document.querySelector('[name="company"]').value = '';
-                    document.querySelector('[name="dept"]').value = '';
-                    document.querySelector('[name="contact"]').value = '';
-                    document.querySelector('[name="email"]').value = '';
-                    document.querySelector('[name="phone"]').value = '';
-                    document.querySelector('[name="address"]').value = '';
-                    const vendorRes = await fetch('/api/vendors');
-                    window.appCache.vendors = await vendorRes.json();
-                    loadVendors();
-                    toggleModal('new-registration-modal', false);
-                } catch(e) {
-                    alert('登録に失敗しました');
-                }
-            });
+    if(!company || !contact) return alert('必須項目を入力してください');
 
-            window.addEventListener('keydown', (e) => {
-                if (e.key === 'Escape') {
-                    toggleModal('edit-modal', false);
-                    toggleModal('new-registration-modal', false);
-                }
-            });
+    try {
+      await fetch('/api/vendors', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ company, dept, contact, email, phone, address })
+      });
+      document.querySelector('[name="company"]').value = '';
+      document.querySelector('[name="dept"]').value = '';
+      document.querySelector('[name="contact"]').value = '';
+      document.querySelector('[name="email"]').value = '';
+      document.querySelector('[name="phone"]').value = '';
+      document.querySelector('[name="address"]').value = '';
+      const vendorRes = await fetch('/api/vendors');
+      window.appCache.vendors = await vendorRes.json();
+      loadVendors();
+      toggleModal('new-registration-modal', false);
+    } catch(e) {
+      alert('登録に失敗しました');
+    }
+  });
 
-            loadVendors();
+  document.getElementById('search-keyword').addEventListener('input', (e) => {
+    const keyword = e.target.value.toLowerCase();
+    const filtered = window.appCache.vendors.filter(v =>
+      v.company.toLowerCase().includes(keyword) ||
+      v.contact.toLowerCase().includes(keyword)
+    );
+    renderTable(filtered);
+  });
+});
+</script>
 
-            // Filter event listeners
-            document.getElementById('filter-area').addEventListener('change', filterVendors);
-            document.getElementById('search-keyword').addEventListener('input', filterVendors);
-        });
-
-        function filterVendors() {
-            const area = document.getElementById('filter-area').value;
-            const keyword = document.getElementById('search-keyword').value.toLowerCase();
-            const rows = document.querySelectorAll('#main-table tbody tr');
-
-            rows.forEach(row => {
-                const company = row.querySelector('td:nth-child(2)').textContent.toLowerCase();
-                const contact = row.querySelector('td:nth-child(4)').textContent.toLowerCase();
-                const rowArea = row.querySelector('td:nth-child(6)').textContent;
-
-                const matchArea = !area || rowArea === area;
-                const matchKeyword = !keyword || company.includes(keyword) || contact.includes(keyword);
-
-                row.style.display = matchArea && matchKeyword ? '' : 'none';
-            });
-        }
-    </script>
+<script src="/notify.js"></script>
 </body></html>

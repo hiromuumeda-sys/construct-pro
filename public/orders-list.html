@@ -1,156 +1,121 @@
 <!DOCTYPE html>
-
-<html class="light" lang="ja"><head>
+<html class="light" lang="ja">
+<head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>工事計画 - WIN WIN様デモ</title>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Noto+Sans+JP:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-<title>注文管理 - CONSTRUCT_PRO</title>
-<script id="tailwind-config">
-        tailwind.config = {
-            darkMode: "class",
-            theme: {
-                extend: {
-                    "colors": {
-                        "surface": "#faf9f7",
-                        "surface-bright": "#faf9f7",
-                        "on-secondary-fixed": "#400100",
-                        "outline-variant": "#c1c7cc",
-                        "on-primary-fixed-variant": "#1d4c5f",
-                        "on-secondary-fixed-variant": "#832519",
-                        "on-tertiary-fixed": "#2c1700",
-                        "on-primary": "#ffffff",
-                        "tertiary-container": "#724d23",
-                        "outline": "#71787c",
-                        "error-container": "#ffdad6",
-                        "on-primary-fixed": "#001f2a",
-                        "surface-tint": "#376478",
-                        "surface-dim": "#dadad8",
-                        "on-surface-variant": "#41484c",
-                        "surface-variant": "#e3e2e0",
-                        "primary-fixed-dim": "#a0cde4",
-                        "secondary-container": "#ff816d",
-                        "on-tertiary-fixed-variant": "#623f16",
-                        "inverse-primary": "#a0cde4",
-                        "secondary-fixed": "#ffdad4",
-                        "on-error-container": "#93000a",
-                        "surface-container": "#efeeec",
-                        "inverse-surface": "#2f3130",
-                        "tertiary-fixed-dim": "#f0bd89",
-                        "on-secondary-container": "#731a0f",
-                        "background": "#faf9f7",
-                        "surface-container-highest": "#e3e2e0",
-                        "on-tertiary-container": "#f3c08c",
-                        "surface-container-low": "#f4f3f1",
-                        "secondary": "#a33c2d",
-                        "surface-container-high": "#e9e8e6",
-                        "primary-container": "#2d5a6e",
-                        "primary": "#104356",
-                        "tertiary": "#57360e",
-                        "inverse-on-surface": "#f1f1ef",
-                        "error": "#ba1a1a",
-                        "secondary-fixed-dim": "#ffb4a7",
-                        "on-background": "#1a1c1b",
-                        "on-secondary": "#ffffff",
-                        "surface-container-lowest": "#ffffff",
-                        "on-tertiary": "#ffffff",
-                        "tertiary-fixed": "#ffdcbc",
-                        "on-error": "#ffffff",
-                        "primary-fixed": "#bfe9ff",
-                        "on-primary-container": "#a3d0e7",
-                        "on-surface": "#1a1c1b"
-                    },
-                    "borderRadius": {
-                        "DEFAULT": "0.25rem",
-                        "lg": "0.5rem",
-                        "xl": "12px",
-                        "2xl": "16px",
-                        "full": "9999px"
-                    },
-                    "spacing": {
-                        "xxl": "64px",
-                        "xl": "40px",
-                        "gutter": "24px",
-                        "md": "16px",
-                        "container-padding": "32px",
-                        "sm": "8px",
-                        "lg": "24px",
-                        "xs": "4px",
-                        "base": "4px"
-                    },
-                    "fontFamily": {
-                        "sans": ["Inter", "Noto Sans JP", "sans-serif"]
-                    }
-                }
-            }
-        }
-    </script>
+<script src="/theme.js"></script>
 <style>
-        body {
-            font-family: 'Inter', 'Noto Sans JP', sans-serif;
-            background-color: #faf9f7;
-        }
-        .material-symbols-outlined {
-            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-            vertical-align: middle;
-        }
-        .custom-scrollbar::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-track {
-            background: #f4f3f1;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-            background: #dadad8;
-            border-radius: 3px;
-        }
-        .tabular-numbers {
-            font-variant-numeric: tabular-nums;
-            font-feature-settings: "tnum";
-        }
-    </style>
+body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
+.material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+.custom-shadow { box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04); }
+.tabular-numbers { font-variant-numeric: tabular-nums; }
+</style>
 </head>
-<body class="text-on-surface antialiased">
-<!-- ヘッダー -->
-<div id="header-placeholder"></div>
-<script>
-fetch('/header.html')
-  .then(response => response.text())
-  .then(html => {
-    document.getElementById('header-placeholder').innerHTML = html;
-  });
-</script>
-<main class="pt-24 pb-xxl w-full">
-<div class="w-full px-container-padding space-y-lg">
-<!-- ページタイトルエリア -->
-<div class="flex justify-between items-center">
-<div class="flex items-center gap-3">
-<button class="w-9 h-9 flex items-center justify-center rounded-xl border border-outline-variant bg-surface-container-lowest hover:bg-surface-container transition-colors text-on-surface-variant shrink-0" onclick="history.back()">
-<span class="material-symbols-outlined text-[20px]">arrow_back</span>
-</button>
-<h1 class="text-xl font-bold text-on-surface tracking-tight">注文管理</h1>
+<body class="bg-background text-on-surface">
+<!-- Sidebar Navigation -->
+<aside class="fixed left-0 top-0 h-screen w-64 z-50 bg-surface-container-lowest border-r border-outline-variant flex flex-col py-6">
+<div class="px-6 mb-10">
+<h1 class="text-headline-md font-display-lg font-bold text-primary">WIN WIN様</h1>
+<p class="text-label-sm text-on-surface-variant tracking-wider uppercase">デモ画面</p>
 </div>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center gap-3 px-6 py-3 text-on-surface-variant hover:bg-surface-container-low transition-colors duration-200" href="/reporting.html">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-label-md text-label-md">ダッシュボード</span>
+</a>
+<a class="flex items-center gap-3 px-6 py-3 text-on-surface-variant hover:bg-surface-container-low transition-colors duration-200" href="/projects.html">
+<span class="material-symbols-outlined">engineering</span>
+<span class="font-label-md text-label-md">受注一覧</span>
+</a>
+<a class="flex items-center gap-3 px-6 py-3 text-on-surface-variant hover:bg-surface-container-low transition-colors duration-200" href="/customers.html">
+<span class="material-symbols-outlined">groups</span>
+<span class="font-label-md text-label-md">顧客マスタ</span>
+</a>
+<a class="flex items-center gap-3 px-6 py-3 text-on-surface-variant hover:bg-surface-container-low transition-colors duration-200" href="/vendors.html">
+<span class="material-symbols-outlined">store</span>
+<span class="font-label-md text-label-md">発注先マスタ</span>
+</a>
+<a class="flex items-center gap-3 px-6 py-3 text-on-surface-variant hover:bg-surface-container-low transition-colors duration-200" href="/categories.html">
+<span class="material-symbols-outlined">category</span>
+<span class="font-label-md text-label-md">工事区分マスタ</span>
+</a>
+<a class="flex items-center gap-3 px-6 py-3 text-on-surface-variant hover:bg-surface-container-low transition-colors duration-200" href="/receipts.html">
+<span class="material-symbols-outlined">savings</span>
+<span class="font-label-md text-label-md">売上・入金管理</span>
+</a>
+<a class="flex items-center gap-3 px-6 py-3 text-on-surface-variant hover:bg-surface-container-low transition-colors duration-200" href="/payment.html">
+<span class="material-symbols-outlined">payments</span>
+<span class="font-label-md text-label-md">支払管理</span>
+</a>
+<a class="flex items-center gap-3 px-6 py-3 text-secondary font-bold border-l-4 border-secondary bg-surface-container-low" href="/orders-list.html">
+<span class="material-symbols-outlined">receipt_long</span>
+<span class="font-label-md text-label-md">工事計画</span>
+</a>
+<a class="flex items-center gap-3 px-6 py-3 text-on-surface-variant hover:bg-surface-container-low transition-colors duration-200" href="/history.html">
+<span class="material-symbols-outlined">history</span>
+<span class="font-label-md text-label-md">履歴詳細</span>
+</a>
+</nav>
+</aside>
+<!-- Main Content Canvas -->
+<main class="ml-64 min-h-screen">
+<!-- Top App Bar -->
+<header class="sticky top-0 z-40 flex justify-between items-center h-20 px-margin-desktop bg-surface/80 backdrop-blur-md shadow-sm">
+<div class="flex items-center gap-4 bg-surface-container-low px-md py-2 rounded-full w-96">
+<span class="material-symbols-outlined text-on-surface-variant">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-body-md w-full" id="keyword-search" placeholder="Search projects..." type="text"/>
+</div>
+<div class="flex items-center gap-md">
+<div class="flex items-center gap-4">
+<div class="relative" id="notif-wrap">
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary relative" onclick="toggleNotif(event)">notifications<span id="notif-badge" class="absolute -top-1 -right-1 bg-error text-on-error text-[9px] font-normal rounded-full min-w-[16px] h-4 px-1 flex items-center justify-center" style="display:none">0</span></button>
+<div id="notif-panel" class="absolute right-0 mt-2 w-96 max-h-[480px] overflow-y-auto bg-surface-container-lowest border border-outline-variant rounded-lg custom-shadow z-[200]" style="display:none" onclick="event.stopPropagation()">
+<div class="px-4 py-3 border-b border-outline-variant flex justify-between items-center sticky top-0 bg-surface-container-lowest">
+<span class="text-label-md font-label-md text-primary">通知</span>
+<span class="text-label-sm text-on-surface-variant" id="notif-count-label"></span>
+</div>
+<div id="notif-list"></div>
+</div>
+</div>
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary">help</button>
+</div>
+<div class="h-8 w-px bg-outline-variant"></div>
 <div class="flex items-center gap-3">
-<button class="bg-surface-container-lowest border border-outline-variant text-on-surface px-5 py-2.5 text-sm font-semibold rounded-xl flex items-center gap-2 hover:bg-surface-container-high transition-all">
-<span class="material-symbols-outlined text-[20px]">download</span>
+<div class="text-right">
+<p class="text-label-md font-bold text-primary">Admin User</p>
+<p class="text-label-sm text-on-surface-variant">System</p>
+</div>
+<div class="w-10 h-10 rounded-full bg-surface-container-high border border-outline-variant"></div>
+</div>
+</div>
+</header>
+<!-- Page Content -->
+<div class="p-margin-desktop space-y-lg max-w-container-max mx-auto">
+<!-- Header Section -->
+<div class="flex justify-between items-end mb-lg">
+<div>
+<h2 class="text-[18px] font-label-md text-primary">工事計画</h2>
+<p class="text-label-md text-on-surface-variant" id="project-name"></p>
+</div>
+<div class="flex gap-md">
+<button class="px-4 py-1.5 border border-outline text-primary font-label-md rounded-lg hover:bg-surface-container transition-colors flex items-center gap-2">
+<span class="material-symbols-outlined">download</span>
 CSV出力
 </button>
-<button class="bg-primary text-on-primary px-6 py-2.5 text-sm font-bold rounded-xl flex items-center gap-2 shadow-lg shadow-primary/10 hover:opacity-90 transition-all" onclick="openOrderModal('', '', '', '', '', '未処理')">
-<span class="material-symbols-outlined text-[20px]">add</span>
+<button class="px-4 py-1.5 bg-secondary text-on-secondary font-label-md rounded-lg shadow-lg hover:scale-[1.02] active:scale-95 transition-all flex items-center gap-2" onclick="openOrderModal('', '', '', '', '', '未処理')">
+<span class="material-symbols-outlined">add</span>
 新規注文登録
 </button>
-<button class="bg-primary text-on-primary px-6 py-2.5 text-sm font-bold rounded-xl flex items-center gap-2 shadow-lg shadow-primary/10 hover:opacity-90 transition-all" onclick="generateInvoice()">
-<span class="material-symbols-outlined text-[20px]">description</span>
-請求書を発行
-</button>
 </div>
 </div>
-<!-- フィルタエリア -->
-<div class="bg-surface-container-low p-5 rounded-2xl border border-outline-variant/30 flex flex-wrap items-center gap-4">
+<!-- Filter Section -->
+<div class="bg-surface-container-low p-5 rounded-2xl border border-outline-variant flex flex-wrap items-center gap-4">
 <div class="relative min-w-[220px]">
-<select class="w-full bg-surface-container-lowest border-outline-variant/50 text-sm py-2.5 px-4 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary appearance-none transition-all cursor-pointer" id="category-filter">
+<select class="w-full bg-surface-container-lowest border border-outline-variant text-sm py-2.5 px-4 rounded-lg focus:ring-2 focus:ring-secondary/20 focus:border-transparent appearance-none transition-all cursor-pointer" id="category-filter">
 <option value="">すべての工事区分</option>
 <option value="仮設工事">仮設工事</option>
 <option value="土工事">土工事</option>
@@ -159,7 +124,7 @@ CSV出力
 <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-on-surface-variant">keyboard_arrow_down</span>
 </div>
 <div class="relative min-w-[220px]">
-<select class="w-full bg-surface-container-lowest border-outline-variant/50 text-sm py-2.5 px-4 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary appearance-none transition-all cursor-pointer" id="status-filter">
+<select class="w-full bg-surface-container-lowest border border-outline-variant text-sm py-2.5 px-4 rounded-lg focus:ring-2 focus:ring-secondary/20 focus:border-transparent appearance-none transition-all cursor-pointer" id="status-filter">
 <option value="">すべてのステータス</option>
 <option value="未処理">未処理</option>
 <option value="見積待ち">見積待ち</option>
@@ -170,20 +135,24 @@ CSV出力
 </div>
 <div class="relative flex-1 max-w-lg">
 <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant text-xl">search</span>
-<input class="w-full bg-surface-container-lowest border-outline-variant/50 text-sm pl-12 pr-4 py-2.5 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" id="keyword-search" placeholder="工事名、外注先で検索..." type="text"/>
+<input class="w-full bg-surface-container-lowest border border-outline-variant text-sm pl-12 pr-4 py-2.5 rounded-lg focus:ring-2 focus:ring-secondary/20 focus:border-transparent transition-all" id="keyword-search" placeholder="工事名、発注先で検索..." type="text"/>
 </div>
 </div>
-<!-- データテーブル -->
-<div class="bg-surface-container-lowest border border-outline-variant/30 rounded-2xl overflow-hidden shadow-sm">
+
+<!-- Data Table -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-2xl overflow-hidden shadow-sm">
 <table class="w-full text-left border-separate border-spacing-0">
 <thead>
-<tr class="bg-surface-container-low/50">
-<th class="px-3 py-1.5 text-[11px] font-bold text-on-surface-variant uppercase tracking-widest border-b border-outline-variant/30 w-1/5">工事区分</th>
-<th class="px-3 py-1.5 text-[11px] font-bold text-on-surface-variant uppercase tracking-widest border-b border-outline-variant/30 w-1/4">外注先</th>
-<th class="px-3 py-1.5 text-[11px] font-bold text-on-surface-variant uppercase tracking-widest border-b border-outline-variant/30 text-right">見積額</th>
-<th class="px-3 py-1.5 text-[11px] font-bold text-on-surface-variant uppercase tracking-widest border-b border-outline-variant/30 text-right">予定金額</th>
-<th class="px-3 py-1.5 text-[11px] font-bold text-on-surface-variant uppercase tracking-widest border-b border-outline-variant/30 text-right">決定金額</th>
-<th class="px-3 py-1.5 text-[11px] font-bold text-on-surface-variant uppercase tracking-widest border-b border-outline-variant/30 text-center w-32">ステータス</th>
+<tr class="bg-surface-container-low">
+<th class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant w-1/5">工事区分</th>
+<th class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant w-1/4">発注先</th>
+<th class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant text-right">見積額</th>
+<th class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant text-right">予定金額</th>
+<th class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant text-right">決定金額</th>
+<th class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant text-center w-32">ステータス</th>
+<th class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant text-center w-20">請求書</th>
+<th class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant text-center w-20">請書</th>
+<th class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant text-center w-24">操作</th>
 </tr>
 </thead>
 <tbody class="divide-y divide-outline-variant/20" id="orders-table-body">
@@ -191,11 +160,12 @@ CSV出力
 </tbody>
 </table>
 </div>
+
 <!-- Summary Section (与実の管理) -->
 <div class="w-full grid grid-cols-1 md:grid-cols-4 gap-4">
 <div class="bg-surface-container-lowest p-5 rounded-2xl border border-outline-variant/60 shadow-sm group hover:shadow-md transition-shadow">
 <div class="flex items-center justify-between mb-3">
-<p class="text-[11px] font-bold text-on-surface-variant uppercase tracking-widest flex items-center gap-1.5">
+<p class="text-[11px] font-bold text-on-surface-variant uppercase tracking-wider flex items-center gap-1.5">
 <span class="w-1.5 h-1.5 rounded-full bg-primary/40"></span>売上高合計</p>
 <span class="text-[9px] font-bold text-primary tabular-numbers summary-rate">予算達成率 154%</span>
 </div>
@@ -211,7 +181,7 @@ CSV出力
 </div>
 <div class="bg-surface-container-lowest p-5 rounded-2xl border border-outline-variant/60 shadow-sm group hover:shadow-md transition-shadow">
 <div class="flex items-center justify-between mb-3">
-<p class="text-[11px] font-bold text-on-surface-variant uppercase tracking-widest flex items-center gap-1.5">
+<p class="text-[11px] font-bold text-on-surface-variant uppercase tracking-wider flex items-center gap-1.5">
 <span class="w-1.5 h-1.5 rounded-full bg-error/40"></span>外注費合計</p>
 <span class="text-[9px] font-bold text-error tabular-numbers summary-cost-rate">予算超過注意</span>
 </div>
@@ -227,7 +197,7 @@ CSV出力
 </div>
 <div class="bg-surface-container-lowest p-5 rounded-2xl border border-outline-variant/60 shadow-sm group hover:shadow-md transition-shadow">
 <div class="flex items-center justify-between mb-3">
-<p class="text-[11px] font-bold text-on-surface-variant uppercase tracking-widest flex items-center gap-1.5">
+<p class="text-[11px] font-bold text-on-surface-variant uppercase tracking-wider flex items-center gap-1.5">
 <span class="w-1.5 h-1.5 rounded-full bg-green-500/40"></span>想定利益額</p>
 </div>
 <div class="space-y-1.5">
@@ -242,7 +212,7 @@ CSV出力
 </div>
 <div class="bg-surface-container-lowest p-5 rounded-2xl border border-outline-variant/60 shadow-sm group hover:shadow-md transition-shadow">
 <div class="flex items-center justify-between mb-3">
-<p class="text-[11px] font-bold text-on-surface-variant uppercase tracking-widest flex items-center gap-1.5">
+<p class="text-[11px] font-bold text-on-surface-variant uppercase tracking-wider flex items-center gap-1.5">
 <span class="w-1.5 h-1.5 rounded-full bg-primary/40"></span>想定粗利率</p>
 </div>
 <div class="space-y-1.5">
@@ -256,82 +226,86 @@ CSV出力
 </div>
 </div>
 </div>
-<!-- History Logs -->
-<div class="bg-surface-container-lowest border border-outline-variant/60 rounded-3xl shadow-sm overflow-hidden">
-<div class="px-6 py-5 border-b border-outline-variant/40 flex justify-between items-center bg-surface-container-low/30">
-<h2 class="text-sm font-bold text-on-surface flex items-center gap-2">
-<span class="material-symbols-outlined text-primary text-[20px]">history</span>
-操作履歴
-</h2>
-<span class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">直近100件を表示</span>
+
 </div>
-<div class="max-h-[300px] overflow-y-auto custom-scrollbar">
-<table class="w-full text-left border-separate border-spacing-0">
-<thead>
-<tr class="bg-surface-container-lowest sticky top-0 z-10">
-<th class="px-4 py-2 text-[11px] font-bold text-on-surface-variant uppercase tracking-widest border-b border-outline-variant/40 w-48">日時</th>
-<th class="px-4 py-2 text-[11px] font-bold text-on-surface-variant uppercase tracking-widest border-b border-outline-variant/40 w-48">操作者</th>
-<th class="px-4 py-2 text-[11px] font-bold text-on-surface-variant uppercase tracking-widest border-b border-outline-variant/40">内容</th>
-</tr>
-</thead>
-<tbody class="divide-y divide-outline-variant/20">
-<tr class="hover:bg-surface-container-low/20 transition-colors cursor-pointer" onclick="location.href='history.html?type=order'">
-<td class="px-4 py-2 text-xs text-on-surface-variant tabular-numbers">2024/05/08 14:25:31</td>
-<td class="px-4 py-2 text-xs font-semibold text-on-surface">管理者 太郎</td>
-<td class="px-4 py-2 text-xs text-on-surface-variant">初期データ30件を一括生成しました</td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="px-4 py-3 border-t border-outline-variant/30 bg-surface-container-low/30 text-center">
-<a href="history.html?type=order" class="text-xs font-bold text-primary hover:underline transition-all inline-flex items-center gap-1">
-もっと見る
-<span class="material-symbols-outlined text-sm">arrow_forward</span>
-</a>
-</div>
-</div>
+<!-- Footer -->
+<footer class="border-t border-outline-variant mt-xl py-lg px-margin-desktop text-center text-on-surface-variant">
+<p class="text-label-sm uppercase tracking-wider mb-2">WIN WIN様 デモ画面 v2.4.0</p>
+<p class="text-body-sm">© 2024 株式会社WIN WIN デモ環境</p>
+</footer>
 </main>
 
 <!-- 注文編集モーダル -->
-<div class="fixed inset-0 z-[100] hidden overflow-y-auto" id="edit-modal">
-<div class="absolute inset-0 bg-primary/20 backdrop-blur-md" onclick="closeOrderModal()"></div>
-<div class="relative w-full max-w-2xl mx-auto my-8 bg-surface-container-lowest rounded-2xl shadow-2xl overflow-hidden border border-outline-variant/30 transform transition-all scale-95 opacity-0 duration-300">
-<div class="px-6 py-4 border-b border-outline-variant/30 flex justify-between items-center bg-surface-container-low/50 sticky top-0">
-<h3 class="text-lg font-bold text-on-surface">注文詳細の編集</h3>
-<button class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-surface-container transition-colors text-on-surface-variant" onclick="closeOrderModal()">
-<span class="material-symbols-outlined">close</span>
+<!-- Project Selection Modal -->
+<div class="fixed inset-0 z-[120] overflow-y-auto" id="project-select-modal" style="display:none">
+<div class="absolute inset-0 bg-primary/20 backdrop-blur-md"></div>
+<div class="relative w-full max-w-2xl mx-auto my-8 bg-surface-container-lowest rounded-2xl shadow-2xl overflow-hidden border border-outline-variant">
+<div class="px-lg py-md border-b border-outline-variant flex items-center gap-3 bg-surface-container-low">
+<button class="flex items-center gap-1.5 px-3 py-2 text-label-md font-normal text-on-surface-variant border border-outline-variant rounded-lg hover:bg-surface-container transition-colors" onclick="goBackFromProjectSelect()">
+<span class="material-symbols-outlined text-[18px]">arrow_back</span>戻る
 </button>
+<span class="material-symbols-outlined text-primary">engineering</span>
+<div>
+<h3 class="text-label-md font-label-md text-on-surface">案件を選択してください</h3>
+<p class="text-label-sm text-on-surface-variant">注文を表示する案件を選んでください</p>
 </div>
-<div class="p-5 space-y-4 max-h-[calc(100vh-200px)] overflow-y-auto">
+</div>
+<div class="p-5 max-h-[calc(100vh-200px)] overflow-y-auto">
+<div class="grid grid-cols-2 gap-3 mb-3">
+<div>
+<label class="block text-label-sm text-on-surface-variant uppercase tracking-wider font-bold mb-1.5">工期開始（以降）</label>
+<input type="date" id="project-date-start" class="w-full bg-surface-container-low border border-outline-variant text-sm px-4 py-2.5 rounded-lg focus:ring-2 focus:ring-secondary/20 focus:border-transparent transition-all" onchange="renderProjectSelectList()"/>
+</div>
+<div>
+<label class="block text-label-sm text-on-surface-variant uppercase tracking-wider font-bold mb-1.5">工期終了（以前）</label>
+<input type="date" id="project-date-end" class="w-full bg-surface-container-low border border-outline-variant text-sm px-4 py-2.5 rounded-lg focus:ring-2 focus:ring-secondary/20 focus:border-transparent transition-all" onchange="renderProjectSelectList()"/>
+</div>
+</div>
+<div class="relative mb-4">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant text-xl">search</span>
+<input class="w-full bg-surface-container-low border border-outline-variant text-sm pl-12 pr-4 py-2.5 rounded-lg focus:ring-2 focus:ring-secondary/20 focus:border-transparent transition-all" id="project-search" placeholder="案件名で検索..." type="text" oninput="renderProjectSelectList()"/>
+</div>
+<div class="space-y-2" id="project-select-list"></div>
+</div>
+</div>
+</div>
+
+<div class="fixed inset-0 z-[100] bg-primary/20 backdrop-blur-md" id="edit-modal" style="display:none" onclick="closeOrderModal()">
+<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl max-h-[90vh] bg-surface-container-lowest rounded-lg custom-shadow border border-outline-variant overflow-hidden flex flex-col" onclick="event.stopPropagation()">
+<div class="px-lg py-md flex justify-between items-center border-b border-outline-variant bg-surface-container-low shrink-0">
+<h3 class="text-label-md font-label-md text-primary">注文詳細の編集</h3>
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary" onclick="closeOrderModal()">close</button>
+</div>
+<div class="p-lg space-y-md overflow-y-auto flex-1">
 <input id="edit-id" type="hidden"/>
-<div class="grid grid-cols-2 gap-6">
+<div class="grid grid-cols-2 gap-md">
 <div class="col-span-2">
-<label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-2.5">工事区分</label>
-<select class="w-full bg-surface-container-low border-outline-variant/50 rounded-xl text-sm px-4 py-3 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" id="edit-category">
+<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">工事区分</label>
+<select class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent" id="edit-category">
 <option value="">選択してください</option>
 </select>
 </div>
 <div class="col-span-2">
-<label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-2.5">外注先</label>
-<select class="w-full bg-surface-container-low border-outline-variant/50 rounded-xl text-sm px-4 py-3 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" id="edit-vendor">
+<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">発注先</label>
+<select class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent transition-all" id="edit-vendor">
 <option value="">選択してください</option>
 </select>
 </div>
 <div>
-<label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-2.5">見積額</label>
-<input class="w-full bg-surface-container-low border-outline-variant/50 rounded-xl text-sm px-4 py-3 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all tabular-numbers" id="edit-estimate" type="number"/>
+<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">見積額</label>
+<input class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent transition-all tabular-numbers" id="edit-estimate" type="number"/>
 </div>
 <div>
-<label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-2.5">予定金額</label>
-<input class="w-full bg-surface-container-low border-outline-variant/50 rounded-xl text-sm px-4 py-3 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all tabular-numbers" id="edit-planned" type="number"/>
+<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">予定金額</label>
+<input class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent transition-all tabular-numbers" id="edit-planned" type="number"/>
 </div>
 <div>
-<label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-2.5">決定金額</label>
-<input class="w-full bg-surface-container-low border-outline-variant/50 rounded-xl text-sm px-4 py-3 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all tabular-numbers" id="edit-decided" type="number"/>
+<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">決定金額</label>
+<input class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent transition-all tabular-numbers" id="edit-decided" type="number"/>
 </div>
 <div>
-<label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-2.5">ステータス</label>
-<select class="w-full bg-surface-container-low border-outline-variant/50 rounded-xl text-sm px-4 py-3 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" id="edit-status">
+<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">ステータス</label>
+<select class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent transition-all" id="edit-status">
 <option value="未処理">未処理</option>
 <option value="見積待ち">見積待ち</option>
 <option value="決定済み">決定済み</option>
@@ -339,125 +313,38 @@ CSV出力
 </select>
 </div>
 <div class="col-span-2">
-<label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-2.5">工事場所</label>
-<input class="w-full bg-surface-container-low border-outline-variant/50 rounded-xl text-sm px-4 py-3 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" id="edit-site" type="text"/>
+<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">工事場所</label>
+<input class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent transition-all" id="edit-site" type="text"/>
 </div>
 <div>
-<label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-2.5">工事開始日</label>
-<input class="w-full bg-surface-container-low border-outline-variant/50 rounded-xl text-sm px-4 py-3 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" id="edit-period-start" type="date"/>
+<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">工事開始日</label>
+<input class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent transition-all" id="edit-period-start" type="date"/>
 </div>
 <div>
-<label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-2.5">工事終了日</label>
-<input class="w-full bg-surface-container-low border-outline-variant/50 rounded-xl text-sm px-4 py-3 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" id="edit-period-end" type="date"/>
+<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">工事終了日</label>
+<input class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent transition-all" id="edit-period-end" type="date"/>
 </div>
 <div class="col-span-2">
-<label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-2.5">検査・引渡時期</label>
-<input class="w-full bg-surface-container-low border-outline-variant/50 rounded-xl text-sm px-4 py-3 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" id="edit-handover" type="date"/>
+<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">検査・引渡時期</label>
+<input class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent transition-all" id="edit-handover" type="date"/>
 </div>
 <div class="col-span-2">
-<label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-2.5">支払条件</label>
-<input class="w-full bg-surface-container-low border-outline-variant/50 rounded-xl text-sm px-4 py-3 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" id="edit-payment" type="text"/>
+<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">支払条件</label>
+<input class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent transition-all" id="edit-payment" type="text"/>
 </div>
 <div class="col-span-2">
-<label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-2.5">工事内容</label>
-<textarea class="w-full bg-surface-container-low border-outline-variant/50 rounded-xl text-sm px-4 py-3 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" id="edit-details" rows="3"></textarea>
+<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">工事内容</label>
+<textarea class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent transition-all" id="edit-details" rows="3"></textarea>
 </div>
 </div>
-<div class="px-6 py-4 border-t border-outline-variant/30 flex justify-between items-center bg-surface-container-low/50 sticky bottom-0">
-<button class="text-error hover:bg-error-container/20 px-4 py-2 text-sm font-bold rounded-2xl transition-all flex items-center gap-2">
+</div>
+<div class="px-lg py-md border-t border-outline-variant flex justify-between items-center bg-surface-container-low shrink-0">
+<button class="text-error hover:bg-error-container/20 px-4 py-1.5 text-label-md font-normal rounded-2xl transition-all flex items-center gap-2">
 <span class="material-symbols-outlined text-[18px]">delete</span>削除
 </button>
 <div class="flex gap-3">
-<button class="bg-surface-container-lowest border border-outline-variant text-on-surface px-5 py-2.5 text-sm font-semibold rounded-xl hover:bg-surface-container-high shadow-sm transition-all flex items-center gap-2" onclick="showPreview()">
-<span class="material-symbols-outlined text-[18px]">visibility</span>発注書プレビュー
-</button>
-<button class="px-6 py-2.5 text-sm font-semibold text-on-surface border border-outline-variant rounded-xl hover:bg-surface-container transition-all" onclick="closeOrderModal()">キャンセル</button>
-<button class="px-6 py-2.5 text-sm font-bold text-on-primary bg-primary rounded-xl hover:opacity-90 transition-all" onclick="saveOrder()">保存</button>
-</div>
-</div>
-</div>
-</div>
-
-<!-- PO Preview Overlay -->
-<div class="fixed inset-0 z-[110] hidden" id="preview-modal">
-<div class="absolute inset-0 bg-inverse-surface/60 backdrop-blur-md"></div>
-<div class="flex items-center justify-center min-h-screen p-4">
-<div class="bg-white w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden relative transform transition-all border border-outline-variant/30">
-<!-- Floating Email Button -->
-<button class="absolute bottom-6 right-6 w-14 h-14 bg-primary text-on-primary rounded-full flex items-center justify-center shadow-lg hover:shadow-xl hover:scale-110 transition-all transform" onclick="sendEmail()" title="メール送信">
-<span class="material-symbols-outlined text-[24px]">send</span>
-</button>
-<div class="px-6 py-4 border-b border-outline-variant flex justify-between items-center">
-<h3 class="text-sm font-bold text-on-surface flex items-center gap-2">
-<span class="material-symbols-outlined text-primary">description</span>
-発注書プレビュー
-</h3>
-<button class="text-outline hover:text-on-surface p-1 transition-colors" onclick="closePreview()">
-<span class="material-symbols-outlined">close</span>
-</button>
-</div>
-<div class="p-5 bg-surface-container-low/30 overflow-y-auto max-h-[70vh]">
-<div class="bg-white p-12 shadow-sm min-h-[600px] border border-outline-variant/60 text-on-surface rounded-xl flex flex-col">
-<div class="flex justify-between items-start mb-12">
-<div>
-<h1 class="text-3xl font-bold tracking-[0.3em] mb-6 text-on-surface">発注書</h1>
-<p class="text-lg border-b-2 border-on-surface pb-1 inline-block" id="preview-company">未選択 御中</p>
-</div>
-<div class="text-right">
-<p class="font-bold text-lg mb-1 tracking-tight">CONSTRUCT_PRO</p>
-<p class="text-[10px] text-on-surface-variant leading-relaxed">
-〒600-8009<br/>
-京都府京都市下京区四条通<br/>
-室町東入函谷鉾町 101<br/>
-TEL: 075-123-4567
-</p>
-</div>
-</div>
-<div class="border-b-2 border-primary py-6 mb-10 flex justify-between items-end">
-<span class="text-sm font-bold">発注金額合計 (税込)</span>
-<span class="text-3xl font-bold tabular-numbers text-primary">¥<span id="preview-amount">0</span>-</span>
-</div>
-<div class="grid grid-cols-2 gap-y-6 text-xs mb-10 border-t border-b border-outline-variant/20 py-6">
-<div class="flex flex-col gap-1">
-<span class="text-on-surface-variant font-bold uppercase tracking-wider text-[10px]">工事場所</span>
-<span class="font-medium" id="preview-site">---</span>
-</div>
-<div class="flex flex-col gap-1">
-<span class="text-on-surface-variant font-bold uppercase tracking-wider text-[10px]">工事期間</span>
-<span class="font-medium" id="preview-period">---</span>
-</div>
-<div class="flex flex-col gap-1">
-<span class="text-on-surface-variant font-bold uppercase tracking-wider text-[10px]">検査・引渡時期</span>
-<span class="font-medium" id="preview-handover">---</span>
-</div>
-<div class="flex flex-col gap-1">
-<span class="text-on-surface-variant font-bold uppercase tracking-wider text-[10px]">支払条件</span>
-<span class="font-medium text-[11px]" id="preview-payment">---</span>
-</div>
-<div class="col-span-2 flex flex-col gap-1 border-t border-outline-variant/10 pt-4 mt-2">
-<span class="text-on-surface-variant font-bold uppercase tracking-wider text-[10px]">工事内容</span>
-<span class="whitespace-pre-wrap font-medium leading-relaxed text-sm" id="preview-details">---</span>
-</div>
-</div>
-<table class="w-full text-sm flex-grow">
-<thead>
-<tr class="border-b border-on-surface font-bold">
-<th class="py-3 text-left">内容・品名</th>
-<th class="py-3 text-right">金額 (税込)</th>
-</tr>
-</thead>
-<tbody class="divide-y divide-outline-variant/10">
-<tr>
-<td class="py-8 font-medium" id="preview-item">一式</td>
-<td class="py-8 text-right font-bold tabular-numbers text-lg" id="preview-amount-row">0</td>
-</tr>
-</tbody>
-</table>
-<div class="mt-12 border-t border-outline-variant pt-4 text-[10px] text-on-surface-variant">
-<p class="">備考：本発注書の内容に基づき、指定の期日までに納品をお願いいたします。</p>
-</div>
-</div>
-</div>
+<button class="px-4 py-1.5 text-label-md font-normal text-on-surface border border-outline-variant rounded-lg hover:bg-surface-container transition-all" onclick="closeOrderModal()">キャンセル</button>
+<button class="px-4 py-1.5 text-label-md font-normal text-on-primary bg-primary rounded-lg hover:opacity-90 transition-all" onclick="saveOrder()">保存</button>
 </div>
 </div>
 </div>
@@ -471,7 +358,7 @@ if (!window.appCache) {
 
 let orders = [];
 let editingId = null;
-let projectId = new URLSearchParams(window.location.search).get('project_id');
+let projectId = parseInt(new URLSearchParams(window.location.search).get('projectId')) || null;
 
 // データ読み込み
 function loadOrders() {
@@ -481,7 +368,6 @@ function loadOrders() {
     // project_id でフィルタリング
     if (projectId) {
         orders = allOrders.filter(o => o.project_id == projectId);
-        document.querySelector('h1').textContent = `注文管理（案件ID: ${projectId}）`;
     } else {
         orders = allOrders;
     }
@@ -494,14 +380,22 @@ function loadOrders() {
 function renderTable() {
     const tbody = document.getElementById('orders-table-body');
     tbody.innerHTML = orders.map((order) => `
-        <tr class="hover:bg-surface-container-low transition-colors cursor-pointer group" onclick="openOrderDetailModal(${order.id})">
-            <td class="px-3 py-1.5 text-xs font-bold text-on-surface group-hover:text-primary transition-colors">${order.category || '-'}</td>
-            <td class="px-3 py-1.5 text-xs text-on-surface-variant">${order.vendor || '-'}</td>
-            <td class="px-3 py-1.5 text-xs text-right tabular-numbers">${order.estimate ? order.estimate.toLocaleString() : '-'}</td>
-            <td class="px-3 py-1.5 text-xs text-right tabular-numbers">${order.planned ? order.planned.toLocaleString() : '-'}</td>
-            <td class="px-3 py-1.5 text-xs text-right font-bold tabular-numbers">${order.decided ? order.decided.toLocaleString() : '-'}</td>
-            <td class="px-3 py-1.5 text-xs text-center whitespace-nowrap">
-                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold ${getStatusColor(order.status)}">${order.status}</span>
+        <tr class="hover:bg-surface-container-low transition-colors group">
+            <td class="px-3 py-1.5 text-label-md font-label-md text-on-surface cursor-pointer group-hover:text-primary transition-colors" onclick="openOrderDetailModal(${order.id})">${order.category || '-'}</td>
+            <td class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant cursor-pointer" onclick="openOrderDetailModal(${order.id})">${order.vendor || '-'}</td>
+            <td class="px-3 py-1.5 text-label-md font-label-md text-right tabular-numbers cursor-pointer" onclick="openOrderDetailModal(${order.id})">${order.estimate ? order.estimate.toLocaleString() : '-'}</td>
+            <td class="px-3 py-1.5 text-label-md font-label-md text-right tabular-numbers cursor-pointer" onclick="openOrderDetailModal(${order.id})">${order.planned ? order.planned.toLocaleString() : '-'}</td>
+            <td class="px-3 py-1.5 text-label-md font-label-md text-right tabular-numbers cursor-pointer" onclick="openOrderDetailModal(${order.id})">${order.decided ? order.decided.toLocaleString() : '-'}</td>
+            <td class="px-3 py-1.5 text-label-md font-label-md text-center whitespace-nowrap cursor-pointer" onclick="openOrderDetailModal(${order.id})">
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] ${getStatusColor(order.status)}">${order.status}</span>
+            </td>
+            <td class="px-3 py-1.5 text-center whitespace-nowrap cursor-pointer" onclick="toggleInvoice(${order.id})" title="クリックで未/済を変更">${invoiceBadge(order)}</td>
+            <td class="px-3 py-1.5 text-center whitespace-nowrap cursor-pointer" onclick="toggleAck(${order.id})" title="クリックで未/済を変更">${ackBadge(order)}</td>
+            <td class="px-3 py-1.5 text-center">
+              <button class="inline-flex items-center gap-1 px-2 py-1.5 rounded-lg bg-primary/10 text-primary text-[12px] font-normal hover:bg-primary/20 transition-colors whitespace-nowrap" onclick="event.stopPropagation(); showPoPreview(${order.id})" title="発注書プレビュー">
+                <span class="material-symbols-outlined text-[16px]">receipt_long</span>
+                発注書
+              </button>
             </td>
         </tr>
     `).join('');
@@ -516,6 +410,60 @@ function getStatusColor(status) {
         '発注完了': 'bg-secondary-container text-on-secondary-container'
     };
     return colors[status] || 'bg-surface-container text-on-surface';
+}
+
+// 未/済バッジ（済=緑、未=グレー）
+function doneBadge(done) {
+    const cls = done ? 'bg-secondary-container text-on-secondary-container' : 'bg-surface-dim text-on-surface-variant';
+    return `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] ${cls} hover:opacity-80">${done ? '済' : '未'}</span>`;
+}
+
+// 未/済の手動変更はブラウザ単位で保持（localStorage）
+function getStatusOverrides() {
+    try { return JSON.parse(localStorage.getItem('order_status_overrides') || '{"ack":{},"invoice":{}}'); }
+    catch(e) { return { ack: {}, invoice: {} }; }
+}
+function setStatusOverride(kind, id, value) {
+    const o = getStatusOverrides();
+    if (!o[kind]) o[kind] = {};
+    o[kind][id] = value;
+    localStorage.setItem('order_status_overrides', JSON.stringify(o));
+}
+
+// 請書（注文請書）の受領状況：オーバーライド優先、なければ発注完了/支払済みを済とみなす
+function isAckDone(order) {
+    const ov = getStatusOverrides().ack;
+    if (ov && Object.prototype.hasOwnProperty.call(ov, order.id)) return !!ov[order.id];
+    return ['発注完了', '支払済み'].includes(order.status);
+}
+// 請求書の発行状況：オーバーライド優先、なければ該当案件に請求書が登録済みか
+function isInvoiceDone(order) {
+    const ov = getStatusOverrides().invoice;
+    if (ov && Object.prototype.hasOwnProperty.call(ov, order.id)) return !!ov[order.id];
+    const invoices = window.appCache.invoices || [];
+    return invoices.some(inv => inv.project_id == order.project_id);
+}
+function ackBadge(order) { return doneBadge(isAckDone(order)); }
+function invoiceBadge(order) { return doneBadge(isInvoiceDone(order)); }
+
+// 確認ダイアログ付きで未/済を変更
+function toggleAck(id) {
+    const order = orders.find(o => o.id === id) || window.appCache.orders.find(o => o.id === id);
+    if (!order) return;
+    const cur = isAckDone(order);
+    if (confirm(`請書のステータスを「${cur ? '済' : '未'}」→「${cur ? '未' : '済'}」に変更しますか？`)) {
+        setStatusOverride('ack', id, !cur);
+        renderTable();
+    }
+}
+function toggleInvoice(id) {
+    const order = orders.find(o => o.id === id) || window.appCache.orders.find(o => o.id === id);
+    if (!order) return;
+    const cur = isInvoiceDone(order);
+    if (confirm(`請求書のステータスを「${cur ? '済' : '未'}」→「${cur ? '未' : '済'}」に変更しますか？`)) {
+        setStatusOverride('invoice', id, !cur);
+        renderTable();
+    }
 }
 
 function updateSummary() {
@@ -577,62 +525,240 @@ function openOrderModal(id, category, vendor, estimate, planned, status) {
     }
 
     const modal = document.getElementById('edit-modal');
-    modal.classList.remove('hidden');
-    setTimeout(() => {
-        const content = modal.querySelector('.bg-surface-container-lowest');
-        if (content) {
-            content.classList.remove('scale-95', 'opacity-0');
-            content.classList.add('scale-100', 'opacity-100');
-        }
-    }, 10);
+    modal.style.display = 'block';
     document.body.style.overflow = 'hidden';
 }
 
 function closeOrderModal() {
     const modal = document.getElementById('edit-modal');
-    const content = modal.querySelector('.bg-surface-container-lowest');
-    if (content) {
-        content.classList.add('scale-95', 'opacity-0');
-        content.classList.remove('scale-100', 'opacity-100');
-    }
-    setTimeout(() => {
-        modal.classList.add('hidden');
-    }, 300);
+    modal.style.display = 'none';
     document.body.style.overflow = '';
 }
 
-function showPreview() {
-    const previewModal = document.getElementById('preview-modal');
-    const vendorValue = document.getElementById('edit-vendor').value;
-    const amountValue = document.getElementById('edit-decided').value || document.getElementById('edit-planned').value || document.getElementById('edit-estimate').value || '0';
-    const periodStart = document.getElementById('edit-period-start').value;
-    const periodEnd = document.getElementById('edit-period-end').value;
-    const period = periodStart && periodEnd ? periodStart + ' 〜 ' + periodEnd : '---';
+// PO preview modal
+let currentPoOrderId = null;
 
-    document.getElementById('preview-company').textContent = vendorValue + ' 御中';
-    document.getElementById('preview-amount').textContent = parseInt(amountValue).toLocaleString();
-    document.getElementById('preview-amount-row').textContent = '¥' + parseInt(amountValue).toLocaleString();
-    document.getElementById('preview-site').textContent = document.getElementById('edit-site').value || '---';
-    document.getElementById('preview-period').textContent = period;
-    document.getElementById('preview-handover').textContent = document.getElementById('edit-handover').value || '---';
-    document.getElementById('preview-payment').textContent = document.getElementById('edit-payment').value || '---';
-    document.getElementById('preview-details').textContent = document.getElementById('edit-details').value || '---';
-    document.getElementById('preview-item').textContent = document.getElementById('edit-category').value || '一式';
+function showPoPreview(orderId) {
+    const order = window.appCache.orders.find(o => o.id === orderId);
+    if (!order) return;
 
-    previewModal.classList.remove('hidden');
+    currentPoOrderId = orderId;
+    const project = window.appCache.projects.find(p => p.id === order.project_id);
+
+    // Build and show modal
+    showPoModal(order, project);
+}
+
+function showPoModal(order, project) {
+    const modal = document.createElement('div');
+    modal.className = 'fixed inset-0 z-[150]';
+    modal.id = 'po-preview-modal';
+    modal.onclick = closePoPreview;
+
+    const periodStart = order.period_start;
+    const periodEnd = order.period_end;
+    const period = (periodStart && periodEnd) ? (periodStart + ' 〜 ' + periodEnd) : '---';
+
+    modal.innerHTML = `
+      <div class="absolute inset-0 bg-inverse-surface/60 backdrop-blur-md"></div>
+      <div class="flex items-center justify-center min-h-screen p-4" onclick="event.stopPropagation()">
+        <div class="bg-white w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden relative border border-outline-variant" onclick="event.stopPropagation()">
+          <button class="absolute bottom-6 right-6 w-14 h-14 bg-primary text-on-primary rounded-full flex items-center justify-center shadow-lg hover:shadow-xl hover:scale-110 transition-all" onclick="openPoEmailForm()" title="メール送信">
+            <span class="material-symbols-outlined text-[24px]">send</span>
+          </button>
+          <div class="px-lg py-md border-b border-outline-variant flex justify-between items-center">
+            <h3 class="text-sm font-bold text-on-surface flex items-center gap-2">
+              <span class="material-symbols-outlined text-primary">receipt_long</span>
+              発注書プレビュー
+            </h3>
+            <div class="flex items-center gap-2">
+              <button class="flex items-center gap-1.5 px-3 py-1.5 text-label-md font-normal text-primary border border-outline-variant rounded-lg hover:bg-surface-container transition-colors" onclick="downloadPo()" title="PDFダウンロード">
+                <span class="material-symbols-outlined text-[18px]">download</span>ダウンロード
+              </button>
+              <button class="text-outline hover:text-on-surface p-1 transition-colors" onclick="closePoPreview()">
+                <span class="material-symbols-outlined">close</span>
+              </button>
+            </div>
+          </div>
+          <div class="p-5 bg-surface-container-low/30 overflow-y-auto max-h-[70vh]">
+            <div class="bg-white p-12 shadow-sm min-h-[600px] border border-outline-variant/60 text-on-surface rounded-lg flex flex-col">
+              <div class="flex justify-between items-start mb-12">
+                <div>
+                  <h1 class="text-3xl font-bold tracking-[0.3em] mb-6 text-on-surface">発注書</h1>
+                  <p class="text-lg border-b-2 border-on-surface pb-1 inline-block">${order.vendor || '---'} 御中</p>
+                </div>
+                <div class="text-right">
+                  <p class="font-bold text-lg mb-1 tracking-tight">WIN WIN様</p>
+                  <p class="text-[10px] text-on-surface-variant leading-relaxed">
+                    〒600-8009<br/>京都府京都市下京区四条通<br/>室町東入函谷鉾町 101<br/>TEL: 075-123-4567
+                  </p>
+                </div>
+              </div>
+              <div class="border-b-2 border-primary py-6 mb-10 flex justify-between items-end">
+                <span class="text-sm font-bold">発注金額合計 (税込)</span>
+                <span class="text-3xl font-bold tabular-numbers text-primary">¥${(order.decided || order.planned || order.estimate || 0).toLocaleString()}-</span>
+              </div>
+              <div class="grid grid-cols-2 gap-y-6 text-xs mb-10 border-t border-b border-outline-variant/20 py-6">
+                <div class="flex flex-col gap-1">
+                  <span class="text-on-surface-variant font-bold uppercase tracking-wider text-[10px]">工事場所</span>
+                  <span class="font-medium">${order.site || '---'}</span>
+                </div>
+                <div class="flex flex-col gap-1">
+                  <span class="text-on-surface-variant font-bold uppercase tracking-wider text-[10px]">工事期間</span>
+                  <span class="font-medium">${period}</span>
+                </div>
+                <div class="flex flex-col gap-1">
+                  <span class="text-on-surface-variant font-bold uppercase tracking-wider text-[10px]">検査・引渡時期</span>
+                  <span class="font-medium">${order.handover || '---'}</span>
+                </div>
+                <div class="flex flex-col gap-1">
+                  <span class="text-on-surface-variant font-bold uppercase tracking-wider text-[10px]">支払条件</span>
+                  <span class="font-medium text-[11px]">${order.payment || '---'}</span>
+                </div>
+                <div class="col-span-2 flex flex-col gap-1 border-t border-outline-variant/10 pt-4 mt-2">
+                  <span class="text-on-surface-variant font-bold uppercase tracking-wider text-[10px]">工事内容</span>
+                  <span class="whitespace-pre-wrap font-medium leading-relaxed text-sm">${order.details || '---'}</span>
+                </div>
+              </div>
+              <table class="w-full text-sm flex-grow">
+                <thead>
+                  <tr class="border-b border-on-surface font-bold">
+                    <th class="py-3 text-left">内容・品名</th>
+                    <th class="py-3 text-right">金額 (税込)</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-outline-variant/10">
+                  <tr>
+                    <td class="py-8 font-medium">${order.category || '一式'}</td>
+                    <td class="py-8 text-right font-bold tabular-numbers text-lg">¥${(order.decided || order.planned || order.estimate || 0).toLocaleString()}</td>
+                  </tr>
+                </tbody>
+              </table>
+              <div class="mt-12 border-t border-outline-variant pt-4 text-[10px] text-on-surface-variant">
+                <p>備考：本発注書の内容に基づき、指定の期日までに納品をお願いいたします。</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
     document.body.style.overflow = 'hidden';
 }
 
-function closePreview() {
-    const previewModal = document.getElementById('preview-modal');
-    previewModal.classList.add('hidden');
+function closePoPreview() {
+    const modal = document.getElementById('po-preview-modal');
+    if (modal) modal.remove();
+    const emailPanel = document.getElementById('po-email-panel');
+    if (emailPanel) emailPanel.remove();
     document.body.style.overflow = '';
 }
 
-function sendEmail() {
-    const vendorValue = document.getElementById('edit-vendor').value;
-    const amountValue = document.getElementById('edit-decided').value || document.getElementById('edit-planned').value || document.getElementById('edit-estimate').value || '0';
-    alert(`発注書をメール送信します\n\n宛先: ${vendorValue}\n金額: ¥${parseInt(amountValue).toLocaleString()}`);
+async function downloadPo() {
+    if (!currentPoOrderId) return;
+    try {
+        const res = await fetch(`/api/po/${currentPoOrderId}`);
+        if (!res.ok) throw new Error('Failed');
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `po-${currentPoOrderId}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    } catch (err) {
+        alert('ダウンロードに失敗しました: ' + err.message);
+    }
+}
+
+function openPoEmailForm() {
+    const order = window.appCache.orders.find(o => o.id === currentPoOrderId);
+    if (!order) return;
+
+    const panel = document.createElement('div');
+    panel.className = 'fixed inset-0 z-[160] flex items-center justify-center p-4 bg-black/20';
+    panel.id = 'po-email-panel';
+    panel.onclick = closePoEmailForm;
+
+    panel.innerHTML = `
+      <div class="bg-white rounded-3xl shadow-2xl w-full max-w-lg border border-outline-variant overflow-hidden" onclick="event.stopPropagation()">
+        <div class="px-lg py-md border-b border-outline-variant flex justify-between items-center">
+          <h3 class="text-sm font-bold text-on-surface flex items-center gap-2">
+            <span class="material-symbols-outlined text-primary text-[18px]">mail</span>
+            発注書メール送信
+          </h3>
+          <button class="text-outline hover:text-on-surface p-1 transition-colors" onclick="closePoEmailForm()">
+            <span class="material-symbols-outlined">close</span>
+          </button>
+        </div>
+        <div class="p-6 space-y-4">
+          <div>
+            <label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">宛先</label>
+            <input id="po-email-to" type="email" class="w-full bg-surface-container-low border border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent transition-all" placeholder="vendor@example.com" value="${order.vendor || ''}"/>
+          </div>
+          <div>
+            <label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">件名</label>
+            <input id="po-email-subject" type="text" class="w-full bg-surface-container-low border border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent transition-all" value="【発注書】${order.category}工事"/>
+          </div>
+          <div>
+            <label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">本文</label>
+            <textarea id="po-email-body" rows="4" class="w-full bg-surface-container-low border border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent transition-all">お疲れ様です。
+
+下記内容で発注書をお送りいたします。
+ご不明な点がございましたら、お気軽にお問い合わせください。
+
+株式会社WIN WIN</textarea>
+          </div>
+        </div>
+        <div class="px-lg py-md border-t border-outline-variant flex justify-end gap-3">
+          <button class="px-4 py-2 text-label-md font-normal text-on-surface border border-outline-variant rounded-lg hover:bg-surface-container transition-all" onclick="closePoEmailForm()">キャンセル</button>
+          <button id="po-send-btn" class="px-4 py-1.5 text-label-md font-normal text-on-primary bg-primary rounded-lg hover:opacity-90 transition-all flex items-center gap-2" onclick="sendPoEmail()">
+            <span class="material-symbols-outlined text-[18px]">send</span>送信
+          </button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(panel);
+}
+
+function closePoEmailForm() {
+    const panel = document.getElementById('po-email-panel');
+    if (panel) panel.remove();
+}
+
+async function sendPoEmail() {
+    const to = document.getElementById('po-email-to').value.trim();
+    const subject = document.getElementById('po-email-subject').value.trim();
+    const body = document.getElementById('po-email-body').value.trim();
+
+    if (!to || !subject) {
+        alert('宛先と件名を入力してください');
+        return;
+    }
+
+    const btn = document.getElementById('po-send-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="material-symbols-outlined text-[18px]">hourglass_empty</span>送信中...';
+
+    try {
+        const res = await fetch('/api/po/send', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ orderId: currentPoOrderId, to, subject, body })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || '送信失敗');
+        alert(`メールを送信しました\n\n宛先: ${to}`);
+        closePoEmailForm();
+        closePoPreview();
+    } catch (err) {
+        alert('メール送信に失敗しました: ' + err.message);
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<span class="material-symbols-outlined text-[18px]">send</span>送信';
+    }
 }
 
 async function saveOrder() {
@@ -713,7 +839,7 @@ function openOrderDetailModal(id) {
     }
 
     const modal = document.getElementById('edit-modal');
-    modal.classList.remove('hidden');
+    modal.style.display = 'block';
     setTimeout(() => {
         const content = modal.querySelector('.bg-surface-container-lowest');
         if (content) {
@@ -724,13 +850,26 @@ function openOrderDetailModal(id) {
     document.body.style.overflow = 'hidden';
 }
 
-// フィルタ機能
 document.addEventListener('DOMContentLoaded', async () => {
     // Check if cache is empty and populate it
     if (window.appCache.orders.length === 0) {
         const res = await fetch('/api/cache');
         window.appCache = await res.json();
     }
+
+    // projectIdが無い場合（ヘッダー/サイドバーから遷移）はまず案件を選択させる
+    if (!projectId) {
+        openProjectSelectModal();
+        loadMasterData();
+        return;
+    }
+
+    // projectIdがある場合、キャッシュから案件情報を取得してタイトル下に表示
+    const project = window.appCache.projects.find(p => p.id == projectId);
+    if (project) {
+        document.getElementById('project-name').textContent = project.name;
+    }
+
     loadOrders();
     loadMasterData();
 
@@ -738,6 +877,57 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('status-filter').addEventListener('change', filterTable);
     document.getElementById('keyword-search').addEventListener('input', filterTable);
 });
+
+// 案件選択モーダル
+function openProjectSelectModal() {
+    renderProjectSelectList();
+    document.getElementById('project-select-modal').style.display = 'block';
+}
+
+function goBackFromProjectSelect() {
+    if (window.history.length > 1) history.back();
+    else location.href = '/';
+}
+
+function renderProjectSelectList() {
+    const keyword = (document.getElementById('project-search').value || '').toLowerCase();
+    const dateStart = document.getElementById('project-date-start').value;
+    const dateEnd = document.getElementById('project-date-end').value;
+    const list = document.getElementById('project-select-list');
+    const parseD = (s) => { if (!s) return null; const d = new Date(String(s).replace(/\//g, '-')); return isNaN(d) ? null : d; };
+    const rangeStart = dateStart ? new Date(dateStart) : null;
+    const rangeEnd = dateEnd ? new Date(dateEnd) : null;
+
+    const projects = window.appCache.projects.filter(p => {
+        if (!p.name.toLowerCase().includes(keyword)) return false;
+        // 期間で絞り込み：案件の工期が指定範囲に重なるもの
+        if (rangeStart || rangeEnd) {
+            const st = parseD(p.startDate), en = parseD(p.endDate);
+            if (!st || !en) return false;
+            if (rangeStart && en < rangeStart) return false;
+            if (rangeEnd && st > rangeEnd) return false;
+        }
+        return true;
+    });
+    if (projects.length === 0) {
+        list.innerHTML = '<p class="text-label-md text-on-surface-variant text-center py-8">該当する案件がありません</p>';
+        return;
+    }
+    list.innerHTML = projects.map(p => {
+        const period = (p.startDate && p.endDate) ? `${p.startDate} 〜 ${p.endDate}` : '工期未設定';
+        return `
+        <button class="w-full flex items-center justify-between gap-3 px-4 py-3 bg-surface-container-low hover:bg-primary/10 border border-outline-variant rounded-lg text-left transition-colors group" onclick="location.href='/orders-list.html?projectId=${p.id}'">
+            <div class="flex items-center gap-3 min-w-0">
+                <span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary">folder</span>
+                <div class="min-w-0">
+                    <span class="block text-label-md font-label-md text-on-surface truncate">${p.name}</span>
+                    <span class="block text-label-sm text-on-surface-variant tabular-nums">${p.project_no || ''} ・ ${period}</span>
+                </div>
+            </div>
+            <span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary">chevron_right</span>
+        </button>
+    `;}).join('');
+}
 
 function loadMasterData() {
     // Use global cached data
@@ -789,30 +979,19 @@ function filterTable() {
     const tbody = document.getElementById('orders-table-body');
     tbody.innerHTML = filtered.map((order) => `
         <tr class="hover:bg-surface-container-low transition-colors cursor-pointer group" onclick="openOrderDetailModal(${order.id})">
-            <td class="px-3 py-1.5 text-xs font-bold text-on-surface group-hover:text-primary transition-colors">${order.category || '-'}</td>
-            <td class="px-3 py-1.5 text-xs text-on-surface-variant">${order.vendor || '-'}</td>
-            <td class="px-3 py-1.5 text-xs text-right tabular-numbers">${order.estimate ? order.estimate.toLocaleString() : '-'}</td>
-            <td class="px-3 py-1.5 text-xs text-right tabular-numbers">${order.planned ? order.planned.toLocaleString() : '-'}</td>
-            <td class="px-3 py-1.5 text-xs text-right font-bold tabular-numbers">${order.decided ? order.decided.toLocaleString() : '-'}</td>
-            <td class="px-3 py-1.5 text-xs text-center whitespace-nowrap">
-                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold ${getStatusColor(order.status)}">${order.status}</span>
+            <td class="px-3 py-1.5 text-label-md font-label-md text-on-surface group-hover:text-primary transition-colors">${order.category || '-'}</td>
+            <td class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant">${order.vendor || '-'}</td>
+            <td class="px-3 py-1.5 text-label-md font-label-md text-right tabular-numbers">${order.estimate ? order.estimate.toLocaleString() : '-'}</td>
+            <td class="px-3 py-1.5 text-label-md font-label-md text-right tabular-numbers">${order.planned ? order.planned.toLocaleString() : '-'}</td>
+            <td class="px-3 py-1.5 text-label-md font-label-md text-right tabular-numbers">${order.decided ? order.decided.toLocaleString() : '-'}</td>
+            <td class="px-3 py-1.5 text-label-md font-label-md text-center whitespace-nowrap">
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] ${getStatusColor(order.status)}">${order.status}</span>
             </td>
         </tr>
     `).join('');
 }
 
-function generateInvoice() {
-    const url = new URL(window.location);
-    const projectId = url.searchParams.get('project_id');
-    console.log('Project ID:', projectId);
-    if (!projectId) {
-        alert('案件IDが取得できません');
-        return;
-    }
-    const invoiceUrl = `/api/invoice/project/${projectId}`;
-    console.log('Opening:', invoiceUrl);
-    window.open(invoiceUrl, '_blank');
-}
 </script>
+<script src="/notify.js"></script>
 </body>
 </html>

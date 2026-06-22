@@ -1,167 +1,127 @@
 <!DOCTYPE html>
-
-<html class="light" lang="ja"><head>
+<html class="light" lang="ja">
+<head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>工事区分マスタ - WIN WIN様デモ</title>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Noto+Sans+JP:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-<title>工事区分マスタ - CONSTRUCT_PRO</title>
+<script src="/theme.js"></script>
 <style>
-        body {
-            font-family: 'Inter', 'Noto Sans JP', sans-serif;
-        }
-        .material-symbols-outlined {
-            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-            vertical-align: middle;
-        }
-        .custom-scrollbar::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-track {
-            background: #f4f3f1;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-            background: #dadad8;
-            border-radius: 10px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-            background: #c1c7cc;
-        }
-        .tabular-numbers {
-            font-variant-numeric: tabular-nums;
-        }
-    </style>
-<script id="tailwind-config">
-        tailwind.config = {
-            darkMode: "class",
-            theme: {
-                extend: {
-                    "colors": {
-                        "surface": "#faf9f7",
-                        "surface-bright": "#faf9f7",
-                        "on-secondary-fixed": "#400100",
-                        "outline-variant": "#c1c7cc",
-                        "on-primary-fixed-variant": "#1d4c5f",
-                        "on-secondary-fixed-variant": "#832519",
-                        "on-tertiary-fixed": "#2c1700",
-                        "on-primary": "#ffffff",
-                        "tertiary-container": "#724d23",
-                        "outline": "#71787c",
-                        "error-container": "#ffdad6",
-                        "on-primary-fixed": "#001f2a",
-                        "surface-tint": "#376478",
-                        "surface-dim": "#dadad8",
-                        "on-surface-variant": "#41484c",
-                        "surface-variant": "#e3e2e0",
-                        "primary-fixed-dim": "#a0cde4",
-                        "secondary-container": "#ff816d",
-                        "on-tertiary-fixed-variant": "#623f16",
-                        "inverse-primary": "#a0cde4",
-                        "secondary-fixed": "#ffdad4",
-                        "on-error-container": "#93000a",
-                        "surface-container": "#efeeec",
-                        "inverse-surface": "#2f3130",
-                        "tertiary-fixed-dim": "#f0bd89",
-                        "on-secondary-container": "#731a0f",
-                        "background": "#faf9f7",
-                        "surface-container-highest": "#e3e2e0",
-                        "on-tertiary-container": "#f3c08c",
-                        "surface-container-low": "#f4f3f1",
-                        "secondary": "#a33c2d",
-                        "surface-container-high": "#e9e8e6",
-                        "primary-container": "#2d5a6e",
-                        "primary": "#104356",
-                        "tertiary": "#57360e",
-                        "inverse-on-surface": "#f1f1ef",
-                        "error": "#ba1a1a",
-                        "secondary-fixed-dim": "#ffb4a7",
-                        "on-background": "#1a1c1b",
-                        "on-secondary": "#ffffff",
-                        "surface-container-lowest": "#ffffff",
-                        "on-tertiary": "#ffffff",
-                        "tertiary-fixed": "#ffdcbc",
-                        "on-error": "#ffffff",
-                        "primary-fixed": "#bfe9ff",
-                        "on-primary-container": "#a3d0e7",
-                        "on-surface": "#1a1c1b"
-                    },
-                    "borderRadius": {
-                        "DEFAULT": "0.25rem",
-                        "lg": "0.75rem",
-                        "xl": "1rem",
-                        "2xl": "1.5rem",
-                        "full": "9999px"
-                    },
-                    "spacing": {
-                        "xxl": "64px",
-                        "xl": "40px",
-                        "gutter": "24px",
-                        "md": "16px",
-                        "container-padding": "32px",
-                        "sm": "8px",
-                        "lg": "24px",
-                        "xs": "4px",
-                        "base": "4px"
-                    }
-                }
-            }
-        }
-    </script>
+body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
+.material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+.custom-shadow { box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04); }
+.tabular-numbers { font-variant-numeric: tabular-nums; }
+</style>
 </head>
-<body class="bg-background text-on-surface antialiased min-h-screen">
-<div id="header-placeholder"></div>
-<script>
-fetch('/header.html')
-  .then(response => response.text())
-  .then(html => {
-    document.getElementById('header-placeholder').innerHTML = html;
-  });
-</script>
-<main class="pt-24 pb-xxl w-full">
-<div class="w-full px-container-padding space-y-lg">
-<!-- ページタイトルエリア -->
-<div class="flex justify-between items-center">
-<div class="flex items-center gap-3">
-<button class="w-9 h-9 flex items-center justify-center rounded-xl border border-outline-variant bg-surface-container-lowest hover:bg-surface-container transition-colors text-on-surface-variant shrink-0" onclick="history.back()">
-<span class="material-symbols-outlined text-[20px]">arrow_back</span>
-</button>
-<h1 class="text-xl font-bold text-on-surface tracking-tight">工事区分マスタ</h1>
+<body class="bg-background text-on-surface">
+<!-- Sidebar Navigation -->
+<aside class="fixed left-0 top-0 h-screen w-64 z-50 bg-surface-container-lowest border-r border-outline-variant flex flex-col py-6">
+<div class="px-6 mb-10">
+<h1 class="text-headline-md font-display-lg font-bold text-primary">WIN WIN様</h1>
+<p class="text-label-sm text-on-surface-variant tracking-wider uppercase">デモ画面</p>
 </div>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center gap-3 px-6 py-3 text-on-surface-variant hover:bg-surface-container-low transition-colors duration-200" href="/reporting.html">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-label-md text-label-md">ダッシュボード</span>
+</a>
+<a class="flex items-center gap-3 px-6 py-3 text-on-surface-variant hover:bg-surface-container-low transition-colors duration-200" href="/projects.html">
+<span class="material-symbols-outlined">engineering</span>
+<span class="font-label-md text-label-md">受注一覧</span>
+</a>
+<a class="flex items-center gap-3 px-6 py-3 text-on-surface-variant hover:bg-surface-container-low transition-colors duration-200" href="/customers.html">
+<span class="material-symbols-outlined">groups</span>
+<span class="font-label-md text-label-md">顧客マスタ</span>
+</a>
+<a class="flex items-center gap-3 px-6 py-3 text-on-surface-variant hover:bg-surface-container-low transition-colors duration-200" href="/vendors.html">
+<span class="material-symbols-outlined">store</span>
+<span class="font-label-md text-label-md">発注先マスタ</span>
+</a>
+<a class="flex items-center gap-3 px-6 py-3 text-secondary font-bold border-l-4 border-secondary bg-surface-container-low" href="/categories.html">
+<span class="material-symbols-outlined">category</span>
+<span class="font-label-md text-label-md">工事区分マスタ</span>
+</a>
+<a class="flex items-center gap-3 px-6 py-3 text-on-surface-variant hover:bg-surface-container-low transition-colors duration-200" href="/receipts.html">
+<span class="material-symbols-outlined">savings</span>
+<span class="font-label-md text-label-md">売上・入金管理</span>
+</a>
+<a class="flex items-center gap-3 px-6 py-3 text-on-surface-variant hover:bg-surface-container-low transition-colors duration-200" href="/payment.html">
+<span class="material-symbols-outlined">payments</span>
+<span class="font-label-md text-label-md">支払管理</span>
+</a>
+<a class="flex items-center gap-3 px-6 py-3 text-on-surface-variant hover:bg-surface-container-low transition-colors duration-200" href="/orders-list.html">
+<span class="material-symbols-outlined">receipt_long</span>
+<span class="font-label-md text-label-md">工事計画</span>
+</a>
+<a class="flex items-center gap-3 px-6 py-3 text-on-surface-variant hover:bg-surface-container-low transition-colors duration-200" href="/history.html">
+<span class="material-symbols-outlined">history</span>
+<span class="font-label-md text-label-md">履歴詳細</span>
+</a>
+</nav>
+</aside>
+<!-- Main Content Canvas -->
+<main class="ml-64 min-h-screen">
+<!-- Top App Bar -->
+<header class="sticky top-0 z-40 flex justify-between items-center h-20 px-margin-desktop bg-surface/80 backdrop-blur-md shadow-sm">
+<div class="flex items-center gap-4 bg-surface-container-low px-4 py-2 rounded-full w-96">
+<span class="material-symbols-outlined text-on-surface-variant">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-body-md w-full" id="keyword-search" placeholder="工事区分名・コードで検索..." type="text"/>
+</div>
+<div class="flex items-center gap-6">
 <div class="flex items-center gap-4">
-<button class="bg-surface-container-lowest border border-outline-variant text-on-surface-variant px-5 py-2.5 text-sm font-semibold rounded-xl flex items-center gap-2 hover:bg-surface-container hover:text-on-surface transition-all">
-<span class="material-symbols-outlined text-[20px]">download</span>
-                        CSV出力
-                    </button>
-<button class="bg-primary text-on-primary px-6 py-2.5 text-sm font-bold rounded-xl flex items-center gap-2 hover:opacity-90 transition-all shadow-md shadow-primary/10" onclick="openAddModal()">
-<span class="material-symbols-outlined text-[20px]">add</span>
-                        新規工事区分登録
-                    </button>
+<div class="relative" id="notif-wrap">
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary relative" onclick="toggleNotif(event)">notifications<span id="notif-badge" class="absolute -top-1 -right-1 bg-error text-on-error text-[9px] font-normal rounded-full min-w-[16px] h-4 px-1 flex items-center justify-center" style="display:none">0</span></button>
+<div id="notif-panel" class="absolute right-0 mt-2 w-96 max-h-[480px] overflow-y-auto bg-surface-container-lowest border border-outline-variant rounded-lg custom-shadow z-[200]" style="display:none" onclick="event.stopPropagation()">
+<div class="px-4 py-3 border-b border-outline-variant flex justify-between items-center sticky top-0 bg-surface-container-lowest">
+<span class="text-label-md font-label-md text-primary">通知</span>
+<span class="text-label-sm text-on-surface-variant" id="notif-count-label"></span>
+</div>
+<div id="notif-list"></div>
 </div>
 </div>
-<!-- フィルタエリア -->
-<div class="bg-surface-container-low p-6 rounded-2xl border border-outline-variant flex justify-between items-center shadow-sm">
-<div class="relative w-full max-w-md">
-<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant/60 text-xl">search</span>
-<input class="bg-surface-container-lowest border border-outline-variant text-sm pl-12 pr-4 py-3 w-full rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none placeholder:text-on-surface-variant/40" id="keyword-search" placeholder="工事区分名・コードで検索..." type="text"/>
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary">help</button>
 </div>
-<div class="flex items-center gap-2 px-4 py-2 bg-surface-container rounded-full">
-<span class="text-xs font-bold text-on-surface-variant tracking-wider uppercase">データ総数:</span>
-<span class="text-primary font-bold tabular-numbers" id="total-count">30</span>
-<span class="text-xs font-bold text-on-surface-variant">件</span>
+<div class="h-8 w-px bg-outline-variant"></div>
+<div class="flex items-center gap-3">
+<div class="text-right">
+<p class="text-label-md font-bold text-primary">Admin User</p>
+<p class="text-label-sm text-on-surface-variant">System</p>
+</div>
+<div class="w-10 h-10 rounded-full bg-surface-container-high border border-outline-variant"></div>
 </div>
 </div>
-<!-- データテーブル -->
+</header>
+<!-- Page Content -->
+<div class="p-margin-desktop space-y-lg max-w-container-max mx-auto">
+<!-- Header Section -->
+<div class="flex justify-between items-center">
+<div>
+<h2 class="text-[18px] font-label-md text-primary">工事区分マスタ</h2>
+</div>
+<div class="flex gap-md">
+<button class="px-4 py-1.5 border border-outline text-primary font-label-md rounded-lg hover:bg-surface-container transition-colors flex items-center gap-2">
+<span class="material-symbols-outlined">download</span>
+CSV出力
+</button>
+<button class="px-4 py-1.5 bg-secondary text-on-secondary font-label-md font-normal rounded-lg shadow-lg hover:scale-[1.02] active:scale-95 transition-all flex items-center gap-2" onclick="openAddModal()">
+<span class="material-symbols-outlined">add</span>
+新規工事区分登録
+</button>
+</div>
+</div>
+
+<!-- Data Table -->
 <div class="bg-surface-container-lowest border border-outline-variant/30 rounded-2xl overflow-hidden shadow-sm">
 <div class="overflow-x-auto custom-scrollbar">
 <table class="w-full text-left border-separate border-spacing-0">
 <thead>
 <tr class="bg-surface-container-low/50">
-<th class="px-3 py-1.5 text-[11px] font-bold text-on-surface-variant uppercase tracking-widest border-b border-outline-variant/30 w-48">コード</th>
-<th class="px-3 py-1.5 text-[11px] font-bold text-on-surface-variant uppercase tracking-widest border-b border-outline-variant/30">工事区分名称</th>
-<th class="px-3 py-1.5 text-[11px] font-bold text-on-surface-variant uppercase tracking-widest border-b border-outline-variant/30 text-center w-32">表示順</th>
-<th class="px-3 py-1.5 text-[11px] font-bold text-on-surface-variant uppercase tracking-widest border-b border-outline-variant/30">備考・メモ</th>
+<th class="px-3 py-1.5 text-label-md font-label-md font-normal text-on-surface-variant uppercase tracking-widest border-b border-outline-variant/30 w-48">コード</th>
+<th class="px-3 py-1.5 text-label-md font-label-md font-normal text-on-surface-variant uppercase tracking-widest border-b border-outline-variant/30">工事区分名称</th>
+<th class="px-3 py-1.5 text-label-md font-label-md font-normal text-on-surface-variant uppercase tracking-widest border-b border-outline-variant/30 text-center w-32">表示順</th>
+<th class="px-3 py-1.5 text-label-md font-label-md font-normal text-on-surface-variant uppercase tracking-widest border-b border-outline-variant/30">備考・メモ</th>
 </tr>
 </thead>
 <tbody class="divide-y divide-outline-variant/20" id="master-table-body">
@@ -169,102 +129,70 @@ fetch('/header.html')
 </table>
 </div>
 </div>
+
 </div>
-<!-- 操作履歴 -->
-<section class="bg-surface-container-lowest border border-outline-variant/30 rounded-2xl overflow-hidden shadow-sm mt-10">
-<div class="px-6 py-4 border-b border-outline-variant/30 flex justify-between items-center bg-surface-container-low/50">
-<h2 class="text-sm font-bold text-primary flex items-center gap-2">
-<span class="material-symbols-outlined text-lg">history</span>
-操作履歴
-</h2>
-<span class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">履歴ログ (最新100件)</span>
-</div>
-<div class="max-h-[280px] overflow-y-auto custom-scrollbar">
-<table class="w-full text-left border-separate border-spacing-0">
-<thead>
-<tr class="bg-surface-container-lowest sticky top-0 z-10">
-<th class="px-6 py-3 text-[10px] font-bold text-on-surface-variant uppercase tracking-widest border-b border-outline-variant/30 w-48">日時</th>
-<th class="px-6 py-3 text-[10px] font-bold text-on-surface-variant uppercase tracking-widest border-b border-outline-variant/30 w-56">対象</th>
-<th class="px-6 py-3 text-[10px] font-bold text-on-surface-variant uppercase tracking-widest border-b border-outline-variant/30">実行内容</th>
-</tr>
-</thead>
-<tbody class="divide-y divide-outline-variant/20" id="history-table-body">
-<tr class="hover:bg-surface-container-low transition-colors cursor-pointer" onclick="location.href='history.html?type=category'">
-<td class="px-6 py-4 text-xs text-on-surface-variant tabular-numbers">2026/06/17 00:45:47</td>
-<td class="px-6 py-4 text-xs font-bold text-primary">システム一括処理</td>
-<td class="px-6 py-4 text-xs text-on-surface-variant">管理者 太郎 | 初期テストデータ30件をインポートしました</td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="px-6 py-4 border-t border-outline-variant/30 bg-surface-container-low/30 text-center flex justify-center">
-<a href="history.html?type=category" class="text-xs font-bold text-primary hover:underline transition-all inline-flex items-center gap-1">
-もっと見る
-<span class="material-symbols-outlined text-sm">arrow_forward</span>
-</a>
-</div>
-</section>
-</div>
+<!-- Footer -->
+<footer class="border-t border-outline-variant mt-xl py-lg px-margin-desktop text-center text-on-surface-variant">
+<p class="text-label-sm uppercase tracking-wider mb-2">WIN WIN様 デモ画面 v2.4.0</p>
+<p class="text-body-sm">© 2024 株式会社WIN WIN デモ環境</p>
+</footer>
 </main>
-</body>
 
-<div class="fixed inset-0 z-[100] hidden" id="edit-modal">
+<div class="fixed inset-0 z-[100] bg-primary/20 backdrop-blur-md" id="edit-modal" style="display:none" onclick="closeModal('edit-modal')">
 <div class="absolute inset-0 bg-primary/20 backdrop-blur-md" onclick="closeModal('edit-modal')"></div>
-<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl bg-surface-container-lowest rounded-2xl shadow-2xl overflow-hidden border border-outline-variant/30 transform transition-all scale-95 opacity-0 duration-300" id="edit-modal-content">
-<div class="px-6 py-4 border-b border-outline-variant/30 flex justify-between items-center bg-surface-container-low/50">
-<h3 class="text-lg font-bold text-on-surface">工事区分の編集</h3>
-<button class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-surface-container transition-colors text-on-surface-variant" onclick="closeModal('edit-modal')">
-<span class="material-symbols-outlined">close</span>
+<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl max-h-[90vh] bg-surface-container-lowest rounded-lg custom-shadow border border-outline-variant overflow-hidden" onclick="event.stopPropagation()" id="edit-modal-content">
+<div class="px-lg py-md flex justify-between items-center border-b border-outline-variant bg-surface-container-low">
+<h3 class="text-label-md font-label-md text-primary">工事区分の編集</h3>
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary" onclick="closeModal('edit-modal')">close</button>
+</div>
+<div class="p-lg space-y-md overflow-y-auto flex-1">
+<div class="grid grid-cols-2 gap-md">
+<div>
+<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">工事区分コード</label>
+<input class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent tabular-nums" id="modal-code" readonly="" type="text"/>
+</div>
+<div>
+<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">表示順</label>
+<input class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent tabular-nums" id="modal-order" type="number"/>
+</div>
+</div>
+<div>
+<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">工事区分名</label>
+<input class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent" id="modal-name" type="text"/>
+</div>
+<div>
+<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">備考</label>
+<textarea class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent" id="modal-note" rows="3"></textarea>
+</div>
+</div>
+<div class="px-lg py-md bg-surface-container-low border-t border-outline-variant flex justify-between items-center">
+<button class="text-error font-normal text-label-md flex items-center gap-2 hover:bg-error/5 px-4 py-1.5 rounded-lg transition-all" id="delete-btn">
+<span class="material-symbols-outlined text-label-md">delete</span>
+削除
 </button>
-</div>
-<div class="p-5 space-y-4">
-<div class="grid grid-cols-2 gap-6">
-<div>
-<label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-1.5">工事区分コード</label>
-<input class="w-full bg-surface-container-low border-outline-variant/50 rounded-xl text-sm px-4 py-3 text-primary tabular-numbers font-semibold" id="modal-code" readonly="" type="text"/>
-</div>
-<div>
-<label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-1.5">表示順</label>
-<input class="w-full bg-surface-container-low border-outline-variant/50 rounded-xl text-sm px-4 py-3 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all tabular-numbers" id="modal-order" type="number"/>
-</div>
-</div>
-<div>
-<label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-1.5">工事区分名</label>
-<input class="w-full bg-surface-container-low border-outline-variant/50 rounded-xl text-sm px-4 py-3 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" id="modal-name" placeholder="工事区分名を入力" type="text"/>
-</div>
-<div>
-<label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-1.5">備考</label>
-<textarea class="w-full bg-surface-container-low border-outline-variant/50 rounded-xl text-sm px-4 py-3 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all resize-none" id="modal-note" placeholder="備考を入力してください" rows="3"></textarea>
-</div>
-</div>
-<div class="px-6 py-4 bg-surface-container-low/50 border-t border-outline-variant/30 flex justify-between items-center">
-<button class="px-5 py-2.5 text-sm font-bold text-error hover:bg-error/10 rounded-xl transition-all" id="delete-btn">削除</button>
-<div class="flex items-center gap-4">
-<button class="px-5 py-2.5 text-sm font-bold text-on-surface-variant hover:bg-surface-container rounded-xl transition-all" onclick="closeModal('edit-modal')">キャンセル</button>
-<button class="bg-primary text-on-primary px-8 py-2.5 text-sm font-bold rounded-xl shadow-lg shadow-primary/20 hover:opacity-90 transition-all" id="save-btn">保存する</button>
+<div class="flex items-center gap-md">
+<button class="px-4 py-1.5 text-label-md font-label-md font-normal text-on-surface-variant hover:bg-surface-container rounded-lg transition-all" onclick="closeModal('edit-modal')">キャンセル</button>
+<button class="bg-secondary text-on-secondary px-4 py-1.5 text-label-md font-label-md font-normal rounded-lg shadow-lg hover:scale-[1.02] transition-all" id="save-btn">保存</button>
 </div>
 </div>
 </div>
 </div>
 
-<div class="fixed inset-0 z-[100] hidden" id="add-modal">
-<div class="absolute inset-0 bg-primary/20 backdrop-blur-md" onclick="closeModal('add-modal')"></div>
-<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl bg-surface-container-lowest rounded-2xl shadow-2xl overflow-hidden border border-outline-variant/30 transform transition-all scale-95 opacity-0 duration-300" id="add-modal-content">
-<div class="px-6 py-4 border-b border-outline-variant/30 flex justify-between items-center bg-surface-container-low/50">
-<h3 class="text-lg font-bold text-on-surface">新規工事区分登録</h3>
-<button class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-surface-container transition-colors text-on-surface-variant" onclick="closeModal('add-modal')">
-<span class="material-symbols-outlined">close</span>
-</button>
+<div class="fixed inset-0 z-[100] bg-primary/20 backdrop-blur-md" id="add-modal" style="display:none" onclick="closeModal('add-modal')">
+<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl max-h-[90vh] bg-surface-container-lowest rounded-lg custom-shadow border border-outline-variant overflow-hidden" onclick="event.stopPropagation()" id="add-modal-content">
+<div class="px-lg py-md flex justify-between items-center border-b border-outline-variant bg-surface-container-low">
+<h3 class="text-label-md font-label-md text-primary">新規工事区分登録</h3>
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary" onclick="closeModal('add-modal')">close</button>
 </div>
-<div class="p-5 space-y-4">
-<div class="grid grid-cols-2 gap-6">
+<div class="p-lg space-y-md overflow-y-auto flex-1">
+<div class="grid grid-cols-2 gap-md">
 <div>
-<label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-1.5">工事区分コード</label>
-<input class="w-full bg-surface-container-low border-outline-variant/50 rounded-xl text-sm px-4 py-3 text-primary tabular-numbers font-semibold" id="new-modal-code" readonly="" type="text" placeholder="自動発番"/>
+<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">工事区分コード</label>
+<input class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent tabular-nums" id="new-modal-code" readonly="" type="text"/>
 </div>
 <div>
-<label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-1.5">表示順</label>
-<input class="w-full bg-surface-container-low border-outline-variant/50 rounded-xl text-sm px-4 py-3 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all tabular-numbers" id="new-modal-order" type="number"/>
+<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">表示順</label>
+<input class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent tabular-nums" id="new-modal-order" type="number"/>
 </div>
 </div>
 <div>
@@ -277,26 +205,24 @@ fetch('/header.html')
 </div>
 </div>
 <div class="px-6 py-4 bg-surface-container-low/50 border-t border-outline-variant/30 flex justify-end items-center gap-4">
-<button class="px-5 py-2.5 text-sm font-bold text-on-surface-variant hover:bg-surface-container rounded-xl transition-all" onclick="closeModal('add-modal')">キャンセル</button>
-<button class="bg-primary text-on-primary px-8 py-2.5 text-sm font-bold rounded-xl shadow-lg shadow-primary/20 hover:opacity-90 transition-all" id="register-btn">登録する</button>
+<button class="px-4 py-1.5 text-label-md font-label-md font-normal text-on-surface-variant hover:bg-surface-container rounded-lg transition-all" onclick="closeModal('add-modal')">キャンセル</button>
+<button class="bg-secondary text-on-secondary px-4 py-1.5 text-label-md font-label-md font-normal rounded-lg shadow-lg hover:scale-[1.02] transition-all" id="register-btn">登録する</button>
 </div>
 </div>
 </div>
 
 <script>
-        let editingId = null;
+function openModal(id) {
+  const el = document.getElementById(id);
+  if(el) el.style.display = 'block';
+}
 
-        function closeModal(id) {
-            const modal = document.getElementById(id);
-            const content = modal.querySelector('.bg-surface-container-lowest');
-            if (content) {
-                content.classList.add('scale-95', 'opacity-0');
-                content.classList.remove('scale-100', 'opacity-100');
-            }
-            setTimeout(() => {
-                modal.classList.add('hidden');
-            }, 300);
-        }
+function closeModal(id) {
+  const el = document.getElementById(id);
+  if(el) el.style.display = 'none';
+}
+
+let editingId = null;
 
         // グローバルキャッシュの初期化
         if (!window.appCache) {
@@ -311,13 +237,14 @@ fetch('/header.html')
             const tbody = document.getElementById('master-table-body');
             tbody.innerHTML = categories.map(c => `
                 <tr class="hover:bg-surface-container-low transition-colors cursor-pointer group" onclick="openEditModal(${c.id}, '${c.code}', '${c.name}', ${c.order}, '${c.note.replace(/'/g, "\\'")}')">
-                    <td class="px-3 py-1.5 text-xs font-semibold text-primary tabular-numbers">${c.code}</td>
-                    <td class="px-3 py-1.5 text-xs font-bold group-hover:text-primary transition-colors">${c.name}</td>
-                    <td class="px-3 py-1.5 text-xs text-center tabular-numbers font-medium text-on-surface-variant">${c.order}</td>
-                    <td class="px-3 py-1.5 text-xs text-on-surface-variant leading-relaxed">${c.note}</td>
+                    <td class="px-3 py-1.5 text-label-md font-label-md text-primary tabular-numbers">${c.code}</td>
+                    <td class="px-3 py-1.5 text-label-md font-label-md group-hover:text-primary transition-colors">${c.name}</td>
+                    <td class="px-3 py-1.5 text-label-md font-label-md text-center tabular-numbers text-on-surface-variant">${c.order}</td>
+                    <td class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant leading-relaxed">${c.note}</td>
                 </tr>
             `).join('');
-            document.getElementById('total-count').innerText = categories.length;
+            const totalCountEl = document.getElementById('total-count');
+            if (totalCountEl) totalCountEl.innerText = categories.length;
         }
 
         async function openEditModal(id, code, name, order, note) {
@@ -327,14 +254,7 @@ fetch('/header.html')
             document.getElementById('modal-order').value = order;
             document.getElementById('modal-note').value = note;
             const modal = document.getElementById('edit-modal');
-            modal.classList.remove('hidden');
-            setTimeout(() => {
-                const content = modal.querySelector('.bg-surface-container-lowest');
-                if (content) {
-                    content.classList.remove('scale-95', 'opacity-0');
-                    content.classList.add('scale-100', 'opacity-100');
-                }
-            }, 10);
+            modal.style.display = 'block';
             document.body.style.overflow = 'hidden';
         }
 
@@ -345,14 +265,7 @@ fetch('/header.html')
             document.getElementById('new-modal-order').value = '';
             document.getElementById('new-modal-note').value = '';
             const modal = document.getElementById('add-modal');
-            modal.classList.remove('hidden');
-            setTimeout(() => {
-                const content = modal.querySelector('.bg-surface-container-lowest');
-                if (content) {
-                    content.classList.remove('scale-95', 'opacity-0');
-                    content.classList.add('scale-100', 'opacity-100');
-                }
-            }, 10);
+            modal.style.display = 'block';
             document.body.style.overflow = 'hidden';
         }
 
@@ -434,4 +347,6 @@ fetch('/header.html')
             loadCategories();
         })();
     </script>
+
+<script src="/notify.js"></script>
 </html>
