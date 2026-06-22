@@ -3,7 +3,11 @@ const cors = require('cors');
 const path = require('path');
 const PDFDocument = require('pdfkit');
 const nodemailer = require('nodemailer');
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
 const { q, one } = require('./db');
+
+const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-key-change-in-production';
 
 const app = express();
 
@@ -23,6 +27,79 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'login.html'));
 });
 
+// ============ Auth Middleware ============
+const authMiddleware = (req, res, next) => {
+  const token = req.headers.authorization?.replace('Bearer ', '');
+  if (!token) return res.status(401).json({ error: 'Unauthorized' });
+  try {
+    req.user = jwt.verify(token, JWT_SECRET);
+    next();
+  } catch (err) {
+    res.status(401).json({ error: 'Invalid token' });
+  }
+};
+
+// Audit log helper
+const logAudit = async (userId, action, tableName, recordId, details = {}) => {
+  if (!userId) return;
+  await q(
+    'INSERT INTO audit_logs (user_id, action, table_name, record_id, details) VALUES ($1,$2,$3,$4,$5)',
+    [userId, action, tableName, recordId, JSON.stringify(details)]
+  );
+};
+
+// ============ Auth API ============
+app.post('/api/auth/signup', h(async (req, res) => {
+  const { email, password, name } = req.body;
+  if (!email || !password) return res.status(400).json({ error: 'Email and password required' });
+  const existing = await one('SELECT id FROM users WHERE email=$1', [email]);
+  if (existing) return res.status(409).json({ error: 'Email already registered' });
+  const hash = await bcrypt.hash(password, 10);
+  const user = await one('INSERT INTO users (email, password_hash, name, role) VALUES ($1,$2,$3,$4) RETURNING id,email,name,role', [email, hash, name || '', 'user']);
+  const token = jwt.sign({ id: user.id, email: user.email }, JWT_SECRET, { expiresIn: '7d' });
+  res.json({ token, user: { id: user.id, email: user.email, name: user.name, role: user.role } });
+}));
+
+app.post('/api/auth/login', h(async (req, res) => {
+  const { email, password } = req.body;
+  if (!email || !password) return res.status(400).json({ error: 'Email and password required' });
+  const user = await one('SELECT id,email,name,role,password_hash FROM users WHERE email=$1', [email]);
+  if (!user) return res.status(401).json({ error: 'Invalid credentials' });
+  const match = await bcrypt.compare(password, user.password_hash);
+  if (!match) return res.status(401).json({ error: 'Invalid credentials' });
+  const token = jwt.sign({ id: user.id, email: user.email }, JWT_SECRET, { expiresIn: '7d' });
+  res.json({ token, user: { id: user.id, email: user.email, name: user.name, role: user.role } });
+}));
+
+app.get('/api/auth/me', authMiddleware, h(async (req, res) => {
+  const user = await one('SELECT id,email,name,role FROM users WHERE id=$1', [req.user.id]);
+  res.json(user);
+}));
+
+app.post('/api/auth/logout', authMiddleware, (req, res) => {
+  res.json({ success: true });
+});
+
+// ============ Audit Log API ============
+app.get('/api/audit-logs', authMiddleware, h(async (req, res) => {
+  const logs = await q(`
+    SELECT al.*, u.email FROM audit_logs al
+    LEFT JOIN users u ON al.user_id = u.id
+    ORDER BY al.created_at DESC LIMIT 100
+  `);
+  res.json(logs);
+}));
+
+app.get('/api/audit-logs/:tableName', authMiddleware, h(async (req, res) => {
+  const logs = await q(`
+    SELECT al.*, u.email FROM audit_logs al
+    LEFT JOIN users u ON al.user_id = u.id
+    WHERE al.table_name=$1
+    ORDER BY al.created_at DESC LIMIT 50
+  `, [req.params.tableName]);
+  res.json(logs);
+}));
+
 // ============ Projects API ============
 app.get('/api/projects', h(async (req, res) => {
   res.json(await q('SELECT * FROM projects ORDER BY id'));
@@ -36,6 +113,8 @@ app.post('/api/projects', h(async (req, res) => {
     [name, client, clientCompany, clientPhone, clientEmail, clientAddress, amount, startDate, endDate, status, notes]
   );
   await q('UPDATE projects SET project_no=$1 WHERE id=$2', [`WW7-${String(row.id).padStart(4, '0')}`, row.id]);
+  const userId = req.headers.authorization ? jwt.decode(req.headers.authorization.replace('Bearer ', '')).id : null;
+  await logAudit(userId, 'CREATE', 'projects', row.id, { name, client });
   res.json({ id: row.id, ...req.body });
 }));
 
@@ -45,11 +124,15 @@ app.put('/api/projects/:id', h(async (req, res) => {
     `UPDATE projects SET name=$1, client=$2, "clientCompany"=$3, "clientPhone"=$4, "clientEmail"=$5, "clientAddress"=$6, amount=$7, "startDate"=$8, "endDate"=$9, status=$10, notes=$11, paid=$12 WHERE id=$13`,
     [name, client, clientCompany, clientPhone, clientEmail, clientAddress, amount, startDate, endDate, status, notes, paid ? 1 : 0, req.params.id]
   );
+  const userId = req.headers.authorization ? jwt.decode(req.headers.authorization.replace('Bearer ', '')).id : null;
+  await logAudit(userId, 'UPDATE', 'projects', parseInt(req.params.id), { name, status });
   res.json({ id: req.params.id, ...req.body });
 }));
 
 app.delete('/api/projects/:id', h(async (req, res) => {
   await q('DELETE FROM projects WHERE id=$1', [req.params.id]);
+  const userId = req.headers.authorization ? jwt.decode(req.headers.authorization.replace('Bearer ', '')).id : null;
+  await logAudit(userId, 'DELETE', 'projects', parseInt(req.params.id), {});
   res.json({ success: true });
 }));
 
