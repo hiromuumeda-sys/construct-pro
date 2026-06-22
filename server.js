@@ -63,6 +63,39 @@ const getUserId = (req) => {
   } catch { return null; }
 };
 
+// 各テーブルの「列名 → 日本語ラベル」。差分表示に使う。
+const FIELD_LABELS = {
+  projects:   { name:'案件名', client:'顧客', clientCompany:'顧客会社', clientPhone:'電話', clientEmail:'メール', clientAddress:'住所', amount:'金額', startDate:'工期開始', endDate:'工期終了', status:'ステータス', notes:'備考' },
+  orders:     { category:'工事区分', vendor:'発注先', estimate:'見積額', planned:'予算額', decided:'確定額', status:'ステータス', details:'内容', site:'現場', period_start:'開始', period_end:'終了', handover:'引渡', paymentStatus:'支払状況', paymentMethod:'支払方法', paymentDate:'支払日', paymentNotes:'支払備考' },
+  vendors:    { company:'会社名', dept:'部署', contact:'担当者', email:'メール', phone:'電話', address:'住所' },
+  customers:  { company:'会社名', department:'部署', contact:'担当者', email:'メール', phone:'電話', address:'住所', notes:'備考' },
+  categories: { code:'コード', name:'名称', order:'表示順', note:'備考' },
+  receipts:   { project_id:'案件', received_date:'入金日', amount:'金額', month:'対象月', memo:'備考' },
+};
+
+// 表示用に値を整形（金額はカンマ区切り、空は「(空)」）
+const fmtVal = (v) => {
+  if (v === null || v === undefined || v === '') return '(空)';
+  const s = String(v);
+  if (/^-?\d{4,}$/.test(s)) return Number(s).toLocaleString();
+  return s;
+};
+
+// 旧行と新body を比較し「ラベル: 旧 → 新」の配列を返す
+const diffChanges = (table, oldRow, body) => {
+  const labels = FIELD_LABELS[table] || {};
+  const changes = [];
+  for (const [key, label] of Object.entries(labels)) {
+    if (!(key in body)) continue;
+    const before = oldRow ? oldRow[key] : undefined;
+    const after = body[key];
+    if (String(before ?? '') !== String(after ?? '')) {
+      changes.push(`${label}を ${fmtVal(before)} → ${fmtVal(after)} に変更`);
+    }
+  }
+  return changes;
+};
+
 // ============ Auth API ============
 app.post('/api/auth/signup', h(async (req, res) => {
   const { email, password, name } = req.body;
@@ -130,25 +163,27 @@ app.post('/api/projects', h(async (req, res) => {
   );
   await q('UPDATE projects SET project_no=$1 WHERE id=$2', [`WW7-${String(row.id).padStart(4, '0')}`, row.id]);
   const userId = getUserId(req);
-  await logAudit(userId, 'CREATE', 'projects', row.id, { name, client });
+  await logAudit(userId, 'CREATE', 'projects', row.id, { name, changes: [`新規登録（顧客: ${client || '-'} / ステータス: ${status || '-'}）`] });
   res.json({ id: row.id, ...req.body });
 }));
 
 app.put('/api/projects/:id', h(async (req, res) => {
   const { name, client, clientCompany, clientPhone, clientEmail, clientAddress, amount, startDate, endDate, status, notes, paid } = req.body;
+  const before = await one('SELECT * FROM projects WHERE id=$1', [req.params.id]);
   await q(
     `UPDATE projects SET name=$1, client=$2, "clientCompany"=$3, "clientPhone"=$4, "clientEmail"=$5, "clientAddress"=$6, amount=$7, "startDate"=$8, "endDate"=$9, status=$10, notes=$11, paid=$12 WHERE id=$13`,
     [name, client, clientCompany, clientPhone, clientEmail, clientAddress, amount, startDate, endDate, status, notes, paid ? 1 : 0, req.params.id]
   );
   const userId = getUserId(req);
-  await logAudit(userId, 'UPDATE', 'projects', parseInt(req.params.id), { name, status });
+  await logAudit(userId, 'UPDATE', 'projects', parseInt(req.params.id), { name: before?.name || name, changes: diffChanges('projects', before, req.body) });
   res.json({ id: req.params.id, ...req.body });
 }));
 
 app.delete('/api/projects/:id', h(async (req, res) => {
+  const before = await one('SELECT * FROM projects WHERE id=$1', [req.params.id]);
   await q('DELETE FROM projects WHERE id=$1', [req.params.id]);
   const userId = getUserId(req);
-  await logAudit(userId, 'DELETE', 'projects', parseInt(req.params.id), {});
+  await logAudit(userId, 'DELETE', 'projects', parseInt(req.params.id), { name: before?.name, changes: [`削除（案件: ${before?.name || '-'}）`] });
   res.json({ success: true });
 }));
 
@@ -164,23 +199,25 @@ app.post('/api/vendors', h(async (req, res) => {
   await q('INSERT INTO vendors (id, company, dept, contact, email, phone, address) VALUES ($1,$2,$3,$4,$5,$6,$7)',
     [newId, company, dept, contact, email, phone, address]);
   const userId = getUserId(req);
-  await logAudit(userId, 'CREATE', 'vendors', newId, { company });
+  await logAudit(userId, 'CREATE', 'vendors', newId, { name: company, changes: [`新規登録（発注先: ${company || '-'}）`] });
   res.json({ id: newId, ...req.body });
 }));
 
 app.put('/api/vendors/:id', h(async (req, res) => {
   const { company, dept, contact, email, phone, address } = req.body;
+  const before = await one('SELECT * FROM vendors WHERE id=$1', [req.params.id]);
   await q('UPDATE vendors SET company=$1, dept=$2, contact=$3, email=$4, phone=$5, address=$6 WHERE id=$7',
     [company, dept, contact, email, phone, address, req.params.id]);
   const userId = getUserId(req);
-  await logAudit(userId, 'UPDATE', 'vendors', req.params.id, { company });
+  await logAudit(userId, 'UPDATE', 'vendors', req.params.id, { name: before?.company || company, changes: diffChanges('vendors', before, req.body) });
   res.json({ id: req.params.id, ...req.body });
 }));
 
 app.delete('/api/vendors/:id', h(async (req, res) => {
+  const before = await one('SELECT * FROM vendors WHERE id=$1', [req.params.id]);
   await q('DELETE FROM vendors WHERE id=$1', [req.params.id]);
   const userId = getUserId(req);
-  await logAudit(userId, 'DELETE', 'vendors', req.params.id, {});
+  await logAudit(userId, 'DELETE', 'vendors', req.params.id, { name: before?.company, changes: [`削除（発注先: ${before?.company || '-'}）`] });
   res.json({ success: true });
 }));
 
@@ -195,22 +232,24 @@ app.post('/api/categories', h(async (req, res) => {
   const code = String(Number(row.max) + 1).padStart(5, '0');
   const ins = await one('INSERT INTO categories (code, name, "order", note) VALUES ($1,$2,$3,$4) RETURNING id', [code, name, order, note]);
   const userId = getUserId(req);
-  await logAudit(userId, 'CREATE', 'categories', ins.id, { name, code });
+  await logAudit(userId, 'CREATE', 'categories', ins.id, { name, changes: [`新規登録（工事区分: ${name || '-'}）`] });
   res.json({ id: ins.id, code, name, order, note });
 }));
 
 app.put('/api/categories/:id', h(async (req, res) => {
   const { code, name, order, note } = req.body;
+  const before = await one('SELECT * FROM categories WHERE id=$1', [req.params.id]);
   await q('UPDATE categories SET code=$1, name=$2, "order"=$3, note=$4 WHERE id=$5', [code, name, order, note, req.params.id]);
   const userId = getUserId(req);
-  await logAudit(userId, 'UPDATE', 'categories', parseInt(req.params.id), { name, code });
+  await logAudit(userId, 'UPDATE', 'categories', parseInt(req.params.id), { name: before?.name || name, changes: diffChanges('categories', before, req.body) });
   res.json({ id: req.params.id, ...req.body });
 }));
 
 app.delete('/api/categories/:id', h(async (req, res) => {
+  const before = await one('SELECT * FROM categories WHERE id=$1', [req.params.id]);
   await q('DELETE FROM categories WHERE id=$1', [req.params.id]);
   const userId = getUserId(req);
-  await logAudit(userId, 'DELETE', 'categories', parseInt(req.params.id), {});
+  await logAudit(userId, 'DELETE', 'categories', parseInt(req.params.id), { name: before?.name, changes: [`削除（工事区分: ${before?.name || '-'}）`] });
   res.json({ success: true });
 }));
 
@@ -228,25 +267,27 @@ app.post('/api/orders', h(async (req, res) => {
     [b.project_id, b.category, b.vendor, b.estimate, b.planned, b.decided, b.status, b.details, b.site, b.period_start, b.period_end, b.handover, b.payment, b.paymentStatus || '未払い', b.paymentMethod || '', b.paymentDate || '', b.paymentNotes || '']
   );
   const userId = getUserId(req);
-  await logAudit(userId, 'CREATE', 'orders', ins.id, { category: b.category, vendor: b.vendor });
+  await logAudit(userId, 'CREATE', 'orders', ins.id, { name: `${b.category || ''}（${b.vendor || ''}）`, changes: [`新規登録（工事区分: ${b.category || '-'} / 発注先: ${b.vendor || '-'}）`] });
   res.json({ id: ins.id, ...b });
 }));
 
 app.put('/api/orders/:id', h(async (req, res) => {
   const b = req.body;
+  const before = await one('SELECT * FROM orders WHERE id=$1', [req.params.id]);
   await q(
     `UPDATE orders SET project_id=$1, category=$2, vendor=$3, estimate=$4, planned=$5, decided=$6, status=$7, details=$8, site=$9, period_start=$10, period_end=$11, handover=$12, payment=$13, "paymentStatus"=$14, "paymentMethod"=$15, "paymentDate"=$16, "paymentNotes"=$17 WHERE id=$18`,
     [b.project_id, b.category, b.vendor, b.estimate, b.planned, b.decided, b.status, b.details, b.site, b.period_start, b.period_end, b.handover, b.payment, b.paymentStatus, b.paymentMethod, b.paymentDate, b.paymentNotes, req.params.id]
   );
   const userId = getUserId(req);
-  await logAudit(userId, 'UPDATE', 'orders', parseInt(req.params.id), { status: b.status });
+  await logAudit(userId, 'UPDATE', 'orders', parseInt(req.params.id), { name: `${before?.category || b.category || ''}（${before?.vendor || b.vendor || ''}）`, changes: diffChanges('orders', before, b) });
   res.json({ id: req.params.id, ...b });
 }));
 
 app.delete('/api/orders/:id', h(async (req, res) => {
+  const before = await one('SELECT * FROM orders WHERE id=$1', [req.params.id]);
   await q('DELETE FROM orders WHERE id=$1', [req.params.id]);
   const userId = getUserId(req);
-  await logAudit(userId, 'DELETE', 'orders', parseInt(req.params.id), {});
+  await logAudit(userId, 'DELETE', 'orders', parseInt(req.params.id), { name: `${before?.category || ''}（${before?.vendor || ''}）`, changes: [`削除（${before?.category || '-'} / ${before?.vendor || '-'}）`] });
   res.json({ success: true });
 }));
 
@@ -260,23 +301,25 @@ app.post('/api/customers', h(async (req, res) => {
   const ins = await one('INSERT INTO customers (company, department, contact, email, phone, address, notes) VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING id',
     [company, department, contact, email, phone, address, notes]);
   const userId = getUserId(req);
-  await logAudit(userId, 'CREATE', 'customers', ins.id, { company });
+  await logAudit(userId, 'CREATE', 'customers', ins.id, { name: company, changes: [`新規登録（顧客: ${company || '-'}）`] });
   res.json({ id: ins.id, ...req.body });
 }));
 
 app.put('/api/customers/:id', h(async (req, res) => {
   const { company, department, contact, email, phone, address, notes } = req.body;
+  const before = await one('SELECT * FROM customers WHERE id=$1', [req.params.id]);
   await q('UPDATE customers SET company=$1, department=$2, contact=$3, email=$4, phone=$5, address=$6, notes=$7 WHERE id=$8',
     [company, department, contact, email, phone, address, notes, req.params.id]);
   const userId = getUserId(req);
-  await logAudit(userId, 'UPDATE', 'customers', parseInt(req.params.id), { company });
+  await logAudit(userId, 'UPDATE', 'customers', parseInt(req.params.id), { name: before?.company || company, changes: diffChanges('customers', before, req.body) });
   res.json({ id: req.params.id, ...req.body });
 }));
 
 app.delete('/api/customers/:id', h(async (req, res) => {
+  const before = await one('SELECT * FROM customers WHERE id=$1', [req.params.id]);
   await q('DELETE FROM customers WHERE id=$1', [req.params.id]);
   const userId = getUserId(req);
-  await logAudit(userId, 'DELETE', 'customers', parseInt(req.params.id), {});
+  await logAudit(userId, 'DELETE', 'customers', parseInt(req.params.id), { name: before?.company, changes: [`削除（顧客: ${before?.company || '-'}）`] });
   res.json({ success: true });
 }));
 
@@ -290,23 +333,25 @@ app.post('/api/receipts', h(async (req, res) => {
   const ins = await one('INSERT INTO receipts (project_id, received_date, amount, month, memo) VALUES ($1,$2,$3,$4,$5) RETURNING id',
     [project_id, received_date, amount, month, memo]);
   const userId = getUserId(req);
-  await logAudit(userId, 'CREATE', 'receipts', ins.id, { project_id, amount, month });
+  await logAudit(userId, 'CREATE', 'receipts', ins.id, { name: month, changes: [`新規登録（${month || '-'} / ${fmtVal(amount)}円）`] });
   res.json({ id: ins.id, ...req.body });
 }));
 
 app.put('/api/receipts/:id', h(async (req, res) => {
   const { project_id, received_date, amount, month, memo } = req.body;
+  const before = await one('SELECT * FROM receipts WHERE id=$1', [req.params.id]);
   await q('UPDATE receipts SET project_id=$1, received_date=$2, amount=$3, month=$4, memo=$5 WHERE id=$6',
     [project_id, received_date, amount, month, memo, req.params.id]);
   const userId = getUserId(req);
-  await logAudit(userId, 'UPDATE', 'receipts', parseInt(req.params.id), { amount });
+  await logAudit(userId, 'UPDATE', 'receipts', parseInt(req.params.id), { name: before?.month || month, changes: diffChanges('receipts', before, req.body) });
   res.json({ id: req.params.id, ...req.body });
 }));
 
 app.delete('/api/receipts/:id', h(async (req, res) => {
+  const before = await one('SELECT * FROM receipts WHERE id=$1', [req.params.id]);
   await q('DELETE FROM receipts WHERE id=$1', [req.params.id]);
   const userId = getUserId(req);
-  await logAudit(userId, 'DELETE', 'receipts', parseInt(req.params.id), {});
+  await logAudit(userId, 'DELETE', 'receipts', parseInt(req.params.id), { name: before?.month, changes: [`削除（${before?.month || '-'} / ${fmtVal(before?.amount)}円）`] });
   res.json({ success: true });
 }));
 

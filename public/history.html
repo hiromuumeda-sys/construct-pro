@@ -98,13 +98,14 @@ body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 <tr>
 <th class="px-lg py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider">日時</th>
 <th class="px-lg py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider">操作</th>
-<th class="px-lg py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider">テーブル</th>
+<th class="px-lg py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider">種別</th>
 <th class="px-lg py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider">対象</th>
+<th class="px-lg py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider min-w-[320px]">変更内容</th>
 <th class="px-lg py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider">操作者</th>
 </tr>
 </thead>
 <tbody class="divide-y divide-outline-variant" id="history-table-body">
-<tr><td colspan="5" class="px-lg py-4 text-center text-on-surface-variant">読み込み中...</td></tr>
+<tr><td colspan="6" class="px-lg py-4 text-center text-on-surface-variant">読み込み中...</td></tr>
 </tbody>
 </table>
 </div>
@@ -136,6 +137,10 @@ document.addEventListener('click', (e) => {
   if (!menu.contains(e.target)) panel.classList.add('hidden');
 });
 
+function esc(s) {
+  return String(s ?? '').replace(/[&<>"]/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c]));
+}
+
 function setupUserInfo() {
   const user = Auth.getUser();
   if (user) {
@@ -166,7 +171,7 @@ async function loadLogs() {
     document.getElementById('history-count').textContent = `全 ${filtered.length} 件`;
 
     if (!filtered.length) {
-      tbody.innerHTML = '<tr><td colspan="5" class="px-lg py-4 text-center text-on-surface-variant">履歴がありません</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="6" class="px-lg py-4 text-center text-on-surface-variant">履歴がありません</td></tr>';
       emptyState.classList.remove('hidden');
       return;
     }
@@ -181,21 +186,26 @@ async function loadLogs() {
       let details = log.details || {};
       if (typeof details === 'string') { try { details = JSON.parse(details); } catch(_) { details = {}; } }
       const target = details.name || details.company || details.category || details.invoice_no || details.email || `#${log.record_id}`;
-      return `<tr class="hover:bg-surface-container-low transition-colors">
-        <td class="px-lg py-2 text-body-sm">${dateStr}</td>
-        <td class="px-lg py-2 text-body-sm"><span class="px-2 py-1 rounded text-xs font-bold ${
+      const changes = Array.isArray(details.changes) ? details.changes : [];
+      const changesHtml = changes.length
+        ? changes.map(c => `<div>${esc(c)}</div>`).join('')
+        : '<span class="text-on-surface-variant/50">変更なし</span>';
+      return `<tr class="hover:bg-surface-container-low transition-colors align-top">
+        <td class="px-lg py-2 text-body-sm whitespace-nowrap">${dateStr}</td>
+        <td class="px-lg py-2 text-body-sm"><span class="px-2 py-1 rounded text-xs font-bold whitespace-nowrap ${
           log.action === 'CREATE' ? 'bg-success-container text-on-success-container' :
           log.action === 'UPDATE' ? 'bg-warning-container text-on-warning-container' :
           'bg-error-container text-on-error-container'
         }">${ACTION_LABEL[log.action] || log.action}</span></td>
-        <td class="px-lg py-2 text-body-sm">${TABLE_LABEL[log.table_name] || log.table_name || '-'}</td>
-        <td class="px-lg py-2 text-body-sm text-on-surface-variant">${target}</td>
-        <td class="px-lg py-2 text-body-sm">${log.email || 'システム'}</td>
+        <td class="px-lg py-2 text-body-sm whitespace-nowrap">${TABLE_LABEL[log.table_name] || log.table_name || '-'}</td>
+        <td class="px-lg py-2 text-body-sm text-on-surface-variant">${esc(target)}</td>
+        <td class="px-lg py-2 text-body-sm space-y-0.5">${changesHtml}</td>
+        <td class="px-lg py-2 text-body-sm whitespace-nowrap">${log.email || 'システム'}</td>
       </tr>`;
     }).join('');
   } catch(e) {
     console.error('Failed to load logs:', e);
-    tbody.innerHTML = '<tr><td colspan="5" class="px-lg py-4 text-center text-error">読み込みエラー</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="6" class="px-lg py-4 text-center text-error">読み込みエラー</td></tr>';
   }
 }
 
