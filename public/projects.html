@@ -10,6 +10,7 @@
 <script src="/theme.js?v=3"></script>
 <script src="/sidebar.js?v=3"></script>
 <script src="/auth.js?v=3"></script>
+<script src="/header.js?v=3"></script>
 <style>
 body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
@@ -335,8 +336,8 @@ async function initializeGlobalCache() {
 function setupUserInfo() {
   const user = Auth.getUser();
   if (user) {
-    document.getElementById('user-name').textContent = user.name || user.email;
-    document.getElementById('user-role').textContent = user.role || 'user';
+    const nEl = document.getElementById('user-name'); if (nEl) nEl.textContent = user.name || user.email;
+    const rEl = document.getElementById('user-role'); if (rEl) rEl.textContent = user.role || 'user';
   }
 }
 
