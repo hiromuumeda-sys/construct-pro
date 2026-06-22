@@ -36,6 +36,20 @@ function buildSidebar() {
 </aside>`;
 }
 
+// サイドバーのサイズをCSSで強制（DOM置換の成否やTailwindの適用状況に依存しない保険）。
+(function injectSidebarCss() {
+  const css = `
+aside h1 { font-size: 20px !important; line-height: 1.2 !important; }
+aside nav a { padding-top: 10px !important; padding-bottom: 10px !important; }
+aside nav a span:not(.material-symbols-outlined) { font-size: 13px !important; font-weight: 600 !important; letter-spacing: 0.02em !important; }
+aside nav a .material-symbols-outlined { font-size: 20px !important; }
+`;
+  const style = document.createElement('style');
+  style.id = 'sidebar-size-fix';
+  style.textContent = css;
+  (document.head || document.documentElement).appendChild(style);
+})();
+
 document.addEventListener('DOMContentLoaded', () => {
   const existing = document.querySelector('aside');
   if (existing) existing.outerHTML = buildSidebar();
