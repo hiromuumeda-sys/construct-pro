@@ -63,7 +63,6 @@ create table vendors (
   email      text,
   phone      text,
   address    text,
-  area       text,
   categories text default ''
 );
 
@@ -152,17 +151,17 @@ insert into projects (name, client, "clientCompany", "clientPhone", "clientEmail
 -- 工番 WW7-xxxx を自動採番
 update projects set project_no = 'WW7-' || lpad(id::text, 4, '0');
 
-insert into vendors (id, company, dept, contact, email, phone, address, area) values
-('001','なにわ建設株式会社',      '建築部',     '田中 一郎','i.tanaka@naniwa-con.co.jp',           '06-6123-4567', '大阪府大阪市北区梅田',     '大阪府'),
-('002','京都冷熱工業所',          '施工課',     '山口 慎二','s.yamaguchi@kyoto-reinet.jp',         '075-341-8899', '京都府京都市下京区烏丸通', '京都府'),
-('003','播磨土木エンジニアリング','土木課',     '藤本 剛',  't.fujimoto@harima-eng.com',           '078-234-5678', '兵庫県姫路市飾磨区',       '兵庫県'),
-('004','関西電設工業',            '電気工事部', '佐藤 太郎','taro.sato@kansai-densetsu.co.jp',     '077-512-3456', '滋賀県大津市中央',         '滋賀県'),
-('005','大阪内装クリエイト',      '内装設計課', '山田 花子','hanako.yamada@osaka-insou.co.jp',      '06-6789-0123', '大阪府大阪市中央区',       '大阪府'),
-('006','京都建具製作所',          '製造部',     '鈴木 次郎','jiro.suzuki@kyoto-tategu.co.jp',       '075-623-4567', '京都府京都市伏見区',       '京都府'),
-('007','奈良建材商社',            '営業部',     '伊藤 花美','hanami.ito@nara-kenzai.co.jp',         '0742-34-5678', '奈良県奈良市二条',         '奈良県'),
-('008','トランスポート関西',      '施設管理課', '田中 美咲','misaki.tanaka@transport-kansai.co.jp', '078-901-2345', '兵庫県神戸市中央区',       '兵庫県'),
-('009','日本赤十字施設部',        '施設建設課', '鈴木 敏夫','toshio.suzuki@jrc-facility.jp',        '03-1234-5678', '京都府京都市上京区',       '京都府'),
-('010','関西環境施工',            '工事部',     '高橋 健一','kenichi.takahashi@kankyo-sekkou.co.jp','06-5432-1098', '大阪府堺市中区',           '大阪府');
+insert into vendors (id, company, dept, contact, email, phone, address) values
+('001','なにわ建設株式会社',      '建築部',     '田中 一郎','i.tanaka@naniwa-con.co.jp',           '06-6123-4567', '大阪府大阪市北区梅田'),
+('002','京都冷熱工業所',          '施工課',     '山口 慎二','s.yamaguchi@kyoto-reinet.jp',         '075-341-8899', '京都府京都市下京区烏丸通'),
+('003','播磨土木エンジニアリング','土木課',     '藤本 剛',  't.fujimoto@harima-eng.com',           '078-234-5678', '兵庫県姫路市飾磨区'),
+('004','関西電設工業',            '電気工事部', '佐藤 太郎','taro.sato@kansai-densetsu.co.jp',     '077-512-3456', '滋賀県大津市中央'),
+('005','大阪内装クリエイト',      '内装設計課', '山田 花子','hanako.yamada@osaka-insou.co.jp',      '06-6789-0123', '大阪府大阪市中央区'),
+('006','京都建具製作所',          '製造部',     '鈴木 次郎','jiro.suzuki@kyoto-tategu.co.jp',       '075-623-4567', '京都府京都市伏見区'),
+('007','奈良建材商社',            '営業部',     '伊藤 花美','hanami.ito@nara-kenzai.co.jp',         '0742-34-5678', '奈良県奈良市二条'),
+('008','トランスポート関西',      '施設管理課', '田中 美咲','misaki.tanaka@transport-kansai.co.jp', '078-901-2345', '兵庫県神戸市中央区'),
+('009','日本赤十字施設部',        '施設建設課', '鈴木 敏夫','toshio.suzuki@jrc-facility.jp',        '03-1234-5678', '京都府京都市上京区'),
+('010','関西環境施工',            '工事部',     '高橋 健一','kenichi.takahashi@kankyo-sekkou.co.jp','06-5432-1098', '大阪府堺市中区');
 
 insert into categories (code, name, "order", note) values
 ('00001','仮設工事',         1, '共通仮設、直接仮設。'),
