@@ -39,13 +39,28 @@ const authMiddleware = (req, res, next) => {
   }
 };
 
-// Audit log helper
+// Audit log helper（記録失敗が本処理を止めないよう fail-safe にする）
 const logAudit = async (userId, action, tableName, recordId, details = {}) => {
-  if (!userId) return;
-  await q(
-    'INSERT INTO audit_logs (user_id, action, table_name, record_id, details) VALUES ($1,$2,$3,$4,$5)',
-    [userId, action, tableName, recordId, JSON.stringify(details)]
-  );
+  try {
+    if (!userId) return;
+    // 存在しないユーザーIDだと外部キー違反になるため事前確認
+    const u = await one('SELECT id FROM users WHERE id=$1', [userId]);
+    if (!u) return;
+    await q(
+      'INSERT INTO audit_logs (user_id, action, table_name, record_id, details) VALUES ($1,$2,$3,$4,$5)',
+      [userId, action, tableName, recordId, JSON.stringify(details)]
+    );
+  } catch (err) {
+    console.error('audit log failed:', err.message);
+  }
+};
+
+// リクエストから操作者IDを取り出す（トークンが無ければ null）
+const getUserId = (req) => {
+  try {
+    const t = req.headers.authorization?.replace('Bearer ', '');
+    return t ? jwt.decode(t)?.id ?? null : null;
+  } catch { return null; }
 };
 
 // ============ Auth API ============
@@ -114,7 +129,7 @@ app.post('/api/projects', h(async (req, res) => {
     [name, client, clientCompany, clientPhone, clientEmail, clientAddress, amount, startDate, endDate, status, notes]
   );
   await q('UPDATE projects SET project_no=$1 WHERE id=$2', [`WW7-${String(row.id).padStart(4, '0')}`, row.id]);
-  const userId = req.headers.authorization ? jwt.decode(req.headers.authorization.replace('Bearer ', '')).id : null;
+  const userId = getUserId(req);
   await logAudit(userId, 'CREATE', 'projects', row.id, { name, client });
   res.json({ id: row.id, ...req.body });
 }));
@@ -125,14 +140,14 @@ app.put('/api/projects/:id', h(async (req, res) => {
     `UPDATE projects SET name=$1, client=$2, "clientCompany"=$3, "clientPhone"=$4, "clientEmail"=$5, "clientAddress"=$6, amount=$7, "startDate"=$8, "endDate"=$9, status=$10, notes=$11, paid=$12 WHERE id=$13`,
     [name, client, clientCompany, clientPhone, clientEmail, clientAddress, amount, startDate, endDate, status, notes, paid ? 1 : 0, req.params.id]
   );
-  const userId = req.headers.authorization ? jwt.decode(req.headers.authorization.replace('Bearer ', '')).id : null;
+  const userId = getUserId(req);
   await logAudit(userId, 'UPDATE', 'projects', parseInt(req.params.id), { name, status });
   res.json({ id: req.params.id, ...req.body });
 }));
 
 app.delete('/api/projects/:id', h(async (req, res) => {
   await q('DELETE FROM projects WHERE id=$1', [req.params.id]);
-  const userId = req.headers.authorization ? jwt.decode(req.headers.authorization.replace('Bearer ', '')).id : null;
+  const userId = getUserId(req);
   await logAudit(userId, 'DELETE', 'projects', parseInt(req.params.id), {});
   res.json({ success: true });
 }));
@@ -148,7 +163,7 @@ app.post('/api/vendors', h(async (req, res) => {
   const newId = String(Number(row.max) + 1).padStart(3, '0');
   await q('INSERT INTO vendors (id, company, dept, contact, email, phone, address) VALUES ($1,$2,$3,$4,$5,$6,$7)',
     [newId, company, dept, contact, email, phone, address]);
-  const userId = req.headers.authorization ? jwt.decode(req.headers.authorization.replace('Bearer ', '')).id : null;
+  const userId = getUserId(req);
   await logAudit(userId, 'CREATE', 'vendors', newId, { company });
   res.json({ id: newId, ...req.body });
 }));
@@ -157,14 +172,14 @@ app.put('/api/vendors/:id', h(async (req, res) => {
   const { company, dept, contact, email, phone, address } = req.body;
   await q('UPDATE vendors SET company=$1, dept=$2, contact=$3, email=$4, phone=$5, address=$6 WHERE id=$7',
     [company, dept, contact, email, phone, address, req.params.id]);
-  const userId = req.headers.authorization ? jwt.decode(req.headers.authorization.replace('Bearer ', '')).id : null;
+  const userId = getUserId(req);
   await logAudit(userId, 'UPDATE', 'vendors', req.params.id, { company });
   res.json({ id: req.params.id, ...req.body });
 }));
 
 app.delete('/api/vendors/:id', h(async (req, res) => {
   await q('DELETE FROM vendors WHERE id=$1', [req.params.id]);
-  const userId = req.headers.authorization ? jwt.decode(req.headers.authorization.replace('Bearer ', '')).id : null;
+  const userId = getUserId(req);
   await logAudit(userId, 'DELETE', 'vendors', req.params.id, {});
   res.json({ success: true });
 }));
@@ -179,7 +194,7 @@ app.post('/api/categories', h(async (req, res) => {
   const row = await one('SELECT COALESCE(MAX(code::int),0) AS max FROM categories');
   const code = String(Number(row.max) + 1).padStart(5, '0');
   const ins = await one('INSERT INTO categories (code, name, "order", note) VALUES ($1,$2,$3,$4) RETURNING id', [code, name, order, note]);
-  const userId = req.headers.authorization ? jwt.decode(req.headers.authorization.replace('Bearer ', '')).id : null;
+  const userId = getUserId(req);
   await logAudit(userId, 'CREATE', 'categories', ins.id, { name, code });
   res.json({ id: ins.id, code, name, order, note });
 }));
@@ -187,14 +202,14 @@ app.post('/api/categories', h(async (req, res) => {
 app.put('/api/categories/:id', h(async (req, res) => {
   const { code, name, order, note } = req.body;
   await q('UPDATE categories SET code=$1, name=$2, "order"=$3, note=$4 WHERE id=$5', [code, name, order, note, req.params.id]);
-  const userId = req.headers.authorization ? jwt.decode(req.headers.authorization.replace('Bearer ', '')).id : null;
+  const userId = getUserId(req);
   await logAudit(userId, 'UPDATE', 'categories', parseInt(req.params.id), { name, code });
   res.json({ id: req.params.id, ...req.body });
 }));
 
 app.delete('/api/categories/:id', h(async (req, res) => {
   await q('DELETE FROM categories WHERE id=$1', [req.params.id]);
-  const userId = req.headers.authorization ? jwt.decode(req.headers.authorization.replace('Bearer ', '')).id : null;
+  const userId = getUserId(req);
   await logAudit(userId, 'DELETE', 'categories', parseInt(req.params.id), {});
   res.json({ success: true });
 }));
@@ -212,7 +227,7 @@ app.post('/api/orders', h(async (req, res) => {
     `INSERT INTO orders (${ORDER_COLS}) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17) RETURNING id`,
     [b.project_id, b.category, b.vendor, b.estimate, b.planned, b.decided, b.status, b.details, b.site, b.period_start, b.period_end, b.handover, b.payment, b.paymentStatus || '未払い', b.paymentMethod || '', b.paymentDate || '', b.paymentNotes || '']
   );
-  const userId = req.headers.authorization ? jwt.decode(req.headers.authorization.replace('Bearer ', '')).id : null;
+  const userId = getUserId(req);
   await logAudit(userId, 'CREATE', 'orders', ins.id, { category: b.category, vendor: b.vendor });
   res.json({ id: ins.id, ...b });
 }));
@@ -223,14 +238,14 @@ app.put('/api/orders/:id', h(async (req, res) => {
     `UPDATE orders SET project_id=$1, category=$2, vendor=$3, estimate=$4, planned=$5, decided=$6, status=$7, details=$8, site=$9, period_start=$10, period_end=$11, handover=$12, payment=$13, "paymentStatus"=$14, "paymentMethod"=$15, "paymentDate"=$16, "paymentNotes"=$17 WHERE id=$18`,
     [b.project_id, b.category, b.vendor, b.estimate, b.planned, b.decided, b.status, b.details, b.site, b.period_start, b.period_end, b.handover, b.payment, b.paymentStatus, b.paymentMethod, b.paymentDate, b.paymentNotes, req.params.id]
   );
-  const userId = req.headers.authorization ? jwt.decode(req.headers.authorization.replace('Bearer ', '')).id : null;
+  const userId = getUserId(req);
   await logAudit(userId, 'UPDATE', 'orders', parseInt(req.params.id), { status: b.status });
   res.json({ id: req.params.id, ...b });
 }));
 
 app.delete('/api/orders/:id', h(async (req, res) => {
   await q('DELETE FROM orders WHERE id=$1', [req.params.id]);
-  const userId = req.headers.authorization ? jwt.decode(req.headers.authorization.replace('Bearer ', '')).id : null;
+  const userId = getUserId(req);
   await logAudit(userId, 'DELETE', 'orders', parseInt(req.params.id), {});
   res.json({ success: true });
 }));
@@ -244,7 +259,7 @@ app.post('/api/customers', h(async (req, res) => {
   const { company, department, contact, email, phone, address, notes } = req.body;
   const ins = await one('INSERT INTO customers (company, department, contact, email, phone, address, notes) VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING id',
     [company, department, contact, email, phone, address, notes]);
-  const userId = req.headers.authorization ? jwt.decode(req.headers.authorization.replace('Bearer ', '')).id : null;
+  const userId = getUserId(req);
   await logAudit(userId, 'CREATE', 'customers', ins.id, { company });
   res.json({ id: ins.id, ...req.body });
 }));
@@ -253,14 +268,14 @@ app.put('/api/customers/:id', h(async (req, res) => {
   const { company, department, contact, email, phone, address, notes } = req.body;
   await q('UPDATE customers SET company=$1, department=$2, contact=$3, email=$4, phone=$5, address=$6, notes=$7 WHERE id=$8',
     [company, department, contact, email, phone, address, notes, req.params.id]);
-  const userId = req.headers.authorization ? jwt.decode(req.headers.authorization.replace('Bearer ', '')).id : null;
+  const userId = getUserId(req);
   await logAudit(userId, 'UPDATE', 'customers', parseInt(req.params.id), { company });
   res.json({ id: req.params.id, ...req.body });
 }));
 
 app.delete('/api/customers/:id', h(async (req, res) => {
   await q('DELETE FROM customers WHERE id=$1', [req.params.id]);
-  const userId = req.headers.authorization ? jwt.decode(req.headers.authorization.replace('Bearer ', '')).id : null;
+  const userId = getUserId(req);
   await logAudit(userId, 'DELETE', 'customers', parseInt(req.params.id), {});
   res.json({ success: true });
 }));
@@ -274,7 +289,7 @@ app.post('/api/receipts', h(async (req, res) => {
   const { project_id, received_date, amount, month, memo } = req.body;
   const ins = await one('INSERT INTO receipts (project_id, received_date, amount, month, memo) VALUES ($1,$2,$3,$4,$5) RETURNING id',
     [project_id, received_date, amount, month, memo]);
-  const userId = req.headers.authorization ? jwt.decode(req.headers.authorization.replace('Bearer ', '')).id : null;
+  const userId = getUserId(req);
   await logAudit(userId, 'CREATE', 'receipts', ins.id, { project_id, amount, month });
   res.json({ id: ins.id, ...req.body });
 }));
@@ -283,14 +298,14 @@ app.put('/api/receipts/:id', h(async (req, res) => {
   const { project_id, received_date, amount, month, memo } = req.body;
   await q('UPDATE receipts SET project_id=$1, received_date=$2, amount=$3, month=$4, memo=$5 WHERE id=$6',
     [project_id, received_date, amount, month, memo, req.params.id]);
-  const userId = req.headers.authorization ? jwt.decode(req.headers.authorization.replace('Bearer ', '')).id : null;
+  const userId = getUserId(req);
   await logAudit(userId, 'UPDATE', 'receipts', parseInt(req.params.id), { amount });
   res.json({ id: req.params.id, ...req.body });
 }));
 
 app.delete('/api/receipts/:id', h(async (req, res) => {
   await q('DELETE FROM receipts WHERE id=$1', [req.params.id]);
-  const userId = req.headers.authorization ? jwt.decode(req.headers.authorization.replace('Bearer ', '')).id : null;
+  const userId = getUserId(req);
   await logAudit(userId, 'DELETE', 'receipts', parseInt(req.params.id), {});
   res.json({ success: true });
 }));
@@ -375,14 +390,14 @@ app.post('/api/invoices', h(async (req, res) => {
      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING id`,
     [projectId, invoiceNo, 'T8130001068355', invoiceDate, dueDate, subtotal, tax, total, '〇〇銀行 京都支店 (普)0777777', '発行済']
   );
-  const userId = req.headers.authorization ? jwt.decode(req.headers.authorization.replace('Bearer ', '')).id : null;
+  const userId = getUserId(req);
   await logAudit(userId, 'CREATE', 'invoices', ins.id, { invoice_no: invoiceNo, project_id: projectId, total });
   res.json({ id: ins.id, invoice_no: invoiceNo, project_id: projectId, subtotal, tax, total, invoice_date: invoiceDate, due_date: dueDate });
 }));
 
 app.delete('/api/invoices/:id', h(async (req, res) => {
   await q('DELETE FROM invoices WHERE id=$1', [req.params.id]);
-  const userId = req.headers.authorization ? jwt.decode(req.headers.authorization.replace('Bearer ', '')).id : null;
+  const userId = getUserId(req);
   await logAudit(userId, 'DELETE', 'invoices', parseInt(req.params.id), {});
   res.json({ success: true });
 }));
