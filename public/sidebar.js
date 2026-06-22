@@ -16,7 +16,8 @@ const SIDEBAR_LINKS = [
   { href: '/history.html',     icon: 'history',      label: '履歴詳細' },
 ];
 
-const LABEL_STYLE = 'font-size:13px;font-weight:600;letter-spacing:0.02em';
+const LABEL_STYLE = 'font-size:12px;font-weight:500;letter-spacing:0.01em';
+const ICON_STYLE = 'font-size:18px';
 
 function buildSidebar() {
   const current = window.location.pathname;
@@ -37,14 +38,14 @@ function buildSidebar() {
           ? 'flex items-center gap-3 px-4 py-2.5 text-secondary font-bold bg-surface-container-low'
           : 'flex items-center gap-3 px-4 py-2.5 text-on-surface-variant hover:bg-surface-container-low';
         return `<a class="${cc}" href="${c.href}">
-<span class="material-symbols-outlined" style="font-size:20px">${c.icon}</span>
+<span class="material-symbols-outlined" style="${ICON_STYLE}">${c.icon}</span>
 <span style="${LABEL_STYLE}">${c.label}</span>
 </a>`;
       }).join('');
       return `<div class="relative group">
 <div class="${parentCls} cursor-pointer justify-between">
 <span class="flex items-center gap-3">
-<span class="material-symbols-outlined" style="font-size:20px">${l.icon}</span>
+<span class="material-symbols-outlined" style="${ICON_STYLE}">${l.icon}</span>
 <span style="${LABEL_STYLE}">${l.label}</span>
 </span>
 <span class="material-symbols-outlined" style="font-size:18px">chevron_right</span>
@@ -62,7 +63,7 @@ ${sub}
       ? `${base} text-secondary font-bold border-l-4 border-secondary bg-surface-container-low`
       : `${base} text-on-surface-variant hover:bg-surface-container-low`;
     return `<a class="${cls}" href="${l.href}">
-<span class="material-symbols-outlined" style="font-size:20px">${l.icon}</span>
+<span class="material-symbols-outlined" style="${ICON_STYLE}">${l.icon}</span>
 <span style="${LABEL_STYLE}">${l.label}</span>
 </a>`;
   }).join('');
@@ -82,9 +83,9 @@ ${sub}
 (function injectSidebarCss() {
   const css = `
 aside h1 { font-size: 20px !important; line-height: 1.2 !important; }
-aside nav a, aside nav .group > div:first-child { padding-top: 10px !important; padding-bottom: 10px !important; }
-aside nav a span:not(.material-symbols-outlined), aside nav .group span:not(.material-symbols-outlined) { font-size: 13px !important; font-weight: 600 !important; letter-spacing: 0.02em !important; }
-aside nav a .material-symbols-outlined, aside nav .group .material-symbols-outlined { font-size: 20px !important; }
+aside nav a, aside nav .group > div:first-child { padding-top: 8px !important; padding-bottom: 8px !important; }
+aside nav a span:not(.material-symbols-outlined), aside nav .group span:not(.material-symbols-outlined) { font-size: 12px !important; font-weight: 500 !important; letter-spacing: 0.01em !important; }
+aside nav a .material-symbols-outlined, aside nav .group .material-symbols-outlined { font-size: 18px !important; }
 aside nav .group p { font-size: 10px !important; font-weight: 600 !important; }
 `;
   const style = document.createElement('style');
