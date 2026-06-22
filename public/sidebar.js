@@ -29,8 +29,10 @@ function buildSidebar() {
 
   return `<aside class="fixed left-0 top-0 h-screen w-64 z-50 bg-surface-container-lowest border-r border-outline-variant flex flex-col py-6">
 <div class="px-6 mb-8">
-<h1 class="font-bold text-primary" style="font-size:20px;line-height:1.2">WIN WIN様</h1>
-<p class="text-on-surface-variant tracking-wider uppercase" style="font-size:11px">デモ画面</p>
+<img src="/logo.png" alt="WIN WIN" style="height:32px;width:auto;display:block"
+  onerror="this.style.display='none';this.nextElementSibling.style.display='block'"/>
+<h1 class="font-bold text-primary" style="font-size:20px;line-height:1.2;display:none">WIN WIN様</h1>
+<p class="text-on-surface-variant tracking-wider uppercase" style="font-size:11px;margin-top:4px">デモ画面</p>
 </div>
 <nav class="flex-1 space-y-0.5">${items}</nav>
 </aside>`;
