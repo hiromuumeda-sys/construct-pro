@@ -92,3 +92,22 @@ tailwind.config = {
     },
   },
 }
+
+// 全ページ共通の文字サイズ補正（サイズ指定漏れで16px既定になるのを防ぐ）
+// ボタン・入力・セレクト・日付ピッカーを13pxに揃え、ボタン内/単体アイコンは18pxに統一。
+(function injectGlobalSizeFix() {
+  var css = [
+    'input, select, textarea { font-size: 13px !important; }',
+    'button { font-size: 13px !important; }',
+    'button .material-symbols-outlined, button.material-symbols-outlined { font-size: 18px !important; }'
+  ].join('\n');
+  var add = function () {
+    if (document.getElementById('global-size-fix')) return;
+    var s = document.createElement('style');
+    s.id = 'global-size-fix';
+    s.textContent = css;
+    (document.head || document.documentElement).appendChild(s);
+  };
+  if (document.head) add();
+  else document.addEventListener('DOMContentLoaded', add);
+})();
