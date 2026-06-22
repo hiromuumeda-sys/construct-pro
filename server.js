@@ -463,8 +463,8 @@ app.get('/api/notifications', h(async (req, res) => {
     if (!o.paymentDate) return;
     const d = daysBetween(o.paymentDate);
     if (d === null) return;
-    if (d < 0) notifications.push({ type: 'payment', level: 'error', icon: 'error', title: '支払期日超過', message: `${o.vendor} への支払（${o.category}）が${Math.abs(d)}日超過しています`, date: o.paymentDate });
-    else if (d <= 7) notifications.push({ type: 'payment', level: 'warning', icon: 'schedule', title: '支払期日接近', message: `${o.vendor} への支払（${o.category}）まであと${d}日です`, date: o.paymentDate });
+    if (d < 0) notifications.push({ type: 'payment', level: 'error', icon: 'error', title: '支払期日超過', message: `${o.vendor} への支払（${o.category}）が${Math.abs(d)}日超過しています`, date: o.paymentDate, link: '/payment.html' });
+    else if (d <= 7) notifications.push({ type: 'payment', level: 'warning', icon: 'schedule', title: '支払期日接近', message: `${o.vendor} への支払（${o.category}）まであと${d}日です`, date: o.paymentDate, link: '/payment.html' });
   });
 
   const invoices = await q('SELECT * FROM invoices');
@@ -476,18 +476,18 @@ app.get('/api/notifications', h(async (req, res) => {
     const d = daysBetween(inv.due_date);
     if (d === null) continue;
     const yen = '¥' + outstanding.toLocaleString();
-    if (d < 0) notifications.push({ type: 'receipt', level: 'error', icon: 'error', title: '入金期日超過（未入金）', message: `${project ? project.name : '案件'}（${inv.invoice_no}）の入金期日が${Math.abs(d)}日超過・未入金残 ${yen}`, date: inv.due_date });
-    else if (d <= 7) notifications.push({ type: 'receipt', level: 'warning', icon: 'schedule', title: '入金期日接近', message: `${project ? project.name : '案件'}（${inv.invoice_no}）の入金期日まであと${d}日・未入金残 ${yen}`, date: inv.due_date });
+    if (d < 0) notifications.push({ type: 'receipt', level: 'error', icon: 'error', title: '入金期日超過（未入金）', message: `${project ? project.name : '案件'}（${inv.invoice_no}）の入金期日が${Math.abs(d)}日超過・未入金残 ${yen}`, date: inv.due_date, link: '/receipts.html' });
+    else if (d <= 7) notifications.push({ type: 'receipt', level: 'warning', icon: 'schedule', title: '入金期日接近', message: `${project ? project.name : '案件'}（${inv.invoice_no}）の入金期日まであと${d}日・未入金残 ${yen}`, date: inv.due_date, link: '/receipts.html' });
   }
 
   const wonProjects = await q("SELECT * FROM projects WHERE status = '受注'");
   for (const p of wonProjects) {
     const c = await one('SELECT COUNT(*) AS cnt FROM invoices WHERE project_id=$1', [p.id]);
-    if (Number(c.cnt) === 0) notifications.push({ type: 'missing', level: 'info', icon: 'description', title: '請求書未発行', message: `${p.name} は受注済みですが請求書が未発行です`, date: null });
+    if (Number(c.cnt) === 0) notifications.push({ type: 'missing', level: 'info', icon: 'description', title: '請求書未発行', message: `${p.name} は受注済みですが請求書が未発行です`, date: null, link: '/projects.html' });
   }
 
   const undelivered = await q("SELECT * FROM orders WHERE status NOT IN ('発注完了', '支払済み') AND decided > 0");
-  if (undelivered.length > 0) notifications.push({ type: 'missing', level: 'info', icon: 'receipt_long', title: '注文書未発行', message: `決定済みで注文書未発行の明細が${undelivered.length}件あります`, date: null });
+  if (undelivered.length > 0) notifications.push({ type: 'missing', level: 'info', icon: 'receipt_long', title: '注文書未発行', message: `決定済みで注文書未発行の明細が${undelivered.length}件あります`, date: null, link: '/orders-list.html' });
 
   // デモ用テスト通知（20件）
   const demoNotifications = [
@@ -512,7 +512,16 @@ app.get('/api/notifications', h(async (req, res) => {
     { level: 'info', icon: 'cloud_upload', title: 'バックアップ完了', message: '日次データバックアップが正常に完了しました', date: '2026-06-19' },
     { level: 'info', icon: 'update', title: 'システム更新', message: 'v2.4.0 へのアップデートが適用されました', date: '2026-06-18' },
   ];
-  demoNotifications.forEach(n => notifications.push({ type: 'demo', ...n }));
+  // デモ通知のタイトル/本文から遷移先を推定
+  const linkFor = (n) => {
+    const t = (n.title || '') + (n.message || '');
+    if (/入金/.test(t)) return '/receipts.html';
+    if (/支払/.test(t)) return '/payment.html';
+    if (/請求書|契約書|見積|予算|利益/.test(t)) return '/projects.html';
+    if (/注文|発注|請書|協力業者|竣工|工程|進捗/.test(t)) return '/orders-list.html';
+    return null;
+  };
+  demoNotifications.forEach(n => notifications.push({ type: 'demo', link: linkFor(n), ...n }));
 
   const order = { error: 0, warning: 1, info: 2 };
   notifications.sort((a, b) => order[a.level] - order[b.level]);

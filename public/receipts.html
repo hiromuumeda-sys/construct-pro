@@ -210,12 +210,12 @@ body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 
 <!-- 入金登録モーダル -->
 <div class="fixed inset-0 z-[100] bg-primary/20 backdrop-blur-md" id="receipt-modal" style="display:none" onclick="closeReceiptModal()">
-<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-lg max-h-[90vh] bg-surface-container-lowest rounded-lg custom-shadow overflow-hidden border border-outline-variant" onclick="event.stopPropagation()">
-<div class="px-lg py-md border-b border-outline-variant flex justify-between items-center bg-surface-container-low">
+<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-lg max-h-[90vh] bg-surface-container-lowest rounded-lg custom-shadow overflow-hidden border border-outline-variant flex flex-col" onclick="event.stopPropagation()">
+<div class="px-lg py-md border-b border-outline-variant flex justify-between items-center bg-surface-container-low shrink-0">
 <h3 class="text-label-md font-label-md text-primary">入金登録</h3>
 <button class="material-symbols-outlined text-on-surface-variant hover:text-primary" onclick="closeReceiptModal()">close</button>
 </div>
-<div class="p-lg space-y-md">
+<div class="p-lg space-y-md overflow-y-auto flex-1">
 <input id="receipt-project-id" type="hidden"/>
 <div>
 <label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">工事名</label>
@@ -244,7 +244,7 @@ body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 <textarea class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent" id="receipt-memo" rows="2"></textarea>
 </div>
 </div>
-<div class="px-lg py-md border-t border-outline-variant flex justify-end items-center gap-3 bg-surface-container-low">
+<div class="px-lg py-md border-t border-outline-variant flex justify-end items-center gap-3 bg-surface-container-low shrink-0">
 <button class="px-4 py-1.5 text-label-md font-normal text-on-surface border border-outline-variant rounded-lg hover:bg-surface-container transition-all" onclick="closeReceiptModal()">キャンセル</button>
 <button class="px-4 py-1.5 text-label-md font-normal text-on-primary bg-secondary rounded-lg hover:opacity-90 transition-all" onclick="saveReceipt()">入金を登録</button>
 </div>

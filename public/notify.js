@@ -46,6 +46,7 @@ function renderNotif() {
           <p class="text-label-md font-bold ${titleColor}">${n.title}</p>
           <p class="text-body-sm text-on-surface-variant mt-0.5">${n.message}</p>
           ${n.date ? `<p class="text-label-sm text-on-surface-variant mt-1 tabular-numbers">${n.date}</p>` : ''}
+          ${n.link ? `<a href="${n.link}" class="inline-flex items-center gap-0.5 text-label-sm text-secondary hover:underline mt-1"><span class="material-symbols-outlined text-[14px]">open_in_new</span>詳細を見る</a>` : ''}
         </div>
         ${c
           ? '<span class="text-label-sm text-secondary flex items-center gap-1 whitespace-nowrap"><span class="material-symbols-outlined text-[16px]">check_circle</span>確認済</span>'
