@@ -14,7 +14,12 @@ const app = express();
 // Middleware
 app.use(cors());
 app.use(express.json({ limit: '5mb' }));
-app.use(express.static(path.join(__dirname, 'public')));
+// デモは頻繁に更新するため静的ファイルはキャッシュさせない
+app.use(express.static(path.join(__dirname, 'public'), {
+  etag: false,
+  lastModified: false,
+  setHeaders: (res) => res.setHeader('Cache-Control', 'no-store, must-revalidate'),
+}));
 
 // 非同期ハンドラのエラー処理ラッパ
 const h = (fn) => (req, res) => fn(req, res).catch(err => {
