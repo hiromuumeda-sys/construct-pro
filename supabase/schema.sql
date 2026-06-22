@@ -56,14 +56,15 @@ create table projects (
 
 -- 協力業者（発注先）
 create table vendors (
-  id       text primary key,
-  company  text not null,
-  dept     text,
-  contact  text,
-  email    text,
-  phone    text,
-  address  text,
-  area     text
+  id         text primary key,
+  company    text not null,
+  dept       text,
+  contact    text,
+  email      text,
+  phone      text,
+  address    text,
+  area       text,
+  categories text default ''
 );
 
 -- 工事区分

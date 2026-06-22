@@ -121,6 +121,7 @@ body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 <th class="px-lg py-4 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider">メールアドレス</th>
 <th class="px-lg py-4 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider">電話番号</th>
 <th class="px-lg py-4 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider">所在地</th>
+<th class="px-lg py-4 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider">対応工事区分</th>
 </tr>
 </thead>
 <tbody class="divide-y divide-outline-variant" id="vendor-table-body">
@@ -173,6 +174,14 @@ body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 <label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">所在地</label>
 <input class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent" id="modal-address" type="text"/>
 </div>
+<div class="col-span-2">
+<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">対応工事区分（タグ）</label>
+<div class="flex gap-2">
+<select id="edit-cat-select" class="flex-1 bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent"></select>
+<button type="button" onclick="addTag('edit')" class="px-4 py-1.5 bg-secondary text-on-secondary text-label-md font-normal rounded-lg hover:scale-[1.02] transition-all flex items-center gap-1 whitespace-nowrap"><span class="material-symbols-outlined text-[18px]">add</span>追加</button>
+</div>
+<div id="edit-tags" class="flex flex-wrap gap-2 mt-2"></div>
+</div>
 </div>
 </form>
 </div>
@@ -223,6 +232,14 @@ body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 <label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">所在地</label>
 <input class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent" name="address" placeholder="大阪府..." type="text"/>
 </div>
+<div class="col-span-2">
+<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">対応工事区分（タグ）</label>
+<div class="flex gap-2">
+<select id="reg-cat-select" class="flex-1 bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent"></select>
+<button type="button" onclick="addTag('reg')" class="px-4 py-1.5 bg-secondary text-on-secondary text-label-md font-normal rounded-lg hover:scale-[1.02] transition-all flex items-center gap-1 whitespace-nowrap"><span class="material-symbols-outlined text-[18px]">add</span>追加</button>
+</div>
+<div id="reg-tags" class="flex flex-wrap gap-2 mt-2"></div>
+</div>
 </div>
 </form>
 </div>
@@ -256,6 +273,56 @@ if (!window.appCache) {
 
 let vendorList = [];
 
+// ===== 工事区分タグ =====
+const tagState = { reg: [], edit: [] };
+
+function csvToTags(csv) {
+  return (csv || '').split(',').map(s => s.trim()).filter(Boolean);
+}
+
+function populateCatSelects() {
+  const cats = (window.appCache.categories || []).map(c => c.name);
+  ['reg', 'edit'].forEach(prefix => {
+    const sel = document.getElementById(`${prefix}-cat-select`);
+    if (!sel) return;
+    sel.innerHTML = '<option value="">工事区分を選択...</option>' +
+      cats.map(n => `<option value="${n}">${n}</option>`).join('');
+  });
+}
+
+function addTag(prefix) {
+  const sel = document.getElementById(`${prefix}-cat-select`);
+  const val = sel.value;
+  if (!val) return;
+  if (!tagState[prefix].includes(val)) tagState[prefix].push(val);
+  sel.value = '';
+  renderTagsInModal(prefix);
+}
+
+function removeTag(prefix, name) {
+  tagState[prefix] = tagState[prefix].filter(t => t !== name);
+  renderTagsInModal(prefix);
+}
+
+function renderTagsInModal(prefix) {
+  const wrap = document.getElementById(`${prefix}-tags`);
+  if (!wrap) return;
+  wrap.innerHTML = tagState[prefix].map(n => `
+    <span class="inline-flex items-center gap-1 bg-secondary/10 text-secondary border border-secondary/30 rounded-full px-3 py-1 text-label-md">
+      #${n}
+      <button type="button" onclick="removeTag('${prefix}', '${n.replace(/'/g, "\\'")}')" class="material-symbols-outlined text-[16px] hover:text-error">close</button>
+    </span>`).join('') || '<span class="text-label-md text-on-surface-variant/50">タグ未設定</span>';
+}
+
+// 一覧テーブル用のタグ表示
+function renderTagChips(csv) {
+  const tags = csvToTags(csv);
+  if (!tags.length) return '<span class="text-label-md text-on-surface-variant/40">-</span>';
+  return '<div class="flex flex-wrap gap-1">' + tags.map(n =>
+    `<span class="inline-block bg-secondary/10 text-secondary rounded-full px-2 py-0.5 text-[11px] whitespace-nowrap">#${n}</span>`
+  ).join('') + '</div>';
+}
+
 function loadVendors() {
   renderTable(window.appCache.vendors);
 }
@@ -272,6 +339,7 @@ function renderTable(vendors) {
       <td class="px-lg py-5 text-label-md font-label-md tabular-nums text-on-surface-variant">${v.email}</td>
       <td class="px-lg py-5 text-label-md font-label-md tabular-nums text-on-surface-variant">${v.phone || '-'}</td>
       <td class="px-lg py-5 text-label-md font-label-md text-on-surface-variant">${v.address || '-'}</td>
+      <td class="px-lg py-5">${renderTagChips(v.categories)}</td>
     </tr>
   `).join('');
 }
@@ -287,15 +355,18 @@ function openEditModal(id) {
     document.getElementById('modal-email').value = v.email;
     document.getElementById('modal-phone').value = v.phone || '';
     document.getElementById('modal-address').value = v.address || '';
+    tagState.edit = csvToTags(v.categories);
+    renderTagsInModal('edit');
     openModal('edit-modal');
   }
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
-  if (window.appCache.vendors.length === 0) {
+  if (window.appCache.vendors.length === 0 || !window.appCache.categories || window.appCache.categories.length === 0) {
     const res = await fetch('/api/cache');
     window.appCache = await res.json();
   }
+  populateCatSelects();
   loadVendors();
 
   document.getElementById('btn-new-registration').addEventListener('click', () => {
@@ -306,6 +377,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.querySelector('[name="email"]').value = '';
     document.querySelector('[name="phone"]').value = '';
     document.querySelector('[name="address"]').value = '';
+    tagState.reg = [];
+    renderTagsInModal('reg');
     openModal('new-registration-modal');
   });
 
@@ -323,12 +396,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     const email = document.getElementById('modal-email').value;
     const phone = document.getElementById('modal-phone').value;
     const address = document.getElementById('modal-address').value;
+    const categories = tagState.edit.join(',');
 
     try {
       await fetch(`/api/vendors/${editingId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ company, dept, contact, email, phone, address })
+        body: JSON.stringify({ company, dept, contact, email, phone, address, categories })
       });
       const vendorRes = await fetch('/api/vendors');
       window.appCache.vendors = await vendorRes.json();
@@ -361,6 +435,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const email = document.querySelector('[name="email"]').value;
     const phone = document.querySelector('[name="phone"]').value;
     const address = document.querySelector('[name="address"]').value;
+    const categories = tagState.reg.join(',');
 
     if(!company || !contact) return alert('必須項目を入力してください');
 
@@ -368,7 +443,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       await fetch('/api/vendors', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ company, dept, contact, email, phone, address })
+        body: JSON.stringify({ company, dept, contact, email, phone, address, categories })
       });
       document.querySelector('[name="company"]').value = '';
       document.querySelector('[name="dept"]').value = '';
