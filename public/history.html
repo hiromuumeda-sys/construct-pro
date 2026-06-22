@@ -8,11 +8,12 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
 <script src="/theme.js"></script>
+<script src="/sidebar.js"></script>
+<script src="/auth.js"></script>
 <style>
 body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
 .custom-shadow { box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04); }
-.tabular-numbers { font-variant-numeric: tabular-nums; }
 </style>
 </head>
 <body class="bg-background text-on-surface">
@@ -23,326 +24,183 @@ body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 <p class="text-label-sm text-on-surface-variant tracking-wider uppercase">デモ画面</p>
 </div>
 <nav class="flex-1 space-y-1">
-<a class="flex items-center gap-3 px-6 py-3 text-on-surface-variant hover:bg-surface-container-low transition-colors duration-200" href="/reporting.html">
+<a class="flex items-center gap-3 px-6 py-3 text-on-surface-variant hover:bg-surface-container-low transition-colors" href="/reporting.html">
 <span class="material-symbols-outlined">dashboard</span>
-<span class="font-label-md text-label-md">ダッシュボード</span>
+<span class="text-label-md">ダッシュボード</span>
 </a>
-<a class="flex items-center gap-3 px-6 py-3 text-on-surface-variant hover:bg-surface-container-low transition-colors duration-200" href="/projects.html">
+<a class="flex items-center gap-3 px-6 py-3 text-on-surface-variant hover:bg-surface-container-low transition-colors" href="/projects.html">
 <span class="material-symbols-outlined">engineering</span>
-<span class="font-label-md text-label-md">受注一覧</span>
-</a>
-<a class="flex items-center gap-3 px-6 py-3 text-on-surface-variant hover:bg-surface-container-low transition-colors duration-200" href="/customers.html">
-<span class="material-symbols-outlined">groups</span>
-<span class="font-label-md text-label-md">顧客マスタ</span>
-</a>
-<a class="flex items-center gap-3 px-6 py-3 text-on-surface-variant hover:bg-surface-container-low transition-colors duration-200" href="/vendors.html">
-<span class="material-symbols-outlined">store</span>
-<span class="font-label-md text-label-md">発注先マスタ</span>
-</a>
-<a class="flex items-center gap-3 px-6 py-3 text-on-surface-variant hover:bg-surface-container-low transition-colors duration-200" href="/categories.html">
-<span class="material-symbols-outlined">category</span>
-<span class="font-label-md text-label-md">工事区分マスタ</span>
-</a>
-<a class="flex items-center gap-3 px-6 py-3 text-on-surface-variant hover:bg-surface-container-low transition-colors duration-200" href="/receipts.html">
-<span class="material-symbols-outlined">savings</span>
-<span class="font-label-md text-label-md">売上・入金管理</span>
-</a>
-<a class="flex items-center gap-3 px-6 py-3 text-on-surface-variant hover:bg-surface-container-low transition-colors duration-200" href="/payment.html">
-<span class="material-symbols-outlined">payments</span>
-<span class="font-label-md text-label-md">支払管理</span>
-</a>
-<a class="flex items-center gap-3 px-6 py-3 text-on-surface-variant hover:bg-surface-container-low transition-colors duration-200" href="/orders-list.html">
-<span class="material-symbols-outlined">receipt_long</span>
-<span class="font-label-md text-label-md">工事計画</span>
+<span class="text-label-md">受注一覧</span>
 </a>
 <a class="flex items-center gap-3 px-6 py-3 text-secondary font-bold border-l-4 border-secondary bg-surface-container-low" href="/history.html">
 <span class="material-symbols-outlined">history</span>
-<span class="font-label-md text-label-md">履歴詳細</span>
+<span class="text-label-md">履歴詳細</span>
 </a>
 </nav>
 </aside>
-<!-- Main Content Canvas -->
+
+<!-- Main Content -->
 <main class="ml-64 min-h-screen">
 <!-- Top App Bar -->
 <header class="sticky top-0 z-40 flex justify-between items-center h-20 px-margin-desktop bg-surface/80 backdrop-blur-md shadow-sm">
-<div class="flex items-center gap-4 bg-surface-container-low px-4 py-2 rounded-full w-96">
-<span class="material-symbols-outlined text-on-surface-variant">search</span>
-<input class="bg-transparent border-none focus:ring-0 text-body-md w-full" id="keyword-search" placeholder="Search projects..." type="text"/>
-</div>
-<div class="flex items-center gap-6">
-<div class="flex items-center gap-4">
-<div class="relative" id="notif-wrap">
-<button class="material-symbols-outlined text-on-surface-variant hover:text-primary relative" onclick="toggleNotif(event)">notifications<span id="notif-badge" class="absolute -top-1 -right-1 bg-error text-on-error text-[9px] font-normal rounded-full min-w-[16px] h-4 px-1 flex items-center justify-center" style="display:none">0</span></button>
-<div id="notif-panel" class="absolute right-0 mt-2 w-96 max-h-[480px] overflow-y-auto bg-surface-container-lowest border border-outline-variant rounded-lg custom-shadow z-[200]" style="display:none" onclick="event.stopPropagation()">
-<div class="px-4 py-3 border-b border-outline-variant flex justify-between items-center sticky top-0 bg-surface-container-lowest">
-<span class="text-label-md font-label-md text-primary">通知</span>
-<span class="text-label-sm text-on-surface-variant" id="notif-count-label"></span>
-</div>
-<div id="notif-list"></div>
-</div>
-</div>
-<button class="material-symbols-outlined text-on-surface-variant hover:text-primary">help</button>
-</div>
-<div class="h-8 w-px bg-outline-variant"></div>
-<div class="flex items-center gap-3">
+<div class="text-headline-sm font-bold text-primary">操作履歴</div>
+<div class="flex items-center gap-3 cursor-pointer group relative" id="user-menu" onclick="toggleUserMenu()">
 <div class="text-right">
-<p class="text-label-md font-bold text-primary">Admin User</p>
-<p class="text-label-sm text-on-surface-variant">System</p>
+<p class="text-label-md font-bold text-primary" id="user-name">ユーザー</p>
+<p class="text-label-sm text-on-surface-variant" id="user-role">user</p>
 </div>
-<div class="w-10 h-10 rounded-full bg-surface-container-high border border-outline-variant"></div>
+<div class="w-10 h-10 rounded-full bg-secondary text-on-secondary font-bold flex items-center justify-center">👤</div>
+<div id="user-menu-panel" class="absolute right-0 top-full mt-2 w-48 bg-surface-container-lowest border border-outline-variant rounded-lg shadow-lg hidden" onclick="event.stopPropagation()">
+<a href="#" onclick="Auth.logout(); return false;" class="flex items-center gap-3 px-4 py-3 text-on-surface hover:bg-surface-container-low text-body-sm">
+<span class="material-symbols-outlined">logout</span>
+ログアウト
+</a>
 </div>
 </div>
 </header>
-<!-- Page Content -->
+
+<!-- Content -->
 <div class="p-margin-desktop space-y-lg max-w-container-max mx-auto">
-<!-- Header Section -->
-<div class="flex justify-between items-end mb-lg">
-<div>
-<h2 class="text-[18px] font-label-md text-primary" id="pageTitle">履歴詳細</h2>
-</div>
+<div class="flex justify-between items-center">
+<h2 class="text-[18px] font-label-md text-primary">最近の操作</h2>
 <span class="text-label-sm text-on-surface-variant" id="history-count"></span>
 </div>
 
-<!-- Filter Section -->
-<div class="bg-surface-container-low p-5 rounded-2xl border border-outline-variant/30 flex flex-wrap items-center gap-4">
-<div class="relative">
-<select class="bg-surface-container-lowest border-outline-variant/50 text-sm py-2.5 px-4 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary appearance-none transition-all cursor-pointer" id="typeSelect" onchange="onHistoryFilterChange()">
-<option value="">すべての種別</option>
-<option value="project">案件</option>
-<option value="order">注文</option>
-<option value="vendor">発注先</option>
+<!-- Filter -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-lg p-md">
+<div class="grid grid-cols-1 md:grid-cols-2 gap-md">
+<div>
+<label class="block text-label-md text-on-surface-variant font-bold mb-2">テーブル</label>
+<select id="table-filter" class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-md py-2 text-body-md focus:ring-2 focus:ring-secondary/20" onchange="loadLogs()">
+<option value="">すべて</option>
+<option value="projects">案件</option>
+<option value="orders">注文</option>
+<option value="vendors">発注先</option>
 </select>
-<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-on-surface-variant">keyboard_arrow_down</span>
 </div>
-<div class="relative min-w-[220px]">
-<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant text-xl">search</span>
-<input class="w-full bg-surface-container-lowest border-outline-variant/50 text-sm pl-12 pr-4 py-2.5 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" id="searchInput" placeholder="検索..." type="text" oninput="onHistoryFilterChange()"/>
+<div>
+<label class="block text-label-md text-on-surface-variant font-bold mb-2">操作</label>
+<select id="action-filter" class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-md py-2 text-body-md focus:ring-2 focus:ring-secondary/20" onchange="loadLogs()">
+<option value="">すべて</option>
+<option value="CREATE">新規作成</option>
+<option value="UPDATE">更新</option>
+<option value="DELETE">削除</option>
+</select>
+</div>
 </div>
 </div>
 
 <!-- Data Table -->
-<div class="bg-surface-container-lowest border border-outline-variant/30 rounded-2xl overflow-hidden shadow-sm" id="tableContainer">
-<div class="overflow-auto custom-scrollbar" style="max-height: 980px;">
-<table class="w-full text-left border-separate border-spacing-0" id="main-table">
-<thead>
-<tr class="bg-surface-container-low sticky top-0 z-10">
-<th class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant uppercase tracking-widest border-b border-outline-variant/30 w-28">種別</th>
-<th class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant uppercase tracking-widest border-b border-outline-variant/30 w-48">日時</th>
-<th class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant uppercase tracking-widest border-b border-outline-variant/30 min-w-[280px]">対象</th>
-<th class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant uppercase tracking-widest border-b border-outline-variant/30 min-w-[400px]">変更内容</th>
-<th class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant uppercase tracking-widest border-b border-outline-variant/30 min-w-[140px]">操作者</th>
+<div class="bg-surface-container-lowest border border-outline-variant rounded-lg overflow-hidden">
+<div class="overflow-auto" style="max-height: 600px;">
+<table class="w-full text-left border-collapse">
+<thead class="bg-surface sticky top-0 z-10">
+<tr>
+<th class="px-lg py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider">日時</th>
+<th class="px-lg py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider">操作</th>
+<th class="px-lg py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider">テーブル</th>
+<th class="px-lg py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider">対象</th>
+<th class="px-lg py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider">操作者</th>
 </tr>
 </thead>
-<tbody class="divide-y divide-outline-variant/20" id="history-table-body">
+<tbody class="divide-y divide-outline-variant" id="history-table-body">
+<tr><td colspan="5" class="px-lg py-4 text-center text-on-surface-variant">読み込み中...</td></tr>
 </tbody>
 </table>
 </div>
 </div>
 
-<!-- 空状態 -->
-<div class="bg-surface-container-lowest border border-outline-variant/30 rounded-2xl overflow-hidden shadow-sm p-8 text-center" id="emptyState" style="display:none;">
-<span class="material-symbols-outlined text-5xl text-on-surface-variant/30 block mb-3">history</span>
-<p class="text-sm text-on-surface-variant">履歴がありません</p>
+<!-- Empty State -->
+<div id="empty-state" class="bg-surface-container-lowest border border-outline-variant rounded-lg p-lg text-center hidden">
+<span class="material-symbols-outlined text-4xl text-on-surface-variant/30 block mb-2">history</span>
+<p class="text-on-surface-variant">履歴がありません</p>
 </div>
 </div>
+
 <!-- Footer -->
 <footer class="border-t border-outline-variant mt-xl py-lg px-margin-desktop text-center text-on-surface-variant">
-<p class="text-label-sm uppercase tracking-wider mb-2">WIN WIN様 デモ画面 v2.4.0</p>
+<p class="text-label-sm uppercase tracking-wider mb-1">WIN WIN様 デモ画面 v2.4.0</p>
 <p class="text-body-sm">© 2024 株式会社WIN WIN デモ環境</p>
 </footer>
 </main>
 
 <script>
-// テストデータ
-const testData = {
-  project: [
-    { id: 1, name: "京都御所南マンション改修工事", datetime: "2026/06/18 15:30:45", changes: "金額を ¥1,000,000 → ¥1,200,000 に変更", operator: "山田 太郎" },
-    { id: 2, name: "大阪難波タワー内装工事", datetime: "2026/06/18 14:20:12", changes: "新規登録（ステータス: 受注）", operator: "山田 太郎" },
-    { id: 3, name: "名古屋駅前オフィスビル改修", datetime: "2026/06/17 10:15:33", changes: "工期を 2026/08/31 → 2026/09/15 に変更", operator: "田中 花子" },
-    { id: 4, name: "福岡天神商業施設改装", datetime: "2026/06/16 16:45:22", changes: "担当者を 営業 田中 → 営業 山田 に変更", operator: "山田 太郎" },
-    { id: 5, name: "広島平和公園周辺工事", datetime: "2026/06/15 09:30:11", changes: "新規登録（ステータス: 見積中）", operator: "佐藤 次郎" },
-    { id: 6, name: "仙台駅東口再開発", datetime: "2026/06/14 13:20:45", changes: "クライアント電話番号を 09012345678 → 09087654321 に変更", operator: "山田 太郎" },
-    { id: 7, name: "札幌大通公園付近工事", datetime: "2026/06/13 11:10:22", changes: "新規登録（ステータス: 受注）", operator: "山本 健太" },
-    { id: 8, name: "横浜みなとみらい工事", datetime: "2026/06/12 15:35:18", changes: "ステータスを 受注 → 工事中 に変更", operator: "山田 太郎" },
-    { id: 9, name: "東京渋谷駅前ビル改修", datetime: "2026/06/11 08:45:33", changes: "クライアント企業名を ABC建設 → XYZ建設 に変更", operator: "山田 太郎" },
-    { id: 10, name: "鎌倉古都保存工事", datetime: "2026/06/10 14:20:12", changes: "金額を ¥2,500,000 → ¥2,750,000 に変更", operator: "鈴木 美咲" },
-    { id: 11, name: "平塚駅北口商業施設", datetime: "2026/06/09 10:55:44", changes: "新規登録（ステータス: 見積中）", operator: "山田 太郎" },
-    { id: 12, name: "小田原城周辺整備", datetime: "2026/06/08 16:30:27", changes: "工期を 2026/09/30 → 2026/10/15 に変更", operator: "田中 花子" },
-    { id: 13, name: "厚木市民ホール改修", datetime: "2026/06/07 09:15:58", changes: "新規登録（ステータス: 受注）", operator: "山田 太郎" },
-    { id: 14, name: "相模原中央図書館増築", datetime: "2026/06/06 13:40:22", changes: "クライアント住所を 神奈川県相模原市 → 東京都渋谷区 に変更", operator: "佐藤 次郎" },
-    { id: 15, name: "海老名駅西口開発", datetime: "2026/06/05 11:25:11", changes: "新規登録（ステータス: 工事中）", operator: "山田 太郎" },
-    { id: 16, name: "座間市公共施設改修", datetime: "2026/06/04 15:10:35", changes: "ステータスを 見積中 → 受注 に変更", operator: "山本 健太" },
-    { id: 17, name: "綾瀬市役所増改築", datetime: "2026/06/03 10:45:19", changes: "新規登録（ステータス: 見積中）", operator: "山田 太郎" },
-    { id: 18, name: "大和市駅前再開発", datetime: "2026/06/02 14:30:44", changes: "担当者を 営業 太郎 → 営業 鈴木 に変更", operator: "鈴木 美咲" },
-    { id: 19, name: "瀬谷区役所改修工事", datetime: "2026/06/01 09:20:17", changes: "新規登録（ステータス: 工事中）", operator: "山田 太郎" },
-    { id: 20, name: "栄区文化センター拡張", datetime: "2026/05/31 16:05:50", changes: "金額を ¥1,800,000 → ¥2,100,000 に変更", operator: "田中 花子" },
-    { id: 21, name: "泉区スポーツセンター新築", datetime: "2026/05/30 11:40:22", changes: "新規登録（ステータス: 見積中）", operator: "山田 太郎" },
-    { id: 22, name: "金沢区港湾施設改修", datetime: "2026/05/29 13:55:33", changes: "工期を 2026/08/15 → 2026/09/30 に変更", operator: "佐藤 次郎" },
-    { id: 23, name: "磯子区図書館建て替え", datetime: "2026/05/28 10:30:44", changes: "新規登録（ステータス: 受注）", operator: "山田 太郎" },
-    { id: 24, name: "南区民広場整備", datetime: "2026/05/27 14:15:27", changes: "クライアントメールアドレスを contact@example.com → newemail@example.com に変更", operator: "山本 健太" },
-    { id: 25, name: "港南区福祉センター増築", datetime: "2026/05/26 09:50:11", changes: "新規登録（ステータス: 見積中）", operator: "山田 太郎" },
-    { id: 26, name: "保土ケ谷区保育施設新築", datetime: "2026/05/25 15:25:38", changes: "ステータスを 工事中 → 完工 に変更", operator: "鈴木 美咲" },
-    { id: 27, name: "旭区運動公園拡張", datetime: "2026/05/24 11:10:19", changes: "新規登録（ステータス: 工事中）", operator: "山田 太郎" },
-    { id: 28, name: "緑区民センター改修", datetime: "2026/05/23 13:45:50", changes: "金額を ¥3,200,000 → ¥3,500,000 に変更", operator: "田中 花子" },
-    { id: 29, name: "青葉区庁舎増改築", datetime: "2026/05/22 10:20:22", changes: "新規登録（ステータス: 受注）", operator: "山田 太郎" },
-    { id: 30, name: "都筑区商業施設改装", datetime: "2026/05/21 16:35:44", changes: "担当者を 営業 田中 → 営業 鈴木 に変更", operator: "佐藤 次郎" },
-  ],
-  order: [
-    { id: 1, name: "注文01: 塗装工事", datetime: "2026/06/18 15:30:45", changes: "新規登録（数量: 500m²）", operator: "田中 花子" },
-    { id: 2, name: "注文02: 電気工事", datetime: "2026/06/18 14:20:12", changes: "金額を ¥500,000 → ¥600,000 に変更", operator: "山田 太郎" },
-    { id: 3, name: "注文03: 設備工事", datetime: "2026/06/17 10:15:33", changes: "新規登録（数量: 30セット）", operator: "田中 花子" },
-    { id: 4, name: "注文04: 防水工事", datetime: "2026/06/16 16:45:22", changes: "発注先を なにわ建設 → 関西電設工業 に変更", operator: "山田 太郎" },
-    { id: 5, name: "注文05: 内装工事", datetime: "2026/06/15 09:30:11", changes: "新規登録（数量: 200m²）", operator: "佐藤 次郎" },
-    { id: 6, name: "注文06: 給排水工事", datetime: "2026/06/14 13:20:45", changes: "納期を 2026/08/31 → 2026/09/15 に変更", operator: "山田 太郎" },
-    { id: 7, name: "注文07: 空調工事", datetime: "2026/06/13 11:10:22", changes: "新規登録（数量: 15台）", operator: "山本 健太" },
-    { id: 8, name: "注文08: 土木工事", datetime: "2026/06/12 15:35:18", changes: "ステータスを 発注待ち → 進行中 に変更", operator: "山田 太郎" },
-    { id: 9, name: "注文09: 造園工事", datetime: "2026/06/11 08:45:33", changes: "新規登録（数量: 1500㎡）", operator: "鈴木 美咲" },
-    { id: 10, name: "注文10: 左官工事", datetime: "2026/06/10 14:20:12", changes: "金額を ¥800,000 → ¥950,000 に変更", operator: "山田 太郎" },
-    { id: 11, name: "注文11: 石工工事", datetime: "2026/06/09 10:55:44", changes: "新規登録（数量: 250個）", operator: "田中 花子" },
-    { id: 12, name: "注文12: タイル工事", datetime: "2026/06/08 16:30:27", changes: "発注先を 京都冷熱工業所 → 大阪防水工業 に変更", operator: "山田 太郎" },
-    { id: 13, name: "注文13: 木工事", datetime: "2026/06/07 09:15:58", changes: "新規登録（数量: 150㎥）", operator: "佐藤 次郎" },
-    { id: 14, name: "注文14: 鋼構造工事", datetime: "2026/06/06 13:40:22", changes: "金額を ¥2,000,000 → ¥2,200,000 に変更", operator: "山田 太郎" },
-    { id: 15, name: "注文15: 杭工事", datetime: "2026/06/05 11:25:11", changes: "新規登録（数量: 100本）", operator: "山本 健太" },
-    { id: 16, name: "注文16: 石綿除去工事", datetime: "2026/06/04 15:10:35", changes: "納期を 2026/10/31 → 2026/11/30 に変更", operator: "山田 太郎" },
-    { id: 17, name: "注文17: 解体工事", datetime: "2026/06/03 10:45:19", changes: "新規登録（数量: 2000㎡）", operator: "鈴木 美咲" },
-    { id: 18, name: "注文18: 基礎工事", datetime: "2026/06/02 14:30:44", changes: "ステータスを 見積中 → 発注待ち に変更", operator: "山田 太郎" },
-    { id: 19, name: "注文19: 建築工事", datetime: "2026/06/01 09:20:17", changes: "新規登録（数量: 5000㎡）", operator: "田中 花子" },
-    { id: 20, name: "注文20: 一式工事", datetime: "2026/05/31 16:05:50", changes: "金額を ¥3,500,000 → ¥4,000,000 に変更", operator: "山田 太郎" },
-    { id: 21, name: "注文21: 屋根工事", datetime: "2026/05/30 11:40:22", changes: "新規登録（数量: 800㎡）", operator: "佐藤 次郎" },
-    { id: 22, name: "注文22: 外壁工事", datetime: "2026/05/29 13:55:33", changes: "発注先を 兵庫内装工事 → 奈良給排水工事 に変更", operator: "山田 太郎" },
-    { id: 23, name: "注文23: 窓工事", datetime: "2026/05/28 10:30:44", changes: "新規登録（数量: 45枚）", operator: "山本 健太" },
-    { id: 24, name: "注文24: 門扉工事", datetime: "2026/05/27 14:15:27", changes: "金額を ¥300,000 → ¥350,000 に変更", operator: "山田 太郎" },
-    { id: 25, name: "注文25: フェンス工事", datetime: "2026/05/26 09:50:11", changes: "新規登録（数量: 200m）", operator: "鈴木 美咲" },
-    { id: 26, name: "注文26: 標識工事", datetime: "2026/05/25 15:25:38", changes: "納期を 2026/07/15 → 2026/08/15 に変更", operator: "山田 太郎" },
-    { id: 27, name: "注文27: 照明工事", datetime: "2026/05/24 11:10:19", changes: "新規登録（数量: 120個）", operator: "田中 花子" },
-    { id: 28, name: "注文28: 通信工事", datetime: "2026/05/23 13:45:50", changes: "ステータスを 進行中 → 完了 に変更", operator: "山田 太郎" },
-    { id: 29, name: "注文29: ガス工事", datetime: "2026/05/22 10:20:22", changes: "新規登録（数量: 80m）", operator: "佐藤 次郎" },
-    { id: 30, name: "注文30: 昇降機工事", datetime: "2026/05/21 16:35:44", changes: "金額を ¥1,200,000 → ¥1,300,000 に変更", operator: "山田 太郎" },
-  ],
-  vendor: [
-    { id: 1, name: "なにわ建設", datetime: "2026/06/18 15:30:45", changes: "電話番号を 06-1234-5678 → 06-2345-6789 に変更", operator: "山田 太郎" },
-    { id: 2, name: "関西電設工業", datetime: "2026/06/18 14:20:12", changes: "新規登録（業種: 電気工事）", operator: "田中 花子" },
-    { id: 3, name: "京都冷熱工業所", datetime: "2026/06/17 10:15:33", changes: "住所を 京都府京都市 → 大阪府大阪市 に変更", operator: "山田 太郎" },
-    { id: 4, name: "大阪防水工業", datetime: "2026/06/16 16:45:22", changes: "新規登録（業種: 防水工事）", operator: "佐藤 次郎" },
-    { id: 5, name: "兵庫内装工事", datetime: "2026/06/15 09:30:11", changes: "メールアドレスを old@example.com → newemail@example.com に変更", operator: "山田 太郎" },
-    { id: 6, name: "奈良給排水工事", datetime: "2026/06/14 13:20:45", changes: "新規登録（業種: 給排水工事）", operator: "山本 健太" },
-    { id: 7, name: "滋賀空調設備", datetime: "2026/06/13 11:10:22", changes: "単価を ¥80,000/日 → ¥90,000/日 に変更", operator: "山田 太郎" },
-    { id: 8, name: "和歌山土木工業", datetime: "2026/06/12 15:35:18", changes: "新規登録（業種: 土木工事）", operator: "鈴木 美咲" },
-    { id: 9, name: "三重造園工業", datetime: "2026/06/11 08:45:33", changes: "担当者を 田中 → 佐藤 に変更", operator: "山田 太郎" },
-    { id: 10, name: "愛知左官工事", datetime: "2026/06/10 14:20:12", changes: "新規登録（業種: 左官工事）", operator: "田中 花子" },
-    { id: 11, name: "岐阜石工工業", datetime: "2026/06/09 10:55:44", changes: "電話番号を 058-1234-5678 → 058-2345-6789 に変更", operator: "山田 太郎" },
-    { id: 12, name: "静岡タイル工事", datetime: "2026/06/08 16:30:27", changes: "新規登録（業種: タイル工事）", operator: "佐藤 次郎" },
-    { id: 13, name: "神奈川木工事", datetime: "2026/06/07 09:15:58", changes: "単価を ¥70,000/日 → ¥75,000/日 に変更", operator: "山田 太郎" },
-    { id: 14, name: "千葉鋼構造工業", datetime: "2026/06/06 13:40:22", changes: "新規登録（業種: 鋼構造工事）", operator: "山本 健太" },
-    { id: 15, name: "茨城杭工事", datetime: "2026/06/05 11:25:11", changes: "住所を 茨城県水戸市 → 茨城県つくば市 に変更", operator: "山田 太郎" },
-    { id: 16, name: "栃木石綿除去工事", datetime: "2026/06/04 15:10:35", changes: "新規登録（業種: 石綿除去工事）", operator: "鈴木 美咲" },
-    { id: 17, name: "埼玉解体工業", datetime: "2026/06/03 10:45:19", changes: "メールアドレスを contact@example.com → updated@example.com に変更", operator: "山田 太郎" },
-    { id: 18, name: "東京基礎工事", datetime: "2026/06/02 14:30:44", changes: "新規登録（業種: 基礎工事）", operator: "田中 花子" },
-    { id: 19, name: "山梨建築工事", datetime: "2026/06/01 09:20:17", changes: "単価を ¥100,000/日 → ¥110,000/日 に変更", operator: "山田 太郎" },
-    { id: 20, name: "長野一式工事", datetime: "2026/05/31 16:05:50", changes: "新規登録（業種: 一式工事）", operator: "佐藤 次郎" },
-    { id: 21, name: "新潟屋根工事", datetime: "2026/05/30 11:40:22", changes: "電話番号を 025-1234-5678 → 025-2345-6789 に変更", operator: "山田 太郎" },
-    { id: 22, name: "富山外壁工事", datetime: "2026/05/29 13:55:33", changes: "新規登録（業種: 外壁工事）", operator: "山本 健太" },
-    { id: 23, name: "石川窓工事", datetime: "2026/05/28 10:30:44", changes: "担当者を 山田 → 鈴木 に変更", operator: "山田 太郎" },
-    { id: 24, name: "福井門扉工事", datetime: "2026/05/27 14:15:27", changes: "新規登録（業種: 門扉工事）", operator: "鈴木 美咲" },
-    { id: 25, name: "岡山フェンス工事", datetime: "2026/05/26 09:50:11", changes: "単価を ¥65,000/日 → ¥72,000/日 に変更", operator: "山田 太郎" },
-    { id: 26, name: "広島標識工事", datetime: "2026/05/25 15:25:38", changes: "新規登録（業種: 標識工事）", operator: "田中 花子" },
-    { id: 27, name: "山口照明工事", datetime: "2026/05/24 11:10:19", changes: "住所を 山口県山口市 → 山口県下関市 に変更", operator: "山田 太郎" },
-    { id: 28, name: "香川通信工事", datetime: "2026/05/23 13:45:50", changes: "新規登録（業種: 通信工事）", operator: "佐藤 次郎" },
-    { id: 29, name: "徳島ガス工事", datetime: "2026/05/22 10:20:22", changes: "メールアドレスを info@example.com → newinfo@example.com に変更", operator: "山田 太郎" },
-    { id: 30, name: "高知昇降機工事", datetime: "2026/05/21 16:35:44", changes: "新規登録（業種: 昇降機工事）", operator: "山本 健太" },
-  ]
-};
-
-// 全種別を結合し、デモ用に件数を増やした履歴データを構築
-const TYPE_LABEL = { project: '案件', order: '注文', vendor: '発注先' };
-let allHistory = [];
-let displayLimit = 100; // 初期表示は最大100件
-
-function pad(n){ return String(n).padStart(2, '0'); }
-
-function buildAllHistory() {
-  let all = [];
-  ['project', 'order', 'vendor'].forEach(t => {
-    (testData[t] || []).forEach(it => all.push(Object.assign({}, it, { _type: TYPE_LABEL[t] })));
-  });
-  // デモ用に履歴を増幅（合計250件程度・もっと見る動作確認用）
-  const base = all.slice();
-  const ops = ['山田 太郎', '田中 花子', '佐藤 次郎', '山本 健太', '鈴木 美咲'];
-  const start = new Date(2026, 5, 18, 18, 0, 0);
-  for (let i = 0; i < 220; i++) {
-    const b = base[i % base.length];
-    const d = new Date(start.getTime() - (i + base.length) * 5 * 3600 * 1000);
-    const dt = `${d.getFullYear()}/${pad(d.getMonth()+1)}/${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
-    all.push({ id: 1000 + i, name: b.name, datetime: dt, changes: b.changes, operator: ops[i % ops.length], _type: b._type });
-  }
-  all.sort((a, b) => a.datetime < b.datetime ? 1 : -1);
-  return all;
+function toggleUserMenu() {
+  const panel = document.getElementById('user-menu-panel');
+  panel.classList.toggle('hidden');
 }
 
-const TYPE_BADGE = {
-  '案件': 'bg-primary-container text-on-primary-container',
-  '注文': 'bg-tertiary-container text-on-tertiary-container',
-  '発注先': 'bg-secondary-container text-on-secondary-container'
-};
+document.addEventListener('click', (e) => {
+  const panel = document.getElementById('user-menu-panel');
+  const menu = document.getElementById('user-menu');
+  if (!menu.contains(e.target)) panel.classList.add('hidden');
+});
 
-function renderHistory() {
-  const type = document.getElementById('typeSelect').value;
-  const kw = (document.getElementById('searchInput').value || '').toLowerCase();
-  let rows = allHistory;
-  if (type) rows = rows.filter(r => r._type === TYPE_LABEL[type]);
-  if (kw) rows = rows.filter(r => (r.name + r.changes + r.operator).toLowerCase().includes(kw));
+function setupUserInfo() {
+  const user = Auth.getUser();
+  if (user) {
+    document.getElementById('user-name').textContent = user.name || user.email;
+    document.getElementById('user-role').textContent = user.role || 'user';
+  }
+}
 
-  const total = rows.length;
-  const shown = rows.slice(0, displayLimit);
+async function loadLogs() {
+  const tableFilter = document.getElementById('table-filter').value;
+  const actionFilter = document.getElementById('action-filter').value;
   const tbody = document.getElementById('history-table-body');
+  const emptyState = document.getElementById('empty-state');
 
-  let html = shown.map(item => `
-    <tr class="hover:bg-surface-container-low transition-colors">
-      <td class="px-3 py-1.5"><span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] ${TYPE_BADGE[item._type] || ''}">${item._type}</span></td>
-      <td class="px-3 py-1.5 text-label-md font-label-md tabular-nums text-on-surface-variant">${item.datetime}</td>
-      <td class="px-3 py-1.5 text-label-md font-label-md text-on-surface">${item.name}</td>
-      <td class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant">${item.changes}</td>
-      <td class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant">${item.operator}</td>
-    </tr>
-  `).join('');
+  try {
+    const url = tableFilter
+      ? `/api/audit-logs/${tableFilter}`
+      : '/api/audit-logs';
 
-  // 101行目（表示上限超過分）に「もっと見る」リンクを表示
-  if (total > displayLimit) {
-    html += `
-      <tr>
-        <td colspan="5" class="px-3 py-4 text-center border-t border-outline-variant/30">
-          <button onclick="loadMoreHistory()" class="inline-flex items-center gap-1.5 text-label-md font-bold text-secondary hover:underline">
-            <span class="material-symbols-outlined text-[18px]">expand_more</span>もっと見る（残り ${total - displayLimit} 件）
-          </button>
-        </td>
+    const res = await fetch(url, { headers: Auth.headers() });
+    const logs = await res.json();
+
+    let filtered = logs || [];
+    if (actionFilter) {
+      filtered = filtered.filter(l => l.action === actionFilter);
+    }
+
+    document.getElementById('history-count').textContent = `全 ${filtered.length} 件`;
+
+    if (!filtered.length) {
+      tbody.innerHTML = '<tr><td colspan="5" class="px-lg py-4 text-center text-on-surface-variant">履歴がありません</td></tr>';
+      emptyState.classList.remove('hidden');
+      return;
+    }
+
+    emptyState.classList.add('hidden');
+    const TABLE_LABEL = { projects:'案件', orders:'注文', vendors:'発注先', categories:'工事区分', customers:'顧客', receipts:'入金', invoices:'請求書', users:'ユーザー' };
+    const ACTION_LABEL = { CREATE:'新規作成', UPDATE:'更新', DELETE:'削除' };
+    tbody.innerHTML = filtered.map(log => {
+      const dt = new Date(log.created_at);
+      const dateStr = dt.toLocaleString('ja-JP');
+      // details は jsonb（pgはオブジェクトで返す）/ 文字列の両対応
+      let details = log.details || {};
+      if (typeof details === 'string') { try { details = JSON.parse(details); } catch(_) { details = {}; } }
+      const target = details.name || details.company || details.category || details.invoice_no || details.email || `#${log.record_id}`;
+      return `<tr class="hover:bg-surface-container-low transition-colors">
+        <td class="px-lg py-2 text-body-sm">${dateStr}</td>
+        <td class="px-lg py-2 text-body-sm"><span class="px-2 py-1 rounded text-xs font-bold ${
+          log.action === 'CREATE' ? 'bg-success-container text-on-success-container' :
+          log.action === 'UPDATE' ? 'bg-warning-container text-on-warning-container' :
+          'bg-error-container text-on-error-container'
+        }">${ACTION_LABEL[log.action] || log.action}</span></td>
+        <td class="px-lg py-2 text-body-sm">${TABLE_LABEL[log.table_name] || log.table_name || '-'}</td>
+        <td class="px-lg py-2 text-body-sm text-on-surface-variant">${target}</td>
+        <td class="px-lg py-2 text-body-sm">${log.email || 'システム'}</td>
       </tr>`;
+    }).join('');
+  } catch(e) {
+    console.error('Failed to load logs:', e);
+    tbody.innerHTML = '<tr><td colspan="5" class="px-lg py-4 text-center text-error">読み込みエラー</td></tr>';
   }
-  tbody.innerHTML = html;
-
-  const countEl = document.getElementById('history-count');
-  if (countEl) countEl.textContent = `${Math.min(displayLimit, total)} / ${total} 件`;
 }
 
-function loadMoreHistory() {
-  displayLimit += 100; // 追加で100件読み込み
-  renderHistory();
-}
-
-function onHistoryFilterChange() {
-  displayLimit = 100; // 絞り込み変更時は先頭から
-  renderHistory();
-}
-
-// 初期化：全件を初期表示
-(function() {
-  allHistory = buildAllHistory();
-  const type = new URLSearchParams(window.location.search).get('type');
-  if (type && TYPE_LABEL[type]) {
-    document.getElementById('typeSelect').value = type;
-  }
-  renderHistory();
-})();
+setupUserInfo();
+loadLogs();
 </script>
-<script src="/notify.js"></script>
 </body>
 </html>
