@@ -181,6 +181,7 @@ body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 <button type="button" onclick="addTag('edit')" class="px-4 py-1.5 bg-secondary text-on-secondary text-label-md font-normal rounded-lg hover:scale-[1.02] transition-all flex items-center gap-1 whitespace-nowrap"><span class="material-symbols-outlined text-[18px]">add</span>追加</button>
 </div>
 <div id="edit-tags" class="flex flex-wrap gap-2 mt-2"></div>
+<p class="text-[11px] text-on-surface-variant/70 mt-1">未指定の場合は全工事区分で選択候補に表示されます。タグを付けるとその工事区分でのみ候補に表示されます。</p>
 </div>
 </div>
 </form>
@@ -239,6 +240,7 @@ body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 <button type="button" onclick="addTag('reg')" class="px-4 py-1.5 bg-secondary text-on-secondary text-label-md font-normal rounded-lg hover:scale-[1.02] transition-all flex items-center gap-1 whitespace-nowrap"><span class="material-symbols-outlined text-[18px]">add</span>追加</button>
 </div>
 <div id="reg-tags" class="flex flex-wrap gap-2 mt-2"></div>
+<p class="text-[11px] text-on-surface-variant/70 mt-1">未指定の場合は全工事区分で選択候補に表示されます。タグを付けるとその工事区分でのみ候補に表示されます。</p>
 </div>
 </div>
 </form>
@@ -285,7 +287,7 @@ function populateCatSelects() {
   ['reg', 'edit'].forEach(prefix => {
     const sel = document.getElementById(`${prefix}-cat-select`);
     if (!sel) return;
-    sel.innerHTML = '<option value="">工事区分を選択...</option>' +
+    sel.innerHTML = '<option value="">表示する工事区分を指定...</option>' +
       cats.map(n => `<option value="${n}">${n}</option>`).join('');
   });
 }

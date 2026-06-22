@@ -506,11 +506,29 @@ function updateSummary() {
     if (summaryMargin) summaryMargin.textContent = margin.toFixed(1) + '%';
 }
 
+// 発注先がその工事区分に対応するか。タグ未指定なら全工事区分で表示、1つでもあればその区分のみ。
+function vendorMatchesCategory(v, categoryName) {
+    const tags = (v.categories || '').split(',').map(s => s.trim()).filter(Boolean);
+    if (tags.length === 0) return true;          // 未指定 → 全工事区分に表示
+    return !!categoryName && tags.includes(categoryName); // 指定あり → その区分のみ
+}
+
+// 工事区分に連動して発注先プルダウンを再構築（選択中の値は可能なら維持）
+function populateVendorSelect(categoryName, keepValue) {
+    const sel = document.getElementById('edit-vendor');
+    const cur = keepValue !== undefined ? keepValue : sel.value;
+    const list = (window.appCache.vendors || []).filter(v => vendorMatchesCategory(v, categoryName));
+    sel.innerHTML = '<option value="">選択してください</option>' +
+        list.map(v => `<option value="${v.company}">${v.company}</option>`).join('');
+    if (cur && list.some(v => v.company === cur)) sel.value = cur;
+}
+
 function openOrderModal(id, category, vendor, estimate, planned, status) {
     editingId = id || null;
     if (id) {
         const order = orders.find(o => o.id === id);
         document.getElementById('edit-category').value = order.category;
+        populateVendorSelect(order.category, order.vendor);
         document.getElementById('edit-vendor').value = order.vendor;
         document.getElementById('edit-estimate').value = order.estimate;
         document.getElementById('edit-planned').value = order.planned;
@@ -519,6 +537,7 @@ function openOrderModal(id, category, vendor, estimate, planned, status) {
         document.getElementById('edit-id').value = order.id;
     } else {
         document.getElementById('edit-category').value = '';
+        populateVendorSelect('');
         document.getElementById('edit-vendor').value = '';
         document.getElementById('edit-estimate').value = '';
         document.getElementById('edit-planned').value = '';
@@ -827,6 +846,7 @@ function openOrderDetailModal(id) {
     if (order) {
         document.getElementById('edit-id').value = order.id;
         document.getElementById('edit-category').value = order.category;
+        populateVendorSelect(order.category, order.vendor);
         document.getElementById('edit-vendor').value = order.vendor;
         document.getElementById('edit-estimate').value = order.estimate;
         document.getElementById('edit-planned').value = order.planned;
@@ -945,14 +965,9 @@ function loadMasterData() {
         categorySelect.appendChild(option);
     });
 
-    // Load vendors to edit-vendor
-    const vendorSelect = document.getElementById('edit-vendor');
-    vendors.forEach(v => {
-        const option = document.createElement('option');
-        option.value = v.company;
-        option.textContent = v.company;
-        vendorSelect.appendChild(option);
-    });
+    // 発注先は工事区分に連動して絞り込む（初期は全件）
+    populateVendorSelect('');
+    categorySelect.addEventListener('change', (e) => populateVendorSelect(e.target.value));
 
     // Load categories to category-filter
     const categoryFilter = document.getElementById('category-filter');
