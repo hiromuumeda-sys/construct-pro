@@ -87,6 +87,11 @@ aside nav a, aside nav .group > div:first-child { padding-top: 8px !important; p
 aside nav a span:not(.material-symbols-outlined), aside nav .group span:not(.material-symbols-outlined) { font-size: 12px !important; font-weight: 500 !important; letter-spacing: 0.01em !important; }
 aside nav a .material-symbols-outlined, aside nav .group .material-symbols-outlined { font-size: 18px !important; }
 aside nav .group p { font-size: 10px !important; font-weight: 600 !important; }
+/* main内のボタン・入力・日付ピッカーの文字サイズを統一（サイズ指定漏れの16px既定を補正）。
+   aside(サイドバー)は対象外。見出しやテーブル等の非ボタン要素も触らない。 */
+main input, main select, main textarea { font-size: 13px !important; }
+main button { font-size: 13px !important; }
+main button .material-symbols-outlined, main button.material-symbols-outlined { font-size: 18px !important; }
 `;
   const style = document.createElement('style');
   style.id = 'sidebar-size-fix';
