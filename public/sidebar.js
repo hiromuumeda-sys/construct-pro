@@ -68,7 +68,7 @@ ${sub}
 </a>`;
   }).join('');
 
-  return `<aside class="fixed left-0 top-0 h-screen w-64 z-50 bg-surface-container-lowest border-r border-outline-variant flex flex-col py-6">
+  return `<aside class="fixed left-0 top-0 h-screen w-56 z-50 bg-surface-container-lowest border-r border-outline-variant flex flex-col py-6">
 <div class="px-6 mb-8">
 <img src="/logo.png" alt="WIN WIN" style="height:32px;width:auto;display:block"
   onerror="this.style.display='none';this.nextElementSibling.style.display='block'"/>
