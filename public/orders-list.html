@@ -7,10 +7,10 @@
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-<script src="/theme.js?v=15"></script>
-<script src="/sidebar.js?v=15"></script>
-<script src="/auth.js?v=15"></script>
-<script src="/header.js?v=15"></script>
+<script src="/theme.js?v=16"></script>
+<script src="/sidebar.js?v=16"></script>
+<script src="/auth.js?v=16"></script>
+<script src="/header.js?v=16"></script>
 <style>
 body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
@@ -96,8 +96,39 @@ body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 </div>
 </div>
 </header>
+<!-- 案件選択画面（projectId未指定時に表示） -->
+<div class="p-margin-desktop max-w-container-max mx-auto" id="project-select-view" style="display:none">
+<div class="flex items-center gap-3 mb-lg">
+<span class="material-symbols-outlined text-primary text-[28px]">engineering</span>
+<div>
+<h2 class="text-[18px] font-label-md text-primary">工事計画 — 案件を選択</h2>
+<p class="text-label-sm text-on-surface-variant">工事計画を表示する案件を選んでください</p>
+</div>
+</div>
+<div class="bg-surface-container-lowest border border-outline-variant rounded-lg p-md">
+<div class="grid grid-cols-1 md:grid-cols-3 gap-md mb-md">
+<div>
+<label class="block text-label-sm text-on-surface-variant uppercase tracking-wider font-bold mb-1.5">工期開始（以降）</label>
+<input type="date" id="project-date-start" class="w-full bg-surface-container-low border border-outline-variant text-sm px-4 py-2.5 rounded-lg focus:ring-2 focus:ring-secondary/20 focus:border-transparent" onchange="renderProjectSelectList()"/>
+</div>
+<div>
+<label class="block text-label-sm text-on-surface-variant uppercase tracking-wider font-bold mb-1.5">工期終了（以前）</label>
+<input type="date" id="project-date-end" class="w-full bg-surface-container-low border border-outline-variant text-sm px-4 py-2.5 rounded-lg focus:ring-2 focus:ring-secondary/20 focus:border-transparent" onchange="renderProjectSelectList()"/>
+</div>
+<div>
+<label class="block text-label-sm text-on-surface-variant uppercase tracking-wider font-bold mb-1.5">検索</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-xl">search</span>
+<input class="w-full bg-surface-container-low border border-outline-variant text-sm pl-11 pr-4 py-2.5 rounded-lg focus:ring-2 focus:ring-secondary/20 focus:border-transparent" id="project-search" placeholder="案件名で検索..." type="text" oninput="renderProjectSelectList()"/>
+</div>
+</div>
+</div>
+<div class="space-y-2 max-h-[calc(100vh-320px)] overflow-y-auto" id="project-select-list"></div>
+</div>
+</div>
+
 <!-- Page Content -->
-<div class="p-margin-desktop space-y-lg max-w-container-max mx-auto">
+<div class="p-margin-desktop space-y-lg max-w-container-max mx-auto" id="orders-content" style="display:none">
 <!-- Header Section -->
 <div class="flex justify-between items-end mb-lg">
 <div>
@@ -240,39 +271,6 @@ CSV出力
 
 <!-- 注文編集モーダル -->
 <!-- Project Selection Modal -->
-<div class="fixed inset-0 z-[120] overflow-y-auto" id="project-select-modal" style="display:none">
-<div class="absolute inset-0 bg-primary/20 backdrop-blur-md"></div>
-<div class="relative w-full max-w-2xl mx-auto my-8 bg-surface-container-lowest rounded-2xl shadow-2xl overflow-hidden border border-outline-variant">
-<div class="px-lg py-md border-b border-outline-variant flex items-center gap-3 bg-surface-container-low">
-<button class="flex items-center gap-1.5 px-3 py-2 text-label-md font-normal text-on-surface-variant border border-outline-variant rounded-lg hover:bg-surface-container transition-colors" onclick="goBackFromProjectSelect()">
-<span class="material-symbols-outlined text-[18px]">arrow_back</span>戻る
-</button>
-<span class="material-symbols-outlined text-primary">engineering</span>
-<div>
-<h3 class="text-label-md font-label-md text-on-surface">案件を選択してください</h3>
-<p class="text-label-sm text-on-surface-variant">注文を表示する案件を選んでください</p>
-</div>
-</div>
-<div class="p-5 max-h-[calc(100vh-200px)] overflow-y-auto">
-<div class="grid grid-cols-2 gap-3 mb-3">
-<div>
-<label class="block text-label-sm text-on-surface-variant uppercase tracking-wider font-bold mb-1.5">工期開始（以降）</label>
-<input type="date" id="project-date-start" class="w-full bg-surface-container-low border border-outline-variant text-sm px-4 py-2.5 rounded-lg focus:ring-2 focus:ring-secondary/20 focus:border-transparent transition-all" onchange="renderProjectSelectList()"/>
-</div>
-<div>
-<label class="block text-label-sm text-on-surface-variant uppercase tracking-wider font-bold mb-1.5">工期終了（以前）</label>
-<input type="date" id="project-date-end" class="w-full bg-surface-container-low border border-outline-variant text-sm px-4 py-2.5 rounded-lg focus:ring-2 focus:ring-secondary/20 focus:border-transparent transition-all" onchange="renderProjectSelectList()"/>
-</div>
-</div>
-<div class="relative mb-4">
-<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant text-xl">search</span>
-<input class="w-full bg-surface-container-low border border-outline-variant text-sm pl-12 pr-4 py-2.5 rounded-lg focus:ring-2 focus:ring-secondary/20 focus:border-transparent transition-all" id="project-search" placeholder="案件名で検索..." type="text" oninput="renderProjectSelectList()"/>
-</div>
-<div class="space-y-2" id="project-select-list"></div>
-</div>
-</div>
-</div>
-
 <div class="fixed inset-0 z-[100] bg-primary/20 backdrop-blur-md" id="edit-modal" style="display:none" onclick="closeOrderModal()">
 <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl max-h-[90vh] bg-surface-container-lowest rounded-lg custom-shadow border border-outline-variant overflow-hidden flex flex-col" onclick="event.stopPropagation()">
 <div class="px-lg py-md flex justify-between items-center border-b border-outline-variant bg-surface-container-low shrink-0">
@@ -880,14 +878,18 @@ document.addEventListener('DOMContentLoaded', async () => {
         window.appCache = await res.json();
     }
 
-    // projectIdが無い場合（ヘッダー/サイドバーから遷移）はまず案件を選択させる
+    // projectIdが無い場合（ヘッダー/サイドバーから遷移）は案件選択画面を表示
     if (!projectId) {
-        openProjectSelectModal();
+        document.getElementById('orders-content').style.display = 'none';
+        document.getElementById('project-select-view').style.display = 'block';
+        renderProjectSelectList();
         loadMasterData();
         return;
     }
 
-    // projectIdがある場合、キャッシュから案件情報を取得してタイトル下に表示
+    // projectIdがある場合は工事計画明細を表示
+    document.getElementById('project-select-view').style.display = 'none';
+    document.getElementById('orders-content').style.display = 'block';
     const project = window.appCache.projects.find(p => p.id == projectId);
     if (project) {
         document.getElementById('project-name').textContent = project.name;
@@ -900,17 +902,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('status-filter').addEventListener('change', filterTable);
     document.getElementById('keyword-search').addEventListener('input', filterTable);
 });
-
-// 案件選択モーダル
-function openProjectSelectModal() {
-    renderProjectSelectList();
-    document.getElementById('project-select-modal').style.display = 'block';
-}
-
-function goBackFromProjectSelect() {
-    if (window.history.length > 1) history.back();
-    else location.href = '/';
-}
 
 function renderProjectSelectList() {
     const keyword = (document.getElementById('project-search').value || '').toLowerCase();
@@ -1010,6 +1001,6 @@ function filterTable() {
 }
 
 </script>
-<script src="/notify.js?v=15"></script>
+<script src="/notify.js?v=16"></script>
 </body>
 </html>
