@@ -748,137 +748,94 @@ app.get('/api/cache', h(async (req, res) => {
 app.get('/api/test', (req, res) => res.json({ status: 'ok', message: 'Server is running' }));
 
 // ============ PDF: 請求書 ============
-function buildInvoicePDF(project, orders) {
+// 請求書／見積書を画面プレビューと同じデザインで生成（日本語フォント埋め込み）
+function buildDocumentPDF(kind, project, orders) {
+  const isInvoice = kind === 'invoice';
+  const amt = isInvoice
+    ? (o) => Number(o.decided) || 0
+    : (o) => Number(o.estimate) || Number(o.planned) || Number(o.decided) || 0;
   return new Promise((resolve, reject) => {
-    const doc = new PDFDocument({ margin: 40, bufferPages: true });
+    const doc = new PDFDocument({ margin: 40, size: 'A4', bufferPages: true });
     const chunks = [];
     doc.on('data', c => chunks.push(c));
     doc.on('end', () => resolve(Buffer.concat(chunks)));
     doc.on('error', reject);
-    const purpleColor = '#8B4789';
-    const pageWidth = doc.page.width;
-    doc.rect(0, 0, pageWidth, 100).fill(purpleColor);
-    doc.fontSize(40).font('Helvetica-Bold').fillColor('white');
-    doc.text('請　求　書', 50, 30);
-    doc.fillColor('black').fontSize(10);
-    doc.text(`${project.clientCompany || '-'}`, 50, 130);
-    doc.text('件名：', 50, 150);
-    doc.text(project.name, 80, 150, { width: 200 });
-    const totalAmount = orders.reduce((sum, o) => sum + (Number(o.decided) || 0), 0);
+    useJpFont(doc);
+    const navy = '#030424', gray = '#6b7280';
+    const L = 40, R = 555;
     const now = new Date();
-    doc.text(`合計金額: ¥${totalAmount.toLocaleString()}`, 50, 200);
-    doc.text(`請求日: ${now.toLocaleDateString('ja-JP')}`, 50, 220);
-    const dueDate = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
-    doc.text(`お支払期限: ${dueDate.toLocaleDateString('ja-JP')}`, 50, 240);
-    doc.fontSize(9);
-    doc.text('株式会社WIN WIN', 380, 130);
-    doc.text('〒604-0924', 380, 145);
-    doc.text('京都市中京区一之船入町537-20', 380, 158);
-    doc.text('FIS御池ビル505号', 380, 171);
-    doc.text('TEL : 075-777-1236', 380, 190);
-    doc.text(`請求№: INV-${String(project.id).padStart(5, '0')}`, 380, 220);
-    doc.text('適格請求書発行事業者登録番号: T8130001068355', 380, 235);
-    const tableTop = 290;
-    doc.rect(50, tableTop, pageWidth - 100, 25).fill(purpleColor);
-    doc.fillColor('white').fontSize(9);
-    const colPositions = [60, 150, 210, 280, 350, 420];
-    ['品名', '数量', '単位', '単価', '金額', '摘要'].forEach((label, i) => doc.text(label, colPositions[i], tableTop + 8));
-    let tableRowY = tableTop + 30;
-    doc.fillColor('black').fontSize(8);
-    orders.forEach(order => {
-      if (tableRowY > 700) { doc.addPage(); tableRowY = 50; }
-      doc.text(order.category || '-', colPositions[0], tableRowY);
-      doc.text('1', colPositions[1], tableRowY);
-      doc.text('式', colPositions[2], tableRowY);
-      doc.text(`¥${(Number(order.decided) || 0).toLocaleString()}`, colPositions[3], tableRowY);
-      doc.text(`¥${(Number(order.decided) || 0).toLocaleString()}`, colPositions[4], tableRowY);
-      tableRowY += 20;
-    });
-    const calcY = tableRowY + 20;
-    const tax = Math.floor(totalAmount * 0.1);
-    const total = totalAmount + tax;
-    doc.fontSize(9);
-    doc.text('小　　計:', 300, calcY);
-    doc.text(`¥${totalAmount.toLocaleString()}`, 450, calcY, { align: 'right', width: 80 });
-    doc.text('税率:', 300, calcY + 20);
-    doc.text('10%', 450, calcY + 20, { align: 'right', width: 80 });
-    doc.text('消費税:', 300, calcY + 40);
-    doc.text(`¥${tax.toLocaleString()}`, 450, calcY + 40, { align: 'right', width: 80 });
-    doc.font('Helvetica-Bold').text('合　　計:', 300, calcY + 60);
-    doc.text(`¥${total.toLocaleString()}`, 450, calcY + 60, { align: 'right', width: 80 });
-    doc.font('Helvetica').fontSize(9);
-    doc.text('[振込先] 〇〇銀行 京都支店', 50, calcY + 120);
-    doc.text('口座番号／(普)0777777', 50, calcY + 140);
-    doc.end();
-  });
-}
+    const subtotal = orders.reduce((s, o) => s + amt(o), 0);
+    const tax = Math.floor(subtotal * 0.1);
+    const total = subtotal + tax;
+    const title = isInvoice ? '請　求　書' : '見　積　書';
+    const no = (isInvoice ? 'INV-' : 'EST-') + String(project.id).padStart(5, '0');
 
-// ============ PDF: 見積書 ============
-function buildEstimatePDF(project, orders) {
-  return new Promise((resolve, reject) => {
-    const doc = new PDFDocument({ margin: 40, bufferPages: true });
-    const chunks = [];
-    doc.on('data', c => chunks.push(c));
-    doc.on('end', () => resolve(Buffer.concat(chunks)));
-    doc.on('error', reject);
-    const purpleColor = '#8B4789';
-    const pageWidth = doc.page.width;
-    doc.rect(0, 0, pageWidth, 100).fill(purpleColor);
-    doc.fontSize(40).font('Helvetica-Bold').fillColor('white');
-    doc.text('見　積　書', 50, 30);
-    doc.fillColor('black').fontSize(10);
-    doc.text(`${project.clientCompany || '-'}`, 50, 130);
-    doc.text('件名：', 50, 150);
-    doc.text(project.name, 80, 150, { width: 200 });
-    // 見積は見積額（estimate）を採用。未設定なら planned→decided の順でフォールバック
-    const amt = (o) => Number(o.estimate) || Number(o.planned) || Number(o.decided) || 0;
-    const totalAmount = orders.reduce((sum, o) => sum + amt(o), 0);
-    const now = new Date();
-    doc.text(`合計金額: ¥${totalAmount.toLocaleString()}`, 50, 200);
-    doc.text(`見積日: ${now.toLocaleDateString('ja-JP')}`, 50, 220);
-    const validUntil = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
-    doc.text(`有効期限: ${validUntil.toLocaleDateString('ja-JP')}`, 50, 240);
-    doc.fontSize(9);
-    doc.text('株式会社WIN WIN', 380, 130);
-    doc.text('〒604-0924', 380, 145);
-    doc.text('京都市中京区一之船入町537-20', 380, 158);
-    doc.text('FIS御池ビル505号', 380, 171);
-    doc.text('TEL : 075-777-1236', 380, 190);
-    doc.text(`見積№: EST-${String(project.id).padStart(5, '0')}`, 380, 220);
-    doc.text('適格請求書発行事業者登録番号: T8130001068355', 380, 235);
-    const tableTop = 290;
-    doc.rect(50, tableTop, pageWidth - 100, 25).fill(purpleColor);
-    doc.fillColor('white').fontSize(9);
-    const colPositions = [60, 150, 210, 280, 350, 420];
-    ['品名', '数量', '単位', '単価', '金額', '摘要'].forEach((label, i) => doc.text(label, colPositions[i], tableTop + 8));
-    let tableRowY = tableTop + 30;
-    doc.fillColor('black').fontSize(8);
-    orders.forEach(order => {
-      if (tableRowY > 700) { doc.addPage(); tableRowY = 50; }
-      doc.text(order.category || '-', colPositions[0], tableRowY);
-      doc.text('1', colPositions[1], tableRowY);
-      doc.text('式', colPositions[2], tableRowY);
-      doc.text(`¥${amt(order).toLocaleString()}`, colPositions[3], tableRowY);
-      doc.text(`¥${amt(order).toLocaleString()}`, colPositions[4], tableRowY);
-      tableRowY += 20;
+    // タイトル
+    doc.fillColor(navy).fontSize(26).text(title, L, 48, { characterSpacing: 4 });
+    // 宛先（左）
+    const client = (project.clientCompany || project.client || '') + ' 御中';
+    doc.fillColor('#000').fontSize(14).text(client, L, 100);
+    const cw = Math.max(doc.widthOfString(client), 140);
+    doc.moveTo(L, 120).lineTo(L + cw, 120).lineWidth(1).strokeColor('#000').stroke();
+    doc.fillColor(gray).fontSize(9).text(project.name || '', L, 127, { width: 280 });
+    // 自社（右）
+    let ry = 96;
+    doc.fillColor('#000').fontSize(12).text('株式会社WIN WIN', 330, ry, { width: 225, align: 'right' }); ry += 17;
+    doc.fillColor(gray).fontSize(8);
+    ['〒604-0924 京都市中京区一之船入町537-20', 'FIS御池ビル505号', 'TEL: 075-777-1236'].forEach(t => { doc.text(t, 330, ry, { width: 225, align: 'right' }); ry += 11; });
+    doc.fillColor('#000').fontSize(8).text((isInvoice ? '請求№: ' : '見積№: ') + no, 330, ry, { width: 225, align: 'right' }); ry += 11;
+    doc.fillColor(gray).fontSize(7).text('適格: T8130001068355', 330, ry, { width: 225, align: 'right' });
+
+    // 金額バナー（上下ボーダー）
+    const by = 178;
+    doc.lineWidth(2).strokeColor(navy);
+    doc.moveTo(L, by).lineTo(R, by).stroke();
+    doc.moveTo(L, by + 46).lineTo(R, by + 46).stroke();
+    doc.fillColor('#000').fontSize(11).text(isInvoice ? 'ご請求金額（税込）' : 'お見積金額（税込）', L + 4, by + 16);
+    doc.fillColor(navy).fontSize(20).text('¥' + total.toLocaleString() + '-', R - 240, by + 11, { width: 240, align: 'right' });
+
+    // 日付行
+    const dy = by + 62;
+    doc.fillColor(gray).fontSize(8).text(isInvoice ? '請求日' : '見積日', L, dy);
+    doc.fillColor('#000').fontSize(10).text(now.toLocaleDateString('ja-JP'), L, dy + 12);
+    const due = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+    doc.fillColor(gray).fontSize(8).text(isInvoice ? 'お支払期限' : '有効期限', L + 220, dy);
+    doc.fillColor('#000').fontSize(10).text(due.toLocaleDateString('ja-JP'), L + 220, dy + 12);
+
+    // 明細テーブル
+    let ty = dy + 46;
+    doc.fillColor('#000').fontSize(10).text('品名', L, ty);
+    doc.text('金額', R - 140, ty, { width: 140, align: 'right' });
+    ty += 18;
+    doc.moveTo(L, ty).lineTo(R, ty).lineWidth(1).strokeColor('#000').stroke();
+    ty += 8;
+    const rows = orders.length ? orders : [null];
+    rows.forEach(o => {
+      if (ty > 720) { doc.addPage(); ty = 50; }
+      doc.fillColor('#000').fontSize(10).text(o ? (o.category || '一式') : '注文データがありません', L, ty, { width: 320 });
+      if (o) doc.text('¥' + amt(o).toLocaleString(), R - 140, ty, { width: 140, align: 'right' });
+      ty += 20;
+      doc.moveTo(L, ty - 5).lineTo(R, ty - 5).lineWidth(0.5).strokeColor('#e5e7eb').stroke();
     });
-    const calcY = tableRowY + 20;
-    const tax = Math.floor(totalAmount * 0.1);
-    const total = totalAmount + tax;
-    doc.fontSize(9);
-    doc.text('小　　計:', 300, calcY);
-    doc.text(`¥${totalAmount.toLocaleString()}`, 450, calcY, { align: 'right', width: 80 });
-    doc.text('税率:', 300, calcY + 20);
-    doc.text('10%', 450, calcY + 20, { align: 'right', width: 80 });
-    doc.text('消費税:', 300, calcY + 40);
-    doc.text(`¥${tax.toLocaleString()}`, 450, calcY + 40, { align: 'right', width: 80 });
-    doc.font('Helvetica-Bold').text('合　　計:', 300, calcY + 60);
-    doc.text(`¥${total.toLocaleString()}`, 450, calcY + 60, { align: 'right', width: 80 });
-    doc.font('Helvetica').fontSize(9);
-    doc.text('※本見積書の有効期限は発行日より30日間です。', 50, calcY + 120);
+
+    // 合計
+    ty += 12;
+    const lblX = R - 240, valX = R - 140;
+    doc.fillColor('#000').fontSize(10).text('小計', lblX, ty); doc.text('¥' + subtotal.toLocaleString(), valX, ty, { width: 140, align: 'right' }); ty += 18;
+    doc.fillColor(gray).text('消費税（10%）', lblX, ty); doc.fillColor('#000').text('¥' + tax.toLocaleString(), valX, ty, { width: 140, align: 'right' }); ty += 16;
+    doc.moveTo(lblX, ty).lineTo(R, ty).lineWidth(0.5).strokeColor('#d1d5db').stroke(); ty += 6;
+    doc.fillColor(navy).fontSize(12).text('合計', lblX, ty); doc.text('¥' + total.toLocaleString(), valX, ty, { width: 140, align: 'right' });
+
+    // フッター
+    const fy = 770;
+    doc.moveTo(L, fy).lineTo(R, fy).lineWidth(0.5).strokeColor('#d1d5db').stroke();
+    doc.fillColor(gray).fontSize(8);
+    doc.text(isInvoice ? '[振込先] 〇〇銀行 京都支店 ／ 口座番号：(普)0777777' : '※本見積書の有効期限は発行日より30日間です。', L, fy + 6);
     doc.end();
   });
 }
+function buildInvoicePDF(project, orders) { return buildDocumentPDF('invoice', project, orders); }
+function buildEstimatePDF(project, orders) { return buildDocumentPDF('estimate', project, orders); }
 
 // ============ PDF: 発注書 ============
 function buildPurchaseOrderPDF(order, project, vendor) {
@@ -888,14 +845,15 @@ function buildPurchaseOrderPDF(order, project, vendor) {
     doc.on('data', c => chunks.push(c));
     doc.on('end', () => resolve(Buffer.concat(chunks)));
     doc.on('error', reject);
+    useJpFont(doc);
     const primaryColor = '#1a1d3d';
     const pageWidth = doc.page.width;
     const amount = Number(order.decided || order.planned || order.estimate) || 0;
     const tax = Math.floor(amount * 0.1);
     const total = amount + tax;
     doc.rect(0, 0, pageWidth, 100).fill(primaryColor);
-    doc.fontSize(40).font('Helvetica-Bold').fillColor('white');
-    doc.text('発　注　書', 50, 30);
+    doc.fontSize(34).fillColor('white');
+    doc.text('発　注　書', 50, 32, { characterSpacing: 4 });
     doc.fillColor('black').fontSize(11);
     doc.text(`${order.vendor || '-'} 御中`, 50, 130);
     doc.fontSize(9);
@@ -909,10 +867,10 @@ function buildPurchaseOrderPDF(order, project, vendor) {
     doc.text(`発注日: ${now.toLocaleDateString('ja-JP')}`, 380, 220);
     const amountTop = 250;
     doc.rect(50, amountTop, pageWidth - 100, 30).fill(primaryColor);
-    doc.fillColor('white').fontSize(11).font('Helvetica-Bold');
+    doc.fillColor('white').fontSize(11);
     doc.text('発注金額合計 (税込)', 60, amountTop + 9);
     doc.text(`¥${total.toLocaleString()}-`, 350, amountTop + 9, { align: 'right', width: 165 });
-    doc.fillColor('black').font('Helvetica').fontSize(9);
+    doc.fillColor('black').fontSize(9);
     let infoY = amountTop + 50;
     const info = [
       ['工事名', project ? project.name : (order.details || '-')],
@@ -923,17 +881,17 @@ function buildPurchaseOrderPDF(order, project, vendor) {
       ['工事内容', order.details || '-'],
     ];
     info.forEach(([label, val]) => {
-      doc.font('Helvetica-Bold').fillColor('#666').text(label, 60, infoY, { width: 110 });
-      doc.font('Helvetica').fillColor('black').text(String(val), 175, infoY, { width: 340 });
+      doc.fillColor('#666').text(label, 60, infoY, { width: 110 });
+      doc.fillColor('black').text(String(val), 175, infoY, { width: 340 });
       infoY += 24;
     });
     const tableTop = infoY + 20;
     doc.rect(50, tableTop, pageWidth - 100, 25).fill(primaryColor);
-    doc.fillColor('white').fontSize(9).font('Helvetica-Bold');
+    doc.fillColor('white').fontSize(9);
     doc.text('内容・品名', 60, tableTop + 8);
     doc.text('金額 (税抜)', 350, tableTop + 8, { align: 'right', width: 165 });
     let rowY = tableTop + 32;
-    doc.fillColor('black').font('Helvetica').fontSize(9);
+    doc.fillColor('black').fontSize(9);
     doc.text(order.category || '一式', 60, rowY);
     doc.text(`¥${amount.toLocaleString()}`, 350, rowY, { align: 'right', width: 165 });
     const calcY = rowY + 40;
@@ -941,9 +899,9 @@ function buildPurchaseOrderPDF(order, project, vendor) {
     doc.text(`¥${amount.toLocaleString()}`, 435, calcY, { align: 'right', width: 80 });
     doc.text('消費税(10%):', 320, calcY + 20);
     doc.text(`¥${tax.toLocaleString()}`, 435, calcY + 20, { align: 'right', width: 80 });
-    doc.font('Helvetica-Bold').text('合　　計:', 320, calcY + 40);
+    doc.text('合　　計:', 320, calcY + 40);
     doc.text(`¥${total.toLocaleString()}`, 435, calcY + 40, { align: 'right', width: 80 });
-    doc.font('Helvetica').fontSize(9).fillColor('#666');
+    doc.fontSize(9).fillColor('#666');
     doc.text('備考：本発注書の内容に基づき、指定の期日までに施工をお願いいたします。', 50, calcY + 90);
     doc.end();
   });
