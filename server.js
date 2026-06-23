@@ -667,46 +667,53 @@ app.get('/api/report/growth-pdf', h(async (req, res) => {
   doc.on('data', c => chunks.push(c));
   await new Promise((resolve, reject) => {
     doc.on('end', resolve); doc.on('error', reject);
-    const purple = '#8B4789', navy = '#030424';
+    // 色：ヘッダー＝青強めネイビー、グラフ＝Web画面と同色（棒=#7c6cf6 / 線=#030424）
+    const headerNavy = '#1e2a78', barColor = '#7c6cf6', lineColor = '#030424';
+    // 日本語はPDFフォント未対応で文字化けするため英語表記にする
     const pageW = doc.page.width;
-    doc.rect(0, 0, pageW, 80).fill(purple);
+    doc.rect(0, 0, pageW, 80).fill(headerNavy);
     doc.fillColor('white').fontSize(20).font('Helvetica-Bold').text('WIN WIN', 40, 24);
-    doc.fontSize(12).font('Helvetica').text('Report (Sales & Profit)', 40, 50);
+    doc.fontSize(12).font('Helvetica').text('Sales & Profit Report', 40, 50);
     doc.fillColor('black');
 
-    doc.fontSize(11).font('Helvetica-Bold').text(`レポート（受注・入金推移）  ${from} 〜 ${to}`, 40, 96);
+    doc.fontSize(12).font('Helvetica-Bold').text(`Sales & Profit Report   ${from} - ${to}`, 40, 96);
     doc.font('Helvetica').fontSize(10).fillColor('black');
-    doc.text(`売上合計: ¥${totalRevenue.toLocaleString()}`, 40, 116);
-    doc.text(`利益合計: ¥${totalProfit.toLocaleString()}`, 300, 116);
+    doc.text(`Total Sales: ¥${totalRevenue.toLocaleString()}`, 40, 118);
+    doc.text(`Total Profit: ¥${totalProfit.toLocaleString()}`, 320, 118);
 
-    const chartX = 60, chartY = 160, chartW = pageW - 120, chartH = 320;
-    doc.lineWidth(1).strokeColor('#cccccc');
+    const chartX = 60, chartY = 165, chartW = pageW - 120, chartH = 320;
+    doc.lineWidth(1).strokeColor('#d1d5db');
     doc.moveTo(chartX, chartY).lineTo(chartX, chartY + chartH).stroke();
     doc.moveTo(chartX, chartY + chartH).lineTo(chartX + chartW, chartY + chartH).stroke();
     const maxV = Math.max(1, ...points.map(p => Math.max(p.revenue, p.profit)));
     const n = points.length || 1;
     const slot = chartW / n;
     const barW = Math.min(30, slot * 0.5);
-    // 売上の棒
+    // Sales bars（Web同色・半透明）
     points.forEach((p, i) => {
       const hh = (p.revenue / maxV) * (chartH - 10);
       const x = chartX + slot * i + (slot - barW) / 2;
       const y = chartY + chartH - hh;
-      doc.rect(x, y, barW, hh).fill(purple);
-      doc.fillColor('#666').fontSize(6).text(p.ym.replace('-', '/').slice(2), chartX + slot * i, chartY + chartH + 4, { width: slot, align: 'center' });
+      doc.save().fillOpacity(0.55).fill(barColor);
+      doc.rect(x, y, barW, hh).fill();
+      doc.restore();
+      doc.fillColor('#6b7280').fontSize(6).text(p.ym.replace('-', '/').slice(2), chartX + slot * i, chartY + chartH + 4, { width: slot, align: 'center' });
       doc.fillColor('black');
     });
-    // 利益の折れ線
-    doc.strokeColor(navy).lineWidth(2);
+    // Profit line
+    doc.strokeColor(lineColor).lineWidth(2);
     points.forEach((p, i) => {
       const x = chartX + slot * i + slot / 2;
       const y = chartY + chartH - (p.profit / maxV) * (chartH - 10);
       if (i === 0) doc.moveTo(x, y); else doc.lineTo(x, y);
     });
     doc.stroke();
-    doc.fontSize(9).fillColor(purple).text('■ 売上', chartX, chartY - 18);
-    doc.fillColor(navy).text('— 利益', chartX + 60, chartY - 18);
-    doc.fillColor('#888').fontSize(8).text('※ 売上＝案件の工期開始月の契約金額、利益＝売上−注文確定額', 40, chartY + chartH + 24);
+    // legend
+    doc.save().fillOpacity(0.55).fillColor(barColor).rect(chartX, chartY - 22, 12, 12).fill().restore();
+    doc.fillColor('#333').fontSize(9).font('Helvetica').text('Sales', chartX + 16, chartY - 21);
+    doc.strokeColor(lineColor).lineWidth(2).moveTo(chartX + 70, chartY - 16).lineTo(chartX + 90, chartY - 16).stroke();
+    doc.fillColor('#333').text('Profit', chartX + 94, chartY - 21);
+    doc.fillColor('#888').fontSize(8).text('* Sales = contract amount by project start month;  Profit = Sales - committed order cost', 40, chartY + chartH + 24);
     doc.end();
   });
   const pdf = Buffer.concat(chunks);
