@@ -428,6 +428,10 @@ function renderTable(projects) {
       </td>
       <td class="w-48 px-lg py-2 text-center">
         <div class="flex gap-1 justify-center">
+          <button class="inline-flex items-center gap-1 px-2 py-1.5 rounded-lg bg-primary/10 text-primary text-label-md font-label-md hover:bg-primary/20 transition-colors whitespace-nowrap" onclick="event.stopPropagation(); generateEstimate(${p.id})" title="見積書を発行">
+            <span class="material-symbols-outlined text-[18px]">request_quote</span>
+            見積書
+          </button>
           <button class="inline-flex items-center gap-1 px-2 py-1.5 rounded-lg bg-primary/10 text-primary text-label-md font-label-md hover:bg-primary/20 transition-colors whitespace-nowrap" onclick="event.stopPropagation(); generateInvoice(${p.id})" title="請求書を発行">
             <span class="material-symbols-outlined text-[18px]">description</span>
             請求書
@@ -725,6 +729,110 @@ async function sendInvoiceEmail() {
   }
 }
 
+// ===== 見積書 =====
+let currentEstimateProjectId = null;
+
+function generateEstimate(projectId) {
+  if (!projectId) { alert('案件を選択してから見積書を発行してください'); return; }
+  const project = window.appCache.projects.find(p => p.id === projectId);
+  if (!project) { alert('案件が見つかりません'); return; }
+  const orders = (window.appCache.orders || []).filter(o => o.project_id === projectId);
+  const amt = (o) => (o.estimate || o.planned || o.decided || 0);
+
+  currentEstimateProjectId = projectId;
+
+  document.getElementById('est-client').textContent = (project.clientCompany || project.client) + ' 御中';
+  document.getElementById('est-project-name').textContent = project.name;
+  document.getElementById('est-number').textContent = `見積№: EST-${String(projectId).padStart(5, '0')}`;
+
+  const now = new Date();
+  const valid = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+  document.getElementById('est-date').textContent = now.toLocaleDateString('ja-JP');
+  document.getElementById('est-valid').textContent = valid.toLocaleDateString('ja-JP');
+
+  const subtotal = orders.reduce((s, o) => s + amt(o), 0);
+  const tax = Math.floor(subtotal * 0.1);
+  const grand = subtotal + tax;
+  document.getElementById('est-total').textContent = grand.toLocaleString();
+  document.getElementById('est-subtotal').textContent = '¥' + subtotal.toLocaleString();
+  document.getElementById('est-tax').textContent = '¥' + tax.toLocaleString();
+  document.getElementById('est-grand').textContent = '¥' + grand.toLocaleString();
+
+  const tbody = document.getElementById('est-order-rows');
+  tbody.innerHTML = orders.length
+    ? orders.map(o => `<tr><td class="py-3 font-medium">${o.category || '一式'}</td><td class="py-3 text-right tabular-numbers">¥${amt(o).toLocaleString()}</td></tr>`).join('')
+    : '<tr><td colspan="2" class="py-6 text-center text-on-surface-variant text-sm">注文データがありません</td></tr>';
+
+  document.getElementById('estimate-email-to').value = project.clientEmail || '';
+  document.getElementById('estimate-email-subject').value = `【見積書】${project.name}`;
+  document.getElementById('estimate-email-body').value =
+    `${project.clientCompany || project.client} ご担当者様\n\nお世話になっております。\nお見積書をお送りいたします。\nご検討のほどよろしくお願いいたします。\n\n株式会社WIN WIN`;
+
+  document.getElementById('estimate-modal').style.display = 'block';
+  document.body.style.overflow = 'hidden';
+}
+
+function closeEstimatePreview() {
+  document.getElementById('estimate-modal').style.display = 'none';
+  document.getElementById('estimate-email-panel').style.display = 'none';
+  document.body.style.overflow = '';
+}
+
+function openEstimateEmailForm(e) {
+  if (e) e.stopPropagation();
+  document.getElementById('estimate-email-panel').style.display = 'block';
+}
+
+function closeEstimateEmailForm() {
+  document.getElementById('estimate-email-panel').style.display = 'none';
+}
+
+async function downloadEstimate() {
+  if (!currentEstimateProjectId) return;
+  try {
+    const res = await fetch(`/api/estimate/project/${currentEstimateProjectId}`);
+    if (!res.ok) throw new Error('Failed');
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `estimate-${currentEstimateProjectId}.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  } catch (err) {
+    alert('ダウンロードに失敗しました: ' + err.message);
+  }
+}
+
+async function sendEstimateEmail() {
+  const to = document.getElementById('estimate-email-to').value.trim();
+  const subject = document.getElementById('estimate-email-subject').value.trim();
+  const body = document.getElementById('estimate-email-body').value.trim();
+  if (!to || !subject) { alert('宛先と件名を入力してください'); return; }
+
+  const btn = document.getElementById('estimate-send-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="material-symbols-outlined text-[18px]">hourglass_empty</span>送信中...';
+  try {
+    const res = await fetch('/api/estimate/send', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ projectId: currentEstimateProjectId, to, subject, body })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || '送信失敗');
+    alert('メールを送信しました');
+    closeEstimatePreview();
+  } catch (err) {
+    alert('メール送信に失敗しました: ' + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<span class="material-symbols-outlined text-[18px]">send</span>送信';
+  }
+}
+
 </script>
 <!-- Invoice Preview Modal -->
 <div class="fixed inset-0 z-[150]" id="invoice-modal" style="display:none" onclick="closeInvoicePreview()">
@@ -839,6 +947,115 @@ async function sendInvoiceEmail() {
   </div>
 </div>
 
-<script src="/notify.js?v=7"></script>
+<!-- Estimate Preview Modal -->
+<div class="fixed inset-0 z-[150]" id="estimate-modal" style="display:none" onclick="closeEstimatePreview()">
+  <div class="absolute inset-0 bg-inverse-surface/60 backdrop-blur-md"></div>
+  <div class="flex items-center justify-center min-h-screen p-4" onclick="event.stopPropagation()">
+    <div class="bg-white w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden relative transform transition-all border border-outline-variant/30" onclick="event.stopPropagation()">
+      <button class="absolute bottom-6 right-6 w-14 h-14 bg-primary text-on-primary rounded-full flex items-center justify-center shadow-lg hover:shadow-xl hover:scale-110 transition-all" onclick="openEstimateEmailForm()" title="メール送信">
+        <span class="material-symbols-outlined text-[24px]">send</span>
+      </button>
+      <div class="px-6 py-4 border-b border-outline-variant flex justify-between items-center">
+        <h3 class="text-sm font-bold text-on-surface flex items-center gap-2">
+          <span class="material-symbols-outlined text-primary">request_quote</span>
+          見積書プレビュー
+        </h3>
+        <div class="flex items-center gap-1">
+          <button onclick="downloadEstimate()" class="text-outline hover:text-on-surface p-1 transition-colors" title="ダウンロード">
+            <span class="material-symbols-outlined">download</span>
+          </button>
+          <button class="text-outline hover:text-on-surface p-1 transition-colors" onclick="closeEstimatePreview()">
+            <span class="material-symbols-outlined">close</span>
+          </button>
+        </div>
+      </div>
+      <div class="p-5 bg-surface-container-low/30 overflow-y-auto max-h-[70vh]">
+        <div class="bg-white p-12 shadow-sm min-h-[600px] border border-outline-variant/60 text-on-surface rounded-xl flex flex-col">
+          <div class="flex justify-between items-start mb-12">
+            <div>
+              <h1 class="text-3xl font-bold tracking-[0.3em] mb-6 text-on-surface">見　積　書</h1>
+              <p class="text-lg border-b-2 border-on-surface pb-1 inline-block" id="est-client">--- 御中</p>
+              <p class="text-sm mt-2 text-on-surface-variant" id="est-project-name"></p>
+            </div>
+            <div class="text-right">
+              <p class="font-bold text-lg mb-1 tracking-tight">株式会社WIN WIN</p>
+              <p class="text-[10px] text-on-surface-variant leading-relaxed">
+                〒604-0924<br/>京都市中京区一之船入町537-20<br/>FIS御池ビル505号<br/>TEL: 075-777-1236
+              </p>
+              <p class="text-[10px] mt-2 font-medium" id="est-number">見積№: EST-00000</p>
+              <p class="text-[9px] text-on-surface-variant">適格: T8130001068355</p>
+            </div>
+          </div>
+          <div class="border-b-2 border-primary py-6 mb-10 flex justify-between items-end">
+            <span class="text-sm font-bold">お見積金額（税込）</span>
+            <span class="text-3xl font-bold tabular-numbers text-primary">¥<span id="est-total">0</span>-</span>
+          </div>
+          <div class="grid grid-cols-2 gap-y-4 text-xs mb-8 border-t border-b border-outline-variant/20 py-6">
+            <div class="flex flex-col gap-1">
+              <span class="text-on-surface-variant font-bold uppercase tracking-wider text-[10px]">見積日</span>
+              <span class="font-medium" id="est-date">---</span>
+            </div>
+            <div class="flex flex-col gap-1">
+              <span class="text-on-surface-variant font-bold uppercase tracking-wider text-[10px]">有効期限</span>
+              <span class="font-medium" id="est-valid">---</span>
+            </div>
+          </div>
+          <table class="w-full text-sm mb-6 flex-grow">
+            <thead>
+              <tr class="border-b border-on-surface font-bold">
+                <th class="py-3 text-left">品名</th>
+                <th class="py-3 text-right">金額</th>
+              </tr>
+            </thead>
+            <tbody id="est-order-rows" class="divide-y divide-outline-variant/10"></tbody>
+            <tfoot class="border-t-2 border-on-surface">
+              <tr><td class="py-3 text-right font-bold pr-4">小計</td><td class="py-3 text-right tabular-numbers font-bold" id="est-subtotal">¥0</td></tr>
+              <tr><td class="py-2 text-right pr-4 text-on-surface-variant">消費税（10%）</td><td class="py-2 text-right tabular-numbers text-on-surface-variant" id="est-tax">¥0</td></tr>
+              <tr class="border-t border-outline-variant"><td class="py-3 text-right font-bold pr-4">合計</td><td class="py-3 text-right font-bold text-lg tabular-numbers text-primary" id="est-grand">¥0</td></tr>
+            </tfoot>
+          </table>
+          <div class="mt-auto border-t border-outline-variant pt-4 text-[10px] text-on-surface-variant">
+            <p>※本見積書の有効期限は発行日より30日間です。</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="fixed inset-0 z-[160] hidden flex items-center justify-center p-4 bg-black/20" id="estimate-email-panel" onclick="closeEstimateEmailForm()">
+    <div class="bg-white rounded-3xl shadow-2xl w-full max-w-lg border border-outline-variant/30 overflow-hidden" onclick="event.stopPropagation()">
+      <div class="px-6 py-4 border-b border-outline-variant flex justify-between items-center">
+        <h3 class="text-sm font-bold text-on-surface flex items-center gap-2">
+          <span class="material-symbols-outlined text-primary text-[18px]">mail</span>
+          見積書メール送信
+        </h3>
+        <button class="text-outline hover:text-on-surface p-1 transition-colors" onclick="closeEstimateEmailForm()">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+      <div class="p-6 space-y-4">
+        <div>
+          <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-2">宛先</label>
+          <input id="estimate-email-to" type="email" class="w-full bg-surface-container-low border border-outline-variant/50 rounded-xl text-sm px-4 py-3 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" placeholder="client@example.com"/>
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-2">件名</label>
+          <input id="estimate-email-subject" type="text" class="w-full bg-surface-container-low border border-outline-variant/50 rounded-xl text-sm px-4 py-3 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"/>
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-2">本文</label>
+          <textarea id="estimate-email-body" rows="4" class="w-full bg-surface-container-low border border-outline-variant/50 rounded-xl text-sm px-4 py-3 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"></textarea>
+        </div>
+      </div>
+      <div class="px-6 py-4 border-t border-outline-variant flex justify-end gap-3">
+        <button class="px-4 py-2 text-label-md font-normal text-on-surface border border-outline-variant rounded-xl hover:bg-surface-container transition-all" onclick="closeEstimateEmailForm()">キャンセル</button>
+        <button id="estimate-send-btn" class="px-4 py-1.5 text-label-md font-normal text-on-primary bg-primary rounded-xl hover:opacity-90 transition-all flex items-center gap-2" onclick="sendEstimateEmail()">
+          <span class="material-symbols-outlined text-[18px]">send</span>送信
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="/notify.js?v=8"></script>
 </body>
 </html>

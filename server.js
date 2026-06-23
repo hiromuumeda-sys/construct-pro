@@ -689,6 +689,73 @@ function buildInvoicePDF(project, orders) {
   });
 }
 
+// ============ PDF: 見積書 ============
+function buildEstimatePDF(project, orders) {
+  return new Promise((resolve, reject) => {
+    const doc = new PDFDocument({ margin: 40, bufferPages: true });
+    const chunks = [];
+    doc.on('data', c => chunks.push(c));
+    doc.on('end', () => resolve(Buffer.concat(chunks)));
+    doc.on('error', reject);
+    const purpleColor = '#8B4789';
+    const pageWidth = doc.page.width;
+    doc.rect(0, 0, pageWidth, 100).fill(purpleColor);
+    doc.fontSize(40).font('Helvetica-Bold').fillColor('white');
+    doc.text('見　積　書', 50, 30);
+    doc.fillColor('black').fontSize(10);
+    doc.text(`${project.clientCompany || '-'}`, 50, 130);
+    doc.text('件名：', 50, 150);
+    doc.text(project.name, 80, 150, { width: 200 });
+    // 見積は見積額（estimate）を採用。未設定なら planned→decided の順でフォールバック
+    const amt = (o) => Number(o.estimate) || Number(o.planned) || Number(o.decided) || 0;
+    const totalAmount = orders.reduce((sum, o) => sum + amt(o), 0);
+    const now = new Date();
+    doc.text(`合計金額: ¥${totalAmount.toLocaleString()}`, 50, 200);
+    doc.text(`見積日: ${now.toLocaleDateString('ja-JP')}`, 50, 220);
+    const validUntil = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+    doc.text(`有効期限: ${validUntil.toLocaleDateString('ja-JP')}`, 50, 240);
+    doc.fontSize(9);
+    doc.text('株式会社WIN WIN', 380, 130);
+    doc.text('〒604-0924', 380, 145);
+    doc.text('京都市中京区一之船入町537-20', 380, 158);
+    doc.text('FIS御池ビル505号', 380, 171);
+    doc.text('TEL : 075-777-1236', 380, 190);
+    doc.text(`見積№: EST-${String(project.id).padStart(5, '0')}`, 380, 220);
+    doc.text('適格請求書発行事業者登録番号: T8130001068355', 380, 235);
+    const tableTop = 290;
+    doc.rect(50, tableTop, pageWidth - 100, 25).fill(purpleColor);
+    doc.fillColor('white').fontSize(9);
+    const colPositions = [60, 150, 210, 280, 350, 420];
+    ['品名', '数量', '単位', '単価', '金額', '摘要'].forEach((label, i) => doc.text(label, colPositions[i], tableTop + 8));
+    let tableRowY = tableTop + 30;
+    doc.fillColor('black').fontSize(8);
+    orders.forEach(order => {
+      if (tableRowY > 700) { doc.addPage(); tableRowY = 50; }
+      doc.text(order.category || '-', colPositions[0], tableRowY);
+      doc.text('1', colPositions[1], tableRowY);
+      doc.text('式', colPositions[2], tableRowY);
+      doc.text(`¥${amt(order).toLocaleString()}`, colPositions[3], tableRowY);
+      doc.text(`¥${amt(order).toLocaleString()}`, colPositions[4], tableRowY);
+      tableRowY += 20;
+    });
+    const calcY = tableRowY + 20;
+    const tax = Math.floor(totalAmount * 0.1);
+    const total = totalAmount + tax;
+    doc.fontSize(9);
+    doc.text('小　　計:', 300, calcY);
+    doc.text(`¥${totalAmount.toLocaleString()}`, 450, calcY, { align: 'right', width: 80 });
+    doc.text('税率:', 300, calcY + 20);
+    doc.text('10%', 450, calcY + 20, { align: 'right', width: 80 });
+    doc.text('消費税:', 300, calcY + 40);
+    doc.text(`¥${tax.toLocaleString()}`, 450, calcY + 40, { align: 'right', width: 80 });
+    doc.font('Helvetica-Bold').text('合　　計:', 300, calcY + 60);
+    doc.text(`¥${total.toLocaleString()}`, 450, calcY + 60, { align: 'right', width: 80 });
+    doc.font('Helvetica').fontSize(9);
+    doc.text('※本見積書の有効期限は発行日より30日間です。', 50, calcY + 120);
+    doc.end();
+  });
+}
+
 // ============ PDF: 発注書 ============
 function buildPurchaseOrderPDF(order, project, vendor) {
   return new Promise((resolve, reject) => {
@@ -821,6 +888,34 @@ app.post('/api/invoice/send', h(async (req, res) => {
     from: process.env.MAIL_FROM || 'CONSTRUCT_PRO <noreply@construct-pro.jp>',
     to, subject, text: body || '',
     attachments: [{ filename: `invoice-${String(project.id).padStart(5, '0')}.pdf`, content: pdfBuffer, contentType: 'application/pdf' }],
+  });
+  res.json({ success: true });
+}));
+
+// 見積書 PDF
+app.get('/api/estimate/project/:projectId', h(async (req, res) => {
+  const project = await one('SELECT * FROM projects WHERE id=$1', [req.params.projectId]);
+  if (!project) return res.status(404).json({ error: 'プロジェクトが見つかりません' });
+  const orders = await q('SELECT * FROM orders WHERE project_id=$1', [req.params.projectId]);
+  const pdfBuffer = await buildEstimatePDF(project, orders);
+  const disposition = req.query.inline === '1' ? 'inline' : 'attachment';
+  res.setHeader('Content-Type', 'application/pdf');
+  res.setHeader('Content-Disposition', `${disposition}; filename="estimate-${project.id}.pdf"`);
+  res.send(pdfBuffer);
+}));
+
+// 見積書 メール送信
+app.post('/api/estimate/send', h(async (req, res) => {
+  const { projectId, to, subject, body } = req.body;
+  if (!projectId || !to || !subject) return res.status(400).json({ error: '必須パラメータが不足しています' });
+  const project = await one('SELECT * FROM projects WHERE id=$1', [projectId]);
+  if (!project) return res.status(404).json({ error: 'プロジェクトが見つかりません' });
+  const orders = await q('SELECT * FROM orders WHERE project_id=$1', [projectId]);
+  const pdfBuffer = await buildEstimatePDF(project, orders);
+  await makeTransporter().sendMail({
+    from: process.env.MAIL_FROM || 'CONSTRUCT_PRO <noreply@construct-pro.jp>',
+    to, subject, text: body || '',
+    attachments: [{ filename: `estimate-${String(project.id).padStart(5, '0')}.pdf`, content: pdfBuffer, contentType: 'application/pdf' }],
   });
   res.json({ success: true });
 }));
