@@ -7,10 +7,10 @@
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-<script src="/theme.js?v=16"></script>
-<script src="/sidebar.js?v=16"></script>
-<script src="/auth.js?v=16"></script>
-<script src="/header.js?v=16"></script>
+<script src="/theme.js?v=17"></script>
+<script src="/sidebar.js?v=17"></script>
+<script src="/auth.js?v=17"></script>
+<script src="/header.js?v=17"></script>
 <style>
 body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
@@ -883,6 +883,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('orders-content').style.display = 'none';
         document.getElementById('project-select-view').style.display = 'block';
         renderProjectSelectList();
+        document.getElementById('keyword-search').addEventListener('input', renderProjectSelectList);
         loadMasterData();
         return;
     }
@@ -904,7 +905,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 function renderProjectSelectList() {
-    const keyword = (document.getElementById('project-search').value || '').toLowerCase();
+    // 画面内検索とヘッダー検索の両方を反映
+    const kwInline = (document.getElementById('project-search').value || '').toLowerCase();
+    const kwHeader = (document.getElementById('keyword-search')?.value || '').toLowerCase();
     const dateStart = document.getElementById('project-date-start').value;
     const dateEnd = document.getElementById('project-date-end').value;
     const list = document.getElementById('project-select-list');
@@ -913,7 +916,9 @@ function renderProjectSelectList() {
     const rangeEnd = dateEnd ? new Date(dateEnd) : null;
 
     const projects = window.appCache.projects.filter(p => {
-        if (!p.name.toLowerCase().includes(keyword)) return false;
+        const name = p.name.toLowerCase();
+        if (kwInline && !name.includes(kwInline)) return false;
+        if (kwHeader && !name.includes(kwHeader)) return false;
         // 期間で絞り込み：案件の工期が指定範囲に重なるもの
         if (rangeStart || rangeEnd) {
             const st = parseD(p.startDate), en = parseD(p.endDate);
@@ -1001,6 +1006,6 @@ function filterTable() {
 }
 
 </script>
-<script src="/notify.js?v=16"></script>
+<script src="/notify.js?v=17"></script>
 </body>
 </html>
