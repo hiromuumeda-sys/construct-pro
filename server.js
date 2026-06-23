@@ -608,6 +608,83 @@ app.get('/api/dashboard', h(async (req, res) => {
   res.json({ month: ym, activeCount: projects.length, totalReceivable, totalPayable, thisMonthReceipts, thisMonthPayments, totalRevenue, totalCost, totalProfit, avgMargin, projectProfit: projectProfit.sort((a, b) => b.revenue - a.revenue) });
 }));
 
+// ============ 成長レポート（銀行説明資料用） ============
+// 月次の受注額・入金額と、その累計を返す。右肩上がりの成長が見えるデータ。
+async function buildGrowthData() {
+  const projects = await q('SELECT * FROM projects');
+  const receipts = await q('SELECT * FROM receipts');
+  const ymOf = (s) => { if (!s) return null; const m = String(s).replace(/\//g, '-').match(/^(\d{4})-(\d{2})/); return m ? `${m[1]}-${m[2]}` : null; };
+  const map = {}; // ym -> { orders, receipts }
+  const ensure = (ym) => (map[ym] = map[ym] || { orders: 0, receipts: 0 });
+  projects.forEach(p => { const ym = ymOf(p.startDate); if (ym) ensure(ym).orders += Number(p.amount) || 0; });
+  receipts.forEach(r => { const ym = ymOf(r.received_date); if (ym) ensure(ym).receipts += Number(r.amount) || 0; });
+  const months = Object.keys(map).sort();
+  let cumO = 0, cumR = 0;
+  const points = months.map(ym => {
+    cumO += map[ym].orders; cumR += map[ym].receipts;
+    return { ym, orders: map[ym].orders, receipts: map[ym].receipts, cumOrders: cumO, cumReceipts: cumR };
+  });
+  return { points, totalOrders: cumO, totalReceipts: cumR };
+}
+
+app.get('/api/report/growth', h(async (req, res) => {
+  res.json(await buildGrowthData());
+}));
+
+// 成長レポートPDF（累計受注額の棒グラフ＋サマリ）
+app.get('/api/report/growth-pdf', h(async (req, res) => {
+  const { points, totalOrders, totalReceipts } = await buildGrowthData();
+  const doc = new PDFDocument({ margin: 40, size: 'A4', bufferPages: true });
+  const chunks = [];
+  doc.on('data', c => chunks.push(c));
+  await new Promise((resolve, reject) => {
+    doc.on('end', resolve); doc.on('error', reject);
+    const purple = '#8B4789';
+    const pageW = doc.page.width;
+    doc.rect(0, 0, pageW, 90).fill(purple);
+    doc.fillColor('white').fontSize(22).font('Helvetica-Bold').text('WIN WIN', 40, 28);
+    doc.fontSize(13).font('Helvetica').text('Growth Report', 40, 58);
+    doc.fillColor('black');
+
+    doc.fontSize(11).font('Helvetica-Bold').text('事業成長レポート（受注・入金推移）', 40, 110);
+    const now = new Date();
+    doc.font('Helvetica').fontSize(9).fillColor('#555').text(`作成日: ${now.toLocaleDateString('ja-JP')}`, 40, 128);
+    doc.fillColor('black');
+
+    // サマリ
+    doc.fontSize(10).font('Helvetica-Bold');
+    doc.text(`累計受注額: ¥${totalOrders.toLocaleString()}`, 40, 152);
+    doc.text(`累計入金額: ¥${totalReceipts.toLocaleString()}`, 300, 152);
+
+    // 棒グラフ（累計受注額）
+    const chartX = 60, chartY = 200, chartW = pageW - 120, chartH = 300;
+    doc.font('Helvetica').fontSize(9).fillColor('black').text('累計受注額の推移', chartX, chartY - 20);
+    // 軸
+    doc.lineWidth(1).strokeColor('#cccccc');
+    doc.moveTo(chartX, chartY).lineTo(chartX, chartY + chartH).stroke();
+    doc.moveTo(chartX, chartY + chartH).lineTo(chartX + chartW, chartY + chartH).stroke();
+    const maxV = Math.max(1, ...points.map(p => p.cumOrders));
+    const n = points.length || 1;
+    const slot = chartW / n;
+    const barW = Math.min(40, slot * 0.6);
+    points.forEach((p, i) => {
+      const h = (p.cumOrders / maxV) * (chartH - 10);
+      const x = chartX + slot * i + (slot - barW) / 2;
+      const y = chartY + chartH - h;
+      doc.rect(x, y, barW, h).fill(purple);
+      doc.fillColor('#333').fontSize(6).text(p.ym.replace('-', '/').slice(2), x - 4, chartY + chartH + 4, { width: barW + 8, align: 'center' });
+      doc.fillColor('#000').fontSize(6).text('¥' + Math.round(p.cumOrders / 10000) + '万', x - 6, y - 9, { width: barW + 12, align: 'center' });
+      doc.fillColor('black');
+    });
+    doc.fontSize(8).fillColor('#888').text('※ 受注額は案件の工期開始月で集計', 40, chartY + chartH + 30);
+    doc.end();
+  });
+  const pdf = Buffer.concat(chunks);
+  res.setHeader('Content-Type', 'application/pdf');
+  res.setHeader('Content-Disposition', `${req.query.inline === '1' ? 'inline' : 'attachment'}; filename="growth-report.pdf"`);
+  res.send(pdf);
+}));
+
 // ============ Cache endpoint ============
 app.get('/api/cache', h(async (req, res) => {
   const [projects, vendors, categories, orders, customers, receipts, invoices] = await Promise.all([
