@@ -8,10 +8,10 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="/theme.js?v=19"></script>
-<script src="/sidebar.js?v=19"></script>
-<script src="/auth.js?v=19"></script>
-<script src="/header.js?v=19"></script>
+<script src="/theme.js?v=20"></script>
+<script src="/sidebar.js?v=20"></script>
+<script src="/auth.js?v=20"></script>
+<script src="/header.js?v=20"></script>
 <style>
 body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
@@ -175,22 +175,22 @@ body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 
 <!-- レポート（受注・入金推移）：売上・利益の月次推移 -->
 <div class="bg-surface-container-lowest rounded-lg custom-shadow border border-outline-variant overflow-hidden">
-<div class="px-lg py-3 border-b border-outline-variant bg-surface-container-low flex flex-wrap justify-between items-end gap-3">
-<div>
+<div class="px-lg py-3 border-b border-outline-variant bg-surface-container-low">
+<div class="flex flex-wrap justify-between items-center gap-3">
 <h3 class="text-label-md font-label-md text-primary flex items-center gap-1"><span class="material-symbols-outlined text-[18px]">monitoring</span>レポート（受注・入金推移）</h3>
-</div>
 <div class="flex items-end gap-3 flex-wrap">
 <div>
 <label class="block text-label-sm text-on-surface-variant mb-1">期間開始</label>
-<input type="month" id="growth-from" class="bg-surface-container-low border border-outline-variant rounded-lg px-3 py-1.5 text-label-md focus:ring-2 focus:ring-secondary/20" onchange="renderGrowthChart()"/>
+<input type="date" id="growth-from" class="bg-surface-container-low border border-outline-variant rounded-lg px-3 py-1.5 text-label-md focus:ring-2 focus:ring-secondary/20" onchange="renderGrowthChart()"/>
 </div>
 <div>
 <label class="block text-label-sm text-on-surface-variant mb-1">期間終了</label>
-<input type="month" id="growth-to" class="bg-surface-container-low border border-outline-variant rounded-lg px-3 py-1.5 text-label-md focus:ring-2 focus:ring-secondary/20" onchange="renderGrowthChart()"/>
+<input type="date" id="growth-to" class="bg-surface-container-low border border-outline-variant rounded-lg px-3 py-1.5 text-label-md focus:ring-2 focus:ring-secondary/20" onchange="renderGrowthChart()"/>
 </div>
 <button class="px-4 py-1.5 border border-outline text-primary font-label-md rounded-lg hover:bg-surface-container transition-colors flex items-center gap-2 whitespace-nowrap" onclick="downloadGrowthPdf()">
 <span class="material-symbols-outlined text-[18px]">picture_as_pdf</span>PDF出力
 </button>
+</div>
 </div>
 </div>
 <div class="p-lg">
@@ -766,8 +766,8 @@ async function renderGrowthChart() {
   } catch (e) { return; }
   // 期間入力の初期値をサーバー既定（過去12ヶ月）に同期
   const fromEl = document.getElementById('growth-from'), toEl = document.getElementById('growth-to');
-  if (fromEl && !fromEl.value && data.from) fromEl.value = data.from;
-  if (toEl && !toEl.value && data.to) toEl.value = data.to;
+  if (fromEl && !fromEl.value && data.from) fromEl.value = data.from + '-01';
+  if (toEl && !toEl.value && data.to) toEl.value = data.to + '-01';
 
   const pts = data.points || [];
   const yen = v => '¥' + (Number(v) || 0).toLocaleString();
@@ -843,6 +843,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   setReportType('customer');
 });
 </script>
-<script src="/notify.js?v=19"></script>
+<script src="/notify.js?v=20"></script>
 </body>
 </html>
