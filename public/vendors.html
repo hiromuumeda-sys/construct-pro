@@ -7,10 +7,10 @@
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-<script src="/theme.js?v=14"></script>
-<script src="/sidebar.js?v=14"></script>
-<script src="/auth.js?v=14"></script>
-<script src="/header.js?v=14"></script>
+<script src="/theme.js?v=15"></script>
+<script src="/sidebar.js?v=15"></script>
+<script src="/auth.js?v=15"></script>
+<script src="/header.js?v=15"></script>
 <style>
 body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
@@ -184,6 +184,16 @@ body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 <div id="edit-tags" class="flex flex-wrap gap-2 mt-2"></div>
 <p class="text-[11px] text-on-surface-variant/70 mt-1">未指定の場合は全工事区分で選択候補に表示されます。タグを付けるとその工事区分でのみ候補に表示されます。</p>
 </div>
+<div class="col-span-2 border-t border-outline-variant pt-md mt-1">
+<p class="text-label-md font-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2 flex items-center gap-1"><span class="material-symbols-outlined text-[18px]">account_balance</span>振込先口座情報</p>
+<div class="grid grid-cols-2 gap-md">
+<div><label class="block text-[11px] text-on-surface-variant mb-1">銀行名</label><input id="modal-bank-name" type="text" class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20"/></div>
+<div><label class="block text-[11px] text-on-surface-variant mb-1">支店名</label><input id="modal-bank-branch" type="text" class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20"/></div>
+<div><label class="block text-[11px] text-on-surface-variant mb-1">種別</label><select id="modal-bank-type" class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20"><option value="">-</option><option value="普通">普通</option><option value="当座">当座</option></select></div>
+<div><label class="block text-[11px] text-on-surface-variant mb-1">口座番号</label><input id="modal-bank-number" type="text" class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20"/></div>
+<div class="col-span-2"><label class="block text-[11px] text-on-surface-variant mb-1">口座名義</label><input id="modal-bank-holder" type="text" class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20"/></div>
+</div>
+</div>
 </div>
 </form>
 </div>
@@ -242,6 +252,16 @@ body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 </div>
 <div id="reg-tags" class="flex flex-wrap gap-2 mt-2"></div>
 <p class="text-[11px] text-on-surface-variant/70 mt-1">未指定の場合は全工事区分で選択候補に表示されます。タグを付けるとその工事区分でのみ候補に表示されます。</p>
+</div>
+<div class="col-span-2 border-t border-outline-variant pt-md mt-1">
+<p class="text-label-md font-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2 flex items-center gap-1"><span class="material-symbols-outlined text-[18px]">account_balance</span>振込先口座情報</p>
+<div class="grid grid-cols-2 gap-md">
+<div><label class="block text-[11px] text-on-surface-variant mb-1">銀行名</label><input name="bank_name" type="text" class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20" placeholder="〇〇銀行"/></div>
+<div><label class="block text-[11px] text-on-surface-variant mb-1">支店名</label><input name="bank_branch" type="text" class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20" placeholder="〇〇支店"/></div>
+<div><label class="block text-[11px] text-on-surface-variant mb-1">種別</label><select name="bank_type" class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20"><option value="">-</option><option value="普通">普通</option><option value="当座">当座</option></select></div>
+<div><label class="block text-[11px] text-on-surface-variant mb-1">口座番号</label><input name="bank_number" type="text" class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20" placeholder="1234567"/></div>
+<div class="col-span-2"><label class="block text-[11px] text-on-surface-variant mb-1">口座名義</label><input name="bank_holder" type="text" class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20" placeholder="カナ名義"/></div>
+</div>
 </div>
 </div>
 </form>
@@ -358,6 +378,11 @@ function openEditModal(id) {
     document.getElementById('modal-email').value = v.email;
     document.getElementById('modal-phone').value = v.phone || '';
     document.getElementById('modal-address').value = v.address || '';
+    document.getElementById('modal-bank-name').value = v.bank_name || '';
+    document.getElementById('modal-bank-branch').value = v.bank_branch || '';
+    document.getElementById('modal-bank-type').value = v.bank_type || '';
+    document.getElementById('modal-bank-number').value = v.bank_number || '';
+    document.getElementById('modal-bank-holder').value = v.bank_holder || '';
     tagState.edit = csvToTags(v.categories);
     renderTagsInModal('edit');
     openModal('edit-modal');
@@ -380,6 +405,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.querySelector('[name="email"]').value = '';
     document.querySelector('[name="phone"]').value = '';
     document.querySelector('[name="address"]').value = '';
+    ['bank_name','bank_branch','bank_type','bank_number','bank_holder'].forEach(n => { const el = document.querySelector(`[name="${n}"]`); if (el) el.value = ''; });
     tagState.reg = [];
     renderTagsInModal('reg');
     openModal('new-registration-modal');
@@ -400,12 +426,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     const phone = document.getElementById('modal-phone').value;
     const address = document.getElementById('modal-address').value;
     const categories = tagState.edit.join(',');
+    const bank_name = document.getElementById('modal-bank-name').value;
+    const bank_branch = document.getElementById('modal-bank-branch').value;
+    const bank_type = document.getElementById('modal-bank-type').value;
+    const bank_number = document.getElementById('modal-bank-number').value;
+    const bank_holder = document.getElementById('modal-bank-holder').value;
 
     try {
       await fetch(`/api/vendors/${editingId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ company, dept, contact, email, phone, address, categories })
+        body: JSON.stringify({ company, dept, contact, email, phone, address, categories, bank_name, bank_branch, bank_type, bank_number, bank_holder })
       });
       const vendorRes = await fetch('/api/vendors');
       window.appCache.vendors = await vendorRes.json();
@@ -439,6 +470,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     const phone = document.querySelector('[name="phone"]').value;
     const address = document.querySelector('[name="address"]').value;
     const categories = tagState.reg.join(',');
+    const bank_name = document.querySelector('[name="bank_name"]').value;
+    const bank_branch = document.querySelector('[name="bank_branch"]').value;
+    const bank_type = document.querySelector('[name="bank_type"]').value;
+    const bank_number = document.querySelector('[name="bank_number"]').value;
+    const bank_holder = document.querySelector('[name="bank_holder"]').value;
 
     if(!company || !contact) return alert('必須項目を入力してください');
 
@@ -446,7 +482,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       await fetch('/api/vendors', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ company, dept, contact, email, phone, address, categories })
+        body: JSON.stringify({ company, dept, contact, email, phone, address, categories, bank_name, bank_branch, bank_type, bank_number, bank_holder })
       });
       document.querySelector('[name="company"]').value = '';
       document.querySelector('[name="dept"]').value = '';
@@ -474,5 +510,5 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 </script>
 
-<script src="/notify.js?v=14"></script>
+<script src="/notify.js?v=15"></script>
 </body></html>

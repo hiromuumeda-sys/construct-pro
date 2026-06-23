@@ -56,14 +56,19 @@ create table projects (
 
 -- 協力業者（発注先）
 create table vendors (
-  id         text primary key,
-  company    text not null,
-  dept       text,
-  contact    text,
-  email      text,
-  phone      text,
-  address    text,
-  categories text default ''
+  id            text primary key,
+  company       text not null,
+  dept          text,
+  contact       text,
+  email         text,
+  phone         text,
+  address       text,
+  categories    text default '',
+  bank_name     text,
+  bank_branch   text,
+  bank_type     text,
+  bank_number   text,
+  bank_holder   text
 );
 
 -- 工事区分
@@ -161,6 +166,18 @@ insert into vendors (id, company, dept, contact, email, phone, address) values
 ('008','トランスポート関西',      '施設管理課', '田中 美咲','misaki.tanaka@transport-kansai.co.jp', '078-901-2345', '兵庫県神戸市中央区'),
 ('009','日本赤十字施設部',        '施設建設課', '鈴木 敏夫','toshio.suzuki@jrc-facility.jp',        '03-1234-5678', '京都府京都市上京区'),
 ('010','関西環境施工',            '工事部',     '高橋 健一','kenichi.takahashi@kankyo-sekkou.co.jp','06-5432-1098', '大阪府堺市中区');
+
+-- 発注先の口座情報
+update vendors set bank_name='三菱UFJ銀行',     bank_branch='梅田支店', bank_type='普通', bank_number='1234567', bank_holder='ナニワケンセツ(カ'          where id='001';
+update vendors set bank_name='京都銀行',         bank_branch='烏丸支店', bank_type='普通', bank_number='2345678', bank_holder='キヨウトレイネツ'            where id='002';
+update vendors set bank_name='三井住友銀行',     bank_branch='姫路支店', bank_type='当座', bank_number='3456789', bank_holder='ハリマドボク(カ'            where id='003';
+update vendors set bank_name='滋賀銀行',         bank_branch='大津支店', bank_type='普通', bank_number='4567890', bank_holder='カンサイデンセツ'            where id='004';
+update vendors set bank_name='りそな銀行',       bank_branch='本町支店', bank_type='普通', bank_number='5678901', bank_holder='オオサカナイソウ'            where id='005';
+update vendors set bank_name='京都中央信用金庫', bank_branch='伏見支店', bank_type='普通', bank_number='6789012', bank_holder='キヨウトタテグ'              where id='006';
+update vendors set bank_name='南都銀行',         bank_branch='奈良支店', bank_type='普通', bank_number='7890123', bank_holder='ナラケンザイ'                where id='007';
+update vendors set bank_name='三菱UFJ銀行',     bank_branch='三宮支店', bank_type='当座', bank_number='8901234', bank_holder='トランスポートカンサイ'      where id='008';
+update vendors set bank_name='みずほ銀行',       bank_branch='上京支店', bank_type='普通', bank_number='9012345', bank_holder='ニホンセキジユウジ'          where id='009';
+update vendors set bank_name='池田泉州銀行',     bank_branch='堺支店',   bank_type='普通', bank_number='0123456', bank_holder='カンサイカンキヨウ'          where id='010';
 
 insert into categories (code, name, "order", note) values
 ('00001','仮設工事',         1, '共通仮設、直接仮設。'),

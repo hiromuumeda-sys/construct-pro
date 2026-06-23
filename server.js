@@ -72,7 +72,7 @@ const getUserId = (req) => {
 const FIELD_LABELS = {
   projects:   { name:'案件名', client:'顧客', clientCompany:'顧客会社', clientPhone:'電話', clientEmail:'メール', clientAddress:'住所', amount:'金額', startDate:'工期開始', endDate:'工期終了', status:'ステータス', notes:'備考' },
   orders:     { category:'工事区分', vendor:'発注先', estimate:'見積額', planned:'予算額', decided:'確定額', status:'ステータス', details:'内容', site:'現場', period_start:'開始', period_end:'終了', handover:'引渡', paymentStatus:'支払状況', paymentDate:'支払期日', paymentNotes:'支払備考' },
-  vendors:    { company:'会社名', dept:'部署', contact:'担当者', email:'メール', phone:'電話', address:'住所', categories:'工事区分' },
+  vendors:    { company:'会社名', dept:'部署', contact:'担当者', email:'メール', phone:'電話', address:'住所', categories:'工事区分', bank_name:'銀行名', bank_branch:'支店', bank_type:'種別', bank_number:'口座番号', bank_holder:'口座名義' },
   customers:  { company:'会社名', department:'部署', contact:'担当者', email:'メール', phone:'電話', address:'住所', notes:'備考' },
   categories: { code:'コード', name:'名称', order:'表示順', note:'備考' },
   receipts:   { project_id:'案件', received_date:'入金日', amount:'金額', month:'対象月', memo:'備考' },
@@ -198,21 +198,22 @@ app.get('/api/vendors', h(async (req, res) => {
 }));
 
 app.post('/api/vendors', h(async (req, res) => {
-  const { company, dept, contact, email, phone, address, categories } = req.body;
+  const { company, dept, contact, email, phone, address, categories, bank_name, bank_branch, bank_type, bank_number, bank_holder } = req.body;
   const row = await one('SELECT COALESCE(MAX(id::int),0) AS max FROM vendors');
   const newId = String(Number(row.max) + 1).padStart(3, '0');
-  await q('INSERT INTO vendors (id, company, dept, contact, email, phone, address, categories) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)',
-    [newId, company, dept, contact, email, phone, address, categories || '']);
+  await q('INSERT INTO vendors (id, company, dept, contact, email, phone, address, categories, bank_name, bank_branch, bank_type, bank_number, bank_holder) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)',
+    [newId, company, dept, contact, email, phone, address, categories || '', bank_name || '', bank_branch || '', bank_type || '', bank_number || '', bank_holder || '']);
   const userId = getUserId(req);
   await logAudit(userId, 'CREATE', 'vendors', newId, { name: company, changes: [`新規登録（発注先: ${company || '-'}）`] });
   res.json({ id: newId, ...req.body });
 }));
 
 app.put('/api/vendors/:id', h(async (req, res) => {
-  const { company, dept, contact, email, phone, address, categories } = req.body;
+  const { company, dept, contact, email, phone, address, categories, bank_name, bank_branch, bank_type, bank_number, bank_holder } = req.body;
   const before = await one('SELECT * FROM vendors WHERE id=$1', [req.params.id]);
-  await q('UPDATE vendors SET company=$1, dept=$2, contact=$3, email=$4, phone=$5, address=$6, categories=$7 WHERE id=$8',
-    [company, dept, contact, email, phone, address, categories ?? before?.categories ?? '', req.params.id]);
+  await q('UPDATE vendors SET company=$1, dept=$2, contact=$3, email=$4, phone=$5, address=$6, categories=$7, bank_name=$8, bank_branch=$9, bank_type=$10, bank_number=$11, bank_holder=$12 WHERE id=$13',
+    [company, dept, contact, email, phone, address, categories ?? before?.categories ?? '',
+     bank_name ?? before?.bank_name ?? '', bank_branch ?? before?.bank_branch ?? '', bank_type ?? before?.bank_type ?? '', bank_number ?? before?.bank_number ?? '', bank_holder ?? before?.bank_holder ?? '', req.params.id]);
   const userId = getUserId(req);
   await logAudit(userId, 'UPDATE', 'vendors', req.params.id, { name: before?.company || company, changes: diffChanges('vendors', before, req.body) });
   res.json({ id: req.params.id, ...req.body });

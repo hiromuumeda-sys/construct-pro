@@ -7,10 +7,10 @@
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-<script src="/theme.js?v=14"></script>
-<script src="/sidebar.js?v=14"></script>
-<script src="/auth.js?v=14"></script>
-<script src="/header.js?v=14"></script>
+<script src="/theme.js?v=15"></script>
+<script src="/sidebar.js?v=15"></script>
+<script src="/auth.js?v=15"></script>
+<script src="/header.js?v=15"></script>
 <style>
 body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
@@ -145,6 +145,7 @@ body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 <th class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant w-1/4">発注先</th>
 <th class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant text-right">費用</th>
 <th class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant w-28">支払期日</th>
+<th class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant w-32">支払銀行</th>
 <th class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant text-center w-32">入金ステータス</th>
 </tr>
 </thead>
@@ -216,9 +217,44 @@ body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 </div>
 </div>
 
+<!-- 口座情報モーダル -->
+<div class="fixed inset-0 z-[120] bg-primary/20 backdrop-blur-md" id="bank-modal" style="display:none" onclick="closeBankModal()">
+<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-surface-container-lowest rounded-lg custom-shadow border border-outline-variant overflow-hidden" onclick="event.stopPropagation()">
+<div class="px-lg py-md flex justify-between items-center border-b border-outline-variant bg-surface-container-low">
+<h3 class="text-label-md font-label-md text-primary flex items-center gap-1"><span class="material-symbols-outlined text-[18px]">account_balance</span>振込先口座情報</h3>
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary" onclick="closeBankModal()">close</button>
+</div>
+<div class="p-lg space-y-3">
+<div><p class="text-[11px] text-on-surface-variant">発注先</p><p class="text-label-md font-bold text-on-surface" id="bank-vendor">-</p></div>
+<div class="grid grid-cols-2 gap-3">
+<div><p class="text-[11px] text-on-surface-variant">銀行名</p><p class="text-label-md text-on-surface" id="bank-name">-</p></div>
+<div><p class="text-[11px] text-on-surface-variant">支店名</p><p class="text-label-md text-on-surface" id="bank-branch">-</p></div>
+<div><p class="text-[11px] text-on-surface-variant">種別</p><p class="text-label-md text-on-surface" id="bank-type">-</p></div>
+<div><p class="text-[11px] text-on-surface-variant">口座番号</p><p class="text-label-md text-on-surface tabular-numbers" id="bank-number">-</p></div>
+<div class="col-span-2"><p class="text-[11px] text-on-surface-variant">口座名義</p><p class="text-label-md text-on-surface" id="bank-holder">-</p></div>
+</div>
+</div>
+</div>
+</div>
+
 <script>
 if (!window.appCache) {
   window.appCache = { projects: [], orders: [] };
+}
+
+function openBankModal(id) {
+  const p = payments.find(x => x.id === id);
+  if (!p || !p.bank) return;
+  document.getElementById('bank-vendor').textContent = p.vendor || '-';
+  document.getElementById('bank-name').textContent = p.bank.name || '-';
+  document.getElementById('bank-branch').textContent = p.bank.branch || '-';
+  document.getElementById('bank-type').textContent = p.bank.type || '-';
+  document.getElementById('bank-number').textContent = p.bank.number || '-';
+  document.getElementById('bank-holder').textContent = p.bank.holder || '-';
+  document.getElementById('bank-modal').style.display = 'block';
+}
+function closeBankModal() {
+  document.getElementById('bank-modal').style.display = 'none';
 }
 
 let payments = [];
@@ -234,15 +270,18 @@ async function initializeCache() {
 
 async function loadPayments() {
   // Always fetch latest data from server, don't rely on cache
-  const [ordersRes, projectsRes] = await Promise.all([
+  const [ordersRes, projectsRes, vendorsRes] = await Promise.all([
     fetch('/api/orders'),
-    fetch('/api/projects')
+    fetch('/api/projects'),
+    fetch('/api/vendors')
   ]);
   const orders = await ordersRes.json();
   const projects = await projectsRes.json();
+  const vendors = await vendorsRes.json();
 
   payments = orders.map(order => {
     const project = projects.find(p => p.id === order.project_id);
+    const vendor = vendors.find(v => v.company === order.vendor);
     return {
       id: order.id,
       projectName: project?.name || '未設定',
@@ -252,6 +291,7 @@ async function loadPayments() {
       status: order.paymentStatus || '未払い',
       paymentDate: order.paymentDate || '',
       notes: order.paymentNotes || '',
+      bank: vendor ? { name: vendor.bank_name || '', branch: vendor.bank_branch || '', type: vendor.bank_type || '', number: vendor.bank_number || '', holder: vendor.bank_holder || '' } : null,
       // 保存時にPUTで全フィールドを送るために元データを保持
       _raw: order
     };
@@ -270,6 +310,7 @@ function renderTable() {
       <td class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant">${payment.vendor}</td>
       <td class="px-3 py-1.5 text-label-md font-label-md text-right tabular-numbers">¥${payment.amount.toLocaleString()}</td>
       <td class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant tabular-numbers">${payment.paymentDate || '-'}</td>
+      <td class="px-3 py-1.5 text-label-md font-label-md">${payment.bank && payment.bank.name ? `<button class="text-secondary hover:underline" onclick="event.stopPropagation(); openBankModal(${payment.id})">${payment.bank.name}</button>` : '<span class="text-on-surface-variant/40">-</span>'}</td>
       <td class="px-3 py-1.5 text-label-md font-label-md text-center whitespace-nowrap">
         <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] ${getStatusColor(payment.status)}">${payment.status}</span>
       </td>
@@ -397,6 +438,7 @@ function filterTable() {
       <td class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant">${payment.vendor}</td>
       <td class="px-3 py-1.5 text-label-md font-label-md text-right tabular-numbers">¥${payment.amount.toLocaleString()}</td>
       <td class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant tabular-numbers">${payment.paymentDate || '-'}</td>
+      <td class="px-3 py-1.5 text-label-md font-label-md">${payment.bank && payment.bank.name ? `<button class="text-secondary hover:underline" onclick="event.stopPropagation(); openBankModal(${payment.id})">${payment.bank.name}</button>` : '<span class="text-on-surface-variant/40">-</span>'}</td>
       <td class="px-3 py-1.5 text-label-md font-label-md text-center whitespace-nowrap">
         <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] ${getStatusColor(payment.status)}">${payment.status}</span>
       </td>
@@ -404,6 +446,6 @@ function filterTable() {
   `).join('');
 }
 </script>
-<script src="/notify.js?v=14"></script>
+<script src="/notify.js?v=15"></script>
 </body>
 </html>
