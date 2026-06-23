@@ -24,7 +24,7 @@ function buildSidebar() {
   const isActive = (href) => href && current.endsWith(href);
 
   const items = SIDEBAR_LINKS.map(l => {
-    const base = 'flex items-center gap-3 px-6 py-2.5 transition-colors';
+    const base = "flex items-center gap-2 px-4 py-2.5 transition-colors";
 
     // グループ（マスタ設定）：ホバーで右側にサブメニューを表示
     if (l.children) {
@@ -68,8 +68,8 @@ ${sub}
 </a>`;
   }).join('');
 
-  return `<aside class="fixed left-0 top-0 h-screen w-56 z-50 bg-surface-container-lowest border-r border-outline-variant flex flex-col py-6">
-<div class="px-6 mb-8">
+  return `<aside class="fixed left-0 top-0 h-screen w-48 z-50 bg-surface-container-lowest border-r border-outline-variant flex flex-col py-6">
+<div class="px-4 mb-8">
 <img src="/logo.png" alt="WIN WIN" style="height:32px;width:auto;display:block"
   onerror="this.style.display='none';this.nextElementSibling.style.display='block'"/>
 <h1 class="font-bold text-primary" style="font-size:20px;line-height:1.2;display:none">WIN WIN様</h1>
