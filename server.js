@@ -71,7 +71,7 @@ const getUserId = (req) => {
 // 各テーブルの「列名 → 日本語ラベル」。差分表示に使う。
 const FIELD_LABELS = {
   projects:   { name:'案件名', client:'顧客', clientCompany:'顧客会社', clientPhone:'電話', clientEmail:'メール', clientAddress:'住所', amount:'金額', startDate:'工期開始', endDate:'工期終了', status:'ステータス', notes:'備考' },
-  orders:     { category:'工事区分', vendor:'発注先', estimate:'見積額', planned:'予算額', decided:'確定額', status:'ステータス', details:'内容', site:'現場', period_start:'開始', period_end:'終了', handover:'引渡', paymentStatus:'支払状況', paymentMethod:'支払方法', paymentDate:'支払日', paymentNotes:'支払備考' },
+  orders:     { category:'工事区分', vendor:'発注先', estimate:'見積額', planned:'予算額', decided:'確定額', status:'ステータス', details:'内容', site:'現場', period_start:'開始', period_end:'終了', handover:'引渡', paymentStatus:'支払状況', paymentDate:'支払期日', paymentNotes:'支払備考' },
   vendors:    { company:'会社名', dept:'部署', contact:'担当者', email:'メール', phone:'電話', address:'住所', categories:'工事区分' },
   customers:  { company:'会社名', department:'部署', contact:'担当者', email:'メール', phone:'電話', address:'住所', notes:'備考' },
   categories: { code:'コード', name:'名称', order:'表示順', note:'備考' },
@@ -259,7 +259,7 @@ app.delete('/api/categories/:id', h(async (req, res) => {
 }));
 
 // ============ Orders API ============
-const ORDER_COLS = 'project_id, category, vendor, estimate, planned, decided, status, details, site, period_start, period_end, handover, payment, "paymentStatus", "paymentMethod", "paymentDate", "paymentNotes"';
+const ORDER_COLS = 'project_id, category, vendor, estimate, planned, decided, status, details, site, period_start, period_end, handover, payment, "paymentStatus", "paymentDate", "paymentNotes"';
 
 app.get('/api/orders', h(async (req, res) => {
   res.json(await q('SELECT * FROM orders ORDER BY id'));
@@ -268,8 +268,8 @@ app.get('/api/orders', h(async (req, res) => {
 app.post('/api/orders', h(async (req, res) => {
   const b = req.body;
   const ins = await one(
-    `INSERT INTO orders (${ORDER_COLS}) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17) RETURNING id`,
-    [b.project_id, b.category, b.vendor, b.estimate, b.planned, b.decided, b.status, b.details, b.site, b.period_start, b.period_end, b.handover, b.payment, b.paymentStatus || '未払い', b.paymentMethod || '', b.paymentDate || '', b.paymentNotes || '']
+    `INSERT INTO orders (${ORDER_COLS}) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16) RETURNING id`,
+    [b.project_id, b.category, b.vendor, b.estimate, b.planned, b.decided, b.status, b.details, b.site, b.period_start, b.period_end, b.handover, b.payment, b.paymentStatus || '未払い', b.paymentDate || '', b.paymentNotes || '']
   );
   const userId = getUserId(req);
   await logAudit(userId, 'CREATE', 'orders', ins.id, { name: `${b.category || ''}（${b.vendor || ''}）`, changes: [`新規登録（工事区分: ${b.category || '-'} / 発注先: ${b.vendor || '-'}）`] });
@@ -280,8 +280,8 @@ app.put('/api/orders/:id', h(async (req, res) => {
   const b = req.body;
   const before = await one('SELECT * FROM orders WHERE id=$1', [req.params.id]);
   await q(
-    `UPDATE orders SET project_id=$1, category=$2, vendor=$3, estimate=$4, planned=$5, decided=$6, status=$7, details=$8, site=$9, period_start=$10, period_end=$11, handover=$12, payment=$13, "paymentStatus"=$14, "paymentMethod"=$15, "paymentDate"=$16, "paymentNotes"=$17 WHERE id=$18`,
-    [b.project_id, b.category, b.vendor, b.estimate, b.planned, b.decided, b.status, b.details, b.site, b.period_start, b.period_end, b.handover, b.payment, b.paymentStatus, b.paymentMethod, b.paymentDate, b.paymentNotes, req.params.id]
+    `UPDATE orders SET project_id=$1, category=$2, vendor=$3, estimate=$4, planned=$5, decided=$6, status=$7, details=$8, site=$9, period_start=$10, period_end=$11, handover=$12, payment=$13, "paymentStatus"=$14, "paymentDate"=$15, "paymentNotes"=$16 WHERE id=$17`,
+    [b.project_id, b.category, b.vendor, b.estimate, b.planned, b.decided, b.status, b.details, b.site, b.period_start, b.period_end, b.handover, b.payment, b.paymentStatus, b.paymentDate, b.paymentNotes, req.params.id]
   );
   const userId = getUserId(req);
   await logAudit(userId, 'UPDATE', 'orders', parseInt(req.params.id), { name: `${before?.category || b.category || ''}（${before?.vendor || b.vendor || ''}）`, changes: diffChanges('orders', before, b) });
@@ -555,7 +555,7 @@ app.get('/api/export/:type', h(async (req, res) => {
     filename = 'receipts.csv';
   } else if (type === 'payments') {
     const rows = await q('SELECT o.*, p.name AS project_name, p.project_no FROM orders o LEFT JOIN projects p ON o.project_id = p.id ORDER BY o.id');
-    csv = toCSV(rows, [{ key: 'project_no', label: '工番' }, { key: 'project_name', label: '工事名' }, { key: 'vendor', label: '支払先' }, { key: 'category', label: '支払内容' }, { key: 'decided', label: '金額' }, { key: 'paymentMethod', label: '支払方法' }, { key: 'paymentDate', label: '支払期日' }, { key: 'paymentStatus', label: 'ステータス' }]);
+    csv = toCSV(rows, [{ key: 'project_no', label: '工番' }, { key: 'project_name', label: '工事名' }, { key: 'vendor', label: '支払先' }, { key: 'category', label: '支払内容' }, { key: 'decided', label: '金額' }, { key: 'paymentDate', label: '支払期日' }, { key: 'paymentStatus', label: 'ステータス' }]);
     filename = 'payments.csv';
   } else {
     return res.status(400).json({ error: '不正なエクスポート種別です' });

@@ -92,7 +92,6 @@ create table orders (
   handover      text,
   payment       text,
   "paymentStatus" text default '未払い',
-  "paymentMethod" text,
   "paymentDate"   text,
   "paymentNotes"  text
 );
@@ -193,7 +192,7 @@ declare
   cat text[] := array['仮設工事','土工事・地盤改良','基礎工事','躯体工事','屋根工事','建具工事','内装工事','電気設備工事','給排水衛生工事','空調設備工事'];
   ven text[] := array['なにわ建設株式会社','京都冷熱工業所','播磨土木エンジニアリング','関西電設工業','大阪内装クリエイト','京都建具製作所','奈良建材商社','トランスポート関西','日本赤十字施設部','関西環境施工'];
   sts text[] := array['未処理','見積待ち','決定済み','発注完了','支払済み'];
-  pid int; i int; est bigint; pst text; pm text; pd text;
+  pid int; i int; est bigint; pst text; pd text;
 begin
   for pid in 1..10 loop
     for i in 0..9 loop
@@ -207,11 +206,10 @@ begin
       else
         pst := '未払い';   pd := '2026-05-31'; -- 期限切れ（通知対象）
       end if;
-      if i < 5 then pm := '銀行振込'; else pm := '現金'; end if;
       insert into orders (
         project_id, category, vendor, estimate, planned, decided, status,
         details, site, period_start, period_end, handover, payment,
-        "paymentStatus", "paymentMethod", "paymentDate", "paymentNotes"
+        "paymentStatus", "paymentDate", "paymentNotes"
       ) values (
         pid, cat[(i % 10) + 1], ven[((pid + i) % 10) + 1],
         est, floor(est*0.95), floor(est*0.90),
@@ -220,7 +218,7 @@ begin
         '京都施工地' || pid || '番',
         '2026-04-01','2026-06-30','2026-07-31',
         '引き渡し月月末締め翌々月5日振込',
-        pst, pm, pd, ''
+        pst, pd, ''
       );
     end loop;
   end loop;

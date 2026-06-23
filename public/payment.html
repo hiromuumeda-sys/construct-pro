@@ -7,10 +7,10 @@
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-<script src="/theme.js?v=10"></script>
-<script src="/sidebar.js?v=10"></script>
-<script src="/auth.js?v=10"></script>
-<script src="/header.js?v=10"></script>
+<script src="/theme.js?v=11"></script>
+<script src="/sidebar.js?v=11"></script>
+<script src="/auth.js?v=11"></script>
+<script src="/header.js?v=11"></script>
 <style>
 body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
@@ -144,7 +144,7 @@ body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 <th class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant w-1/5">工事区分</th>
 <th class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant w-1/4">発注先</th>
 <th class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant text-right">費用</th>
-<th class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant w-24">支払い方法</th>
+<th class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant w-28">支払期日</th>
 <th class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant text-center w-32">入金ステータス</th>
 </tr>
 </thead>
@@ -200,16 +200,7 @@ body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 </select>
 </div>
 <div>
-<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">支払い方法</label>
-<select class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent transition-all" id="edit-method">
-<option value="">選択してください</option>
-<option value="口座振替">口座振替</option>
-<option value="銀行振込">銀行振込</option>
-<option value="現金">現金</option>
-</select>
-</div>
-<div>
-<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">支払予定日</label>
+<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">支払期日</label>
 <input class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent transition-all" id="edit-payment-date" type="date"/>
 </div>
 <div class="col-span-2">
@@ -259,7 +250,6 @@ async function loadPayments() {
       vendor: order.vendor || '-',
       amount: order.decided || order.planned || 0,
       status: order.paymentStatus || '未払い',
-      method: order.paymentMethod || '',
       paymentDate: order.paymentDate || '',
       notes: order.paymentNotes || '',
       // 保存時にPUTで全フィールドを送るために元データを保持
@@ -279,7 +269,7 @@ function renderTable() {
       <td class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant">${payment.category}</td>
       <td class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant">${payment.vendor}</td>
       <td class="px-3 py-1.5 text-label-md font-label-md text-right tabular-numbers">¥${payment.amount.toLocaleString()}</td>
-      <td class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant">${payment.method || '-'}</td>
+      <td class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant tabular-numbers">${payment.paymentDate || '-'}</td>
       <td class="px-3 py-1.5 text-label-md font-label-md text-center whitespace-nowrap">
         <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] ${getStatusColor(payment.status)}">${payment.status}</span>
       </td>
@@ -306,7 +296,6 @@ function openModal(id) {
   document.getElementById('edit-vendor').value = payment.vendor;
   document.getElementById('edit-amount').value = '¥' + payment.amount.toLocaleString();
   document.getElementById('edit-status').value = payment.status;
-  document.getElementById('edit-method').value = payment.method || '';
   document.getElementById('edit-notes').value = payment.notes || '';
 
   if (payment.paymentDate) {
@@ -338,7 +327,6 @@ async function savePayment() {
   const data = {
     ...payment._raw,
     paymentStatus: document.getElementById('edit-status').value,
-    paymentMethod: document.getElementById('edit-method').value,
     paymentDate: document.getElementById('edit-payment-date').value,
     paymentNotes: document.getElementById('edit-notes').value
   };
@@ -408,7 +396,7 @@ function filterTable() {
       <td class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant">${payment.category}</td>
       <td class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant">${payment.vendor}</td>
       <td class="px-3 py-1.5 text-label-md font-label-md text-right tabular-numbers">¥${payment.amount.toLocaleString()}</td>
-      <td class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant">${payment.method || '-'}</td>
+      <td class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant tabular-numbers">${payment.paymentDate || '-'}</td>
       <td class="px-3 py-1.5 text-label-md font-label-md text-center whitespace-nowrap">
         <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] ${getStatusColor(payment.status)}">${payment.status}</span>
       </td>
@@ -416,6 +404,6 @@ function filterTable() {
   `).join('');
 }
 </script>
-<script src="/notify.js?v=10"></script>
+<script src="/notify.js?v=11"></script>
 </body>
 </html>
