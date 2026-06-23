@@ -58,15 +58,15 @@ tailwind.config = {
         "full": "9999px"
       },
       "spacing": {
-        "xl": "48px",
+        "xl": "32px",
         "margin-mobile": "16px",
         "container-max": "1440px",
-        "md": "24px",
-        "sm": "16px",
-        "margin-desktop": "32px",
-        "gutter": "24px",
+        "md": "16px",
+        "sm": "12px",
+        "margin-desktop": "24px",
+        "gutter": "20px",
         "xs": "8px",
-        "lg": "32px",
+        "lg": "20px",
         "base": "4px"
       },
       "fontFamily": {
