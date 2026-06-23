@@ -9,6 +9,14 @@ const { q, one } = require('./db');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-key-change-in-production';
 
+// PDF用 日本語フォント（Hiragino Sans W3 を同梱）。doc.registerFont('jp', ...) で利用。
+const JP_FONT_PATH = path.join(__dirname, 'fonts', 'jp.ttc');
+const JP_FONT_NAME = 'HiraginoSans-W3';
+function useJpFont(doc) {
+  try { doc.registerFont('jp', JP_FONT_PATH, JP_FONT_NAME); doc.font('jp'); return true; }
+  catch (e) { console.error('jp font load failed:', e.message); return false; }
+}
+
 const app = express();
 
 // Middleware
@@ -669,19 +677,20 @@ app.get('/api/report/growth-pdf', h(async (req, res) => {
     doc.on('end', resolve); doc.on('error', reject);
     // 色：ヘッダー＝青強めネイビー、グラフ＝Web画面と同色（棒=#7c6cf6 / 線=#030424）
     const headerNavy = '#1e2a78', barColor = '#7c6cf6', lineColor = '#030424';
-    // 日本語はPDFフォント未対応で文字化けするため英語表記にする
+    useJpFont(doc); // 日本語フォントを適用
     const pageW = doc.page.width;
-    doc.rect(0, 0, pageW, 80).fill(headerNavy);
-    doc.fillColor('white').fontSize(20).font('Helvetica-Bold').text('WIN WIN', 40, 24);
-    doc.fontSize(12).font('Helvetica').text('Sales & Profit Report', 40, 50);
+    // ヘッダー（高さを小さく：80→48）
+    doc.rect(0, 0, pageW, 48).fill(headerNavy);
+    doc.fillColor('white').fontSize(15).text('WIN WIN', 40, 9);
+    doc.fontSize(10).fillColor('#cdd3f0').text('レポート（受注・入金推移）', 40, 30);
     doc.fillColor('black');
 
-    doc.fontSize(12).font('Helvetica-Bold').text(`Sales & Profit Report   ${from} - ${to}`, 40, 96);
-    doc.font('Helvetica').fontSize(10).fillColor('black');
-    doc.text(`Total Sales: ¥${totalRevenue.toLocaleString()}`, 40, 118);
-    doc.text(`Total Profit: ¥${totalProfit.toLocaleString()}`, 320, 118);
+    doc.fontSize(12).text(`売上・利益レポート　${from} 〜 ${to}`, 40, 68);
+    doc.fontSize(10).fillColor('black');
+    doc.text(`売上合計：¥${totalRevenue.toLocaleString()}`, 40, 90);
+    doc.text(`利益合計：¥${totalProfit.toLocaleString()}`, 320, 90);
 
-    const chartX = 60, chartY = 165, chartW = pageW - 120, chartH = 320;
+    const chartX = 60, chartY = 140, chartW = pageW - 120, chartH = 330;
     doc.lineWidth(1).strokeColor('#d1d5db');
     doc.moveTo(chartX, chartY).lineTo(chartX, chartY + chartH).stroke();
     doc.moveTo(chartX, chartY + chartH).lineTo(chartX + chartW, chartY + chartH).stroke();
@@ -708,12 +717,12 @@ app.get('/api/report/growth-pdf', h(async (req, res) => {
       if (i === 0) doc.moveTo(x, y); else doc.lineTo(x, y);
     });
     doc.stroke();
-    // legend
+    // 凡例
     doc.save().fillOpacity(0.55).fillColor(barColor).rect(chartX, chartY - 22, 12, 12).fill().restore();
-    doc.fillColor('#333').fontSize(9).font('Helvetica').text('Sales', chartX + 16, chartY - 21);
-    doc.strokeColor(lineColor).lineWidth(2).moveTo(chartX + 70, chartY - 16).lineTo(chartX + 90, chartY - 16).stroke();
-    doc.fillColor('#333').text('Profit', chartX + 94, chartY - 21);
-    doc.fillColor('#888').fontSize(8).text('* Sales = contract amount by project start month;  Profit = Sales - committed order cost', 40, chartY + chartH + 24);
+    doc.fillColor('#333').fontSize(9).text('売上', chartX + 16, chartY - 21);
+    doc.strokeColor(lineColor).lineWidth(2).moveTo(chartX + 56, chartY - 16).lineTo(chartX + 76, chartY - 16).stroke();
+    doc.fillColor('#333').text('利益', chartX + 80, chartY - 21);
+    doc.fillColor('#888').fontSize(8).text('※ 売上＝案件の工期開始月の契約金額、利益＝売上−注文確定額', 40, chartY + chartH + 24);
     doc.end();
   });
   const pdf = Buffer.concat(chunks);
