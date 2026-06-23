@@ -608,80 +608,110 @@ app.get('/api/dashboard', h(async (req, res) => {
   res.json({ month: ym, activeCount: projects.length, totalReceivable, totalPayable, thisMonthReceipts, thisMonthPayments, totalRevenue, totalCost, totalProfit, avgMargin, projectProfit: projectProfit.sort((a, b) => b.revenue - a.revenue) });
 }));
 
-// ============ 成長レポート（銀行説明資料用） ============
-// 月次の受注額・入金額と、その累計を返す。右肩上がりの成長が見えるデータ。
-async function buildGrowthData() {
+// ============ レポート（受注・入金推移）：月次の売上・利益 ============
+// 売上＝案件の工期開始月に計上した契約金額、原価＝その案件の注文確定額、利益＝売上−原価。
+// from/to（YYYY-MM）で対象期間可変。未指定時は当月から過去12ヶ月。
+const ymOfDate = (s) => { if (!s) return null; const m = String(s).replace(/\//g, '-').match(/^(\d{4})-(\d{2})/); return m ? `${m[1]}-${m[2]}` : null; };
+function monthRange(from, to) {
+  // from/to: 'YYYY-MM'。連続した月の配列を返す。
+  const list = [];
+  let [fy, fm] = from.split('-').map(Number);
+  const [ty, tm] = to.split('-').map(Number);
+  while (fy < ty || (fy === ty && fm <= tm)) {
+    list.push(`${fy}-${String(fm).padStart(2, '0')}`);
+    fm++; if (fm > 12) { fm = 1; fy++; }
+    if (list.length > 120) break;
+  }
+  return list;
+}
+async function buildReportData(from, to) {
+  const now = new Date();
+  if (!to) to = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  if (!from) {
+    const d = new Date(now.getFullYear(), now.getMonth() - 11, 1);
+    from = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+  }
   const projects = await q('SELECT * FROM projects');
-  const receipts = await q('SELECT * FROM receipts');
-  const ymOf = (s) => { if (!s) return null; const m = String(s).replace(/\//g, '-').match(/^(\d{4})-(\d{2})/); return m ? `${m[1]}-${m[2]}` : null; };
-  const map = {}; // ym -> { orders, receipts }
-  const ensure = (ym) => (map[ym] = map[ym] || { orders: 0, receipts: 0 });
-  projects.forEach(p => { const ym = ymOf(p.startDate); if (ym) ensure(ym).orders += Number(p.amount) || 0; });
-  receipts.forEach(r => { const ym = ymOf(r.received_date); if (ym) ensure(ym).receipts += Number(r.amount) || 0; });
-  const months = Object.keys(map).sort();
-  let cumO = 0, cumR = 0;
-  const points = months.map(ym => {
-    cumO += map[ym].orders; cumR += map[ym].receipts;
-    return { ym, orders: map[ym].orders, receipts: map[ym].receipts, cumOrders: cumO, cumReceipts: cumR };
+  const orders = await q('SELECT * FROM orders');
+  const projMonth = {};               // project_id -> ym
+  const map = {};                     // ym -> { revenue, cost }
+  const ensure = (ym) => (map[ym] = map[ym] || { revenue: 0, cost: 0 });
+  projects.forEach(p => {
+    const ym = ymOfDate(p.startDate);
+    projMonth[p.id] = ym;
+    if (ym) ensure(ym).revenue += Number(p.amount) || 0;
   });
-  return { points, totalOrders: cumO, totalReceipts: cumR };
+  orders.forEach(o => {
+    const ym = projMonth[o.project_id];
+    if (ym) ensure(ym).cost += Number(o.decided) || 0;
+  });
+  const months = monthRange(from, to);
+  const points = months.map(ym => {
+    const v = map[ym] || { revenue: 0, cost: 0 };
+    return { ym, revenue: v.revenue, profit: v.revenue - v.cost };
+  });
+  const totalRevenue = points.reduce((s, p) => s + p.revenue, 0);
+  const totalProfit = points.reduce((s, p) => s + p.profit, 0);
+  return { points, totalRevenue, totalProfit, from, to };
 }
 
 app.get('/api/report/growth', h(async (req, res) => {
-  res.json(await buildGrowthData());
+  res.json(await buildReportData(req.query.from, req.query.to));
 }));
 
-// 成長レポートPDF（累計受注額の棒グラフ＋サマリ）
+// レポートPDF（売上の棒グラフ＋利益の折れ線）
 app.get('/api/report/growth-pdf', h(async (req, res) => {
-  const { points, totalOrders, totalReceipts } = await buildGrowthData();
-  const doc = new PDFDocument({ margin: 40, size: 'A4', bufferPages: true });
+  const { points, totalRevenue, totalProfit, from, to } = await buildReportData(req.query.from, req.query.to);
+  const doc = new PDFDocument({ margin: 40, size: 'A4', layout: 'landscape', bufferPages: true });
   const chunks = [];
   doc.on('data', c => chunks.push(c));
   await new Promise((resolve, reject) => {
     doc.on('end', resolve); doc.on('error', reject);
-    const purple = '#8B4789';
+    const purple = '#8B4789', navy = '#030424';
     const pageW = doc.page.width;
-    doc.rect(0, 0, pageW, 90).fill(purple);
-    doc.fillColor('white').fontSize(22).font('Helvetica-Bold').text('WIN WIN', 40, 28);
-    doc.fontSize(13).font('Helvetica').text('Growth Report', 40, 58);
+    doc.rect(0, 0, pageW, 80).fill(purple);
+    doc.fillColor('white').fontSize(20).font('Helvetica-Bold').text('WIN WIN', 40, 24);
+    doc.fontSize(12).font('Helvetica').text('Report (Sales & Profit)', 40, 50);
     doc.fillColor('black');
 
-    doc.fontSize(11).font('Helvetica-Bold').text('事業成長レポート（受注・入金推移）', 40, 110);
-    const now = new Date();
-    doc.font('Helvetica').fontSize(9).fillColor('#555').text(`作成日: ${now.toLocaleDateString('ja-JP')}`, 40, 128);
-    doc.fillColor('black');
+    doc.fontSize(11).font('Helvetica-Bold').text(`レポート（受注・入金推移）  ${from} 〜 ${to}`, 40, 96);
+    doc.font('Helvetica').fontSize(10).fillColor('black');
+    doc.text(`売上合計: ¥${totalRevenue.toLocaleString()}`, 40, 116);
+    doc.text(`利益合計: ¥${totalProfit.toLocaleString()}`, 300, 116);
 
-    // サマリ
-    doc.fontSize(10).font('Helvetica-Bold');
-    doc.text(`累計受注額: ¥${totalOrders.toLocaleString()}`, 40, 152);
-    doc.text(`累計入金額: ¥${totalReceipts.toLocaleString()}`, 300, 152);
-
-    // 棒グラフ（累計受注額）
-    const chartX = 60, chartY = 200, chartW = pageW - 120, chartH = 300;
-    doc.font('Helvetica').fontSize(9).fillColor('black').text('累計受注額の推移', chartX, chartY - 20);
-    // 軸
+    const chartX = 60, chartY = 160, chartW = pageW - 120, chartH = 320;
     doc.lineWidth(1).strokeColor('#cccccc');
     doc.moveTo(chartX, chartY).lineTo(chartX, chartY + chartH).stroke();
     doc.moveTo(chartX, chartY + chartH).lineTo(chartX + chartW, chartY + chartH).stroke();
-    const maxV = Math.max(1, ...points.map(p => p.cumOrders));
+    const maxV = Math.max(1, ...points.map(p => Math.max(p.revenue, p.profit)));
     const n = points.length || 1;
     const slot = chartW / n;
-    const barW = Math.min(40, slot * 0.6);
+    const barW = Math.min(30, slot * 0.5);
+    // 売上の棒
     points.forEach((p, i) => {
-      const h = (p.cumOrders / maxV) * (chartH - 10);
+      const hh = (p.revenue / maxV) * (chartH - 10);
       const x = chartX + slot * i + (slot - barW) / 2;
-      const y = chartY + chartH - h;
-      doc.rect(x, y, barW, h).fill(purple);
-      doc.fillColor('#333').fontSize(6).text(p.ym.replace('-', '/').slice(2), x - 4, chartY + chartH + 4, { width: barW + 8, align: 'center' });
-      doc.fillColor('#000').fontSize(6).text('¥' + Math.round(p.cumOrders / 10000) + '万', x - 6, y - 9, { width: barW + 12, align: 'center' });
+      const y = chartY + chartH - hh;
+      doc.rect(x, y, barW, hh).fill(purple);
+      doc.fillColor('#666').fontSize(6).text(p.ym.replace('-', '/').slice(2), chartX + slot * i, chartY + chartH + 4, { width: slot, align: 'center' });
       doc.fillColor('black');
     });
-    doc.fontSize(8).fillColor('#888').text('※ 受注額は案件の工期開始月で集計', 40, chartY + chartH + 30);
+    // 利益の折れ線
+    doc.strokeColor(navy).lineWidth(2);
+    points.forEach((p, i) => {
+      const x = chartX + slot * i + slot / 2;
+      const y = chartY + chartH - (p.profit / maxV) * (chartH - 10);
+      if (i === 0) doc.moveTo(x, y); else doc.lineTo(x, y);
+    });
+    doc.stroke();
+    doc.fontSize(9).fillColor(purple).text('■ 売上', chartX, chartY - 18);
+    doc.fillColor(navy).text('— 利益', chartX + 60, chartY - 18);
+    doc.fillColor('#888').fontSize(8).text('※ 売上＝案件の工期開始月の契約金額、利益＝売上−注文確定額', 40, chartY + chartH + 24);
     doc.end();
   });
   const pdf = Buffer.concat(chunks);
   res.setHeader('Content-Type', 'application/pdf');
-  res.setHeader('Content-Disposition', `${req.query.inline === '1' ? 'inline' : 'attachment'}; filename="growth-report.pdf"`);
+  res.setHeader('Content-Disposition', `${req.query.inline === '1' ? 'inline' : 'attachment'}; filename="report-sales-profit.pdf"`);
   res.send(pdf);
 }));
 

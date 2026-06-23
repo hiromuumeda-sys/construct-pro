@@ -8,10 +8,10 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="/theme.js?v=18"></script>
-<script src="/sidebar.js?v=18"></script>
-<script src="/auth.js?v=18"></script>
-<script src="/header.js?v=18"></script>
+<script src="/theme.js?v=19"></script>
+<script src="/sidebar.js?v=19"></script>
+<script src="/auth.js?v=19"></script>
+<script src="/header.js?v=19"></script>
 <style>
 body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
@@ -173,26 +173,35 @@ body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 <!-- ===== Tab: レポート分析 ===== -->
 <div id="tab-analysis" class="hidden space-y-md">
 
-<!-- 成長レポート（銀行説明資料用） -->
+<!-- レポート（受注・入金推移）：売上・利益の月次推移 -->
 <div class="bg-surface-container-lowest rounded-lg custom-shadow border border-outline-variant overflow-hidden">
-<div class="px-lg py-3 border-b border-outline-variant bg-surface-container-low flex justify-between items-center gap-3">
+<div class="px-lg py-3 border-b border-outline-variant bg-surface-container-low flex flex-wrap justify-between items-end gap-3">
 <div>
-<h3 class="text-label-md font-label-md text-primary flex items-center gap-1"><span class="material-symbols-outlined text-[18px]">trending_up</span>成長レポート（受注・入金推移）</h3>
-<p class="text-label-sm text-on-surface-variant">銀行説明資料用 — 累計の伸びを表示</p>
+<h3 class="text-label-md font-label-md text-primary flex items-center gap-1"><span class="material-symbols-outlined text-[18px]">monitoring</span>レポート（受注・入金推移）</h3>
 </div>
-<button class="px-4 py-1.5 border border-outline text-primary font-label-md rounded-lg hover:bg-surface-container transition-colors flex items-center gap-2 whitespace-nowrap" onclick="window.open('/api/report/growth-pdf','_blank')">
+<div class="flex items-end gap-3 flex-wrap">
+<div>
+<label class="block text-label-sm text-on-surface-variant mb-1">期間開始</label>
+<input type="month" id="growth-from" class="bg-surface-container-low border border-outline-variant rounded-lg px-3 py-1.5 text-label-md focus:ring-2 focus:ring-secondary/20" onchange="renderGrowthChart()"/>
+</div>
+<div>
+<label class="block text-label-sm text-on-surface-variant mb-1">期間終了</label>
+<input type="month" id="growth-to" class="bg-surface-container-low border border-outline-variant rounded-lg px-3 py-1.5 text-label-md focus:ring-2 focus:ring-secondary/20" onchange="renderGrowthChart()"/>
+</div>
+<button class="px-4 py-1.5 border border-outline text-primary font-label-md rounded-lg hover:bg-surface-container transition-colors flex items-center gap-2 whitespace-nowrap" onclick="downloadGrowthPdf()">
 <span class="material-symbols-outlined text-[18px]">picture_as_pdf</span>PDF出力
 </button>
 </div>
+</div>
 <div class="p-lg">
-<div class="grid grid-cols-2 md:grid-cols-3 gap-sm mb-md">
-<div class="bg-surface-container-low rounded-lg p-3"><p class="text-label-sm text-on-surface-variant">累計受注額</p><p class="text-[18px] font-bold text-primary tabular-nums" id="growth-total-orders">¥-</p></div>
-<div class="bg-surface-container-low rounded-lg p-3"><p class="text-label-sm text-on-surface-variant">累計入金額</p><p class="text-[18px] font-bold text-secondary tabular-nums" id="growth-total-receipts">¥-</p></div>
-<div class="bg-surface-container-low rounded-lg p-3"><p class="text-label-sm text-on-surface-variant">入金率</p><p class="text-[18px] font-bold text-on-surface tabular-nums" id="growth-rate">-</p></div>
+<div class="grid grid-cols-3 gap-sm mb-md">
+<div class="bg-surface-container-low rounded-lg p-3"><p class="text-label-sm text-on-surface-variant">売上合計</p><p class="text-[18px] font-bold text-primary tabular-nums" id="growth-total-revenue">¥-</p></div>
+<div class="bg-surface-container-low rounded-lg p-3"><p class="text-label-sm text-on-surface-variant">利益合計</p><p class="text-[18px] font-bold text-secondary tabular-nums" id="growth-total-profit">¥-</p></div>
+<div class="bg-surface-container-low rounded-lg p-3"><p class="text-label-sm text-on-surface-variant">利益率</p><p class="text-[18px] font-bold text-on-surface tabular-nums" id="growth-margin">-</p></div>
 </div>
 <div class="flex items-center gap-4 mb-2 text-label-sm">
-<span class="flex items-center gap-1"><span class="inline-block w-3 h-3 rounded-sm bg-secondary/60"></span>月次受注額</span>
-<span class="flex items-center gap-1"><span class="inline-block w-4 h-0.5 bg-primary"></span>累計受注額</span>
+<span class="flex items-center gap-1"><span class="inline-block w-3 h-3 rounded-sm bg-secondary/60"></span>売上</span>
+<span class="flex items-center gap-1"><span class="inline-block w-4 h-0.5 bg-primary"></span>利益</span>
 </div>
 <div class="w-full overflow-hidden">
 <svg id="growth-chart" viewBox="0 0 800 320" class="w-full" style="height:auto" preserveAspectRatio="xMidYMid meet"></svg>
@@ -736,51 +745,72 @@ async function loadDashboard() {
 }
 
 let growthLoaded = false;
+function growthQuery() {
+  const from = document.getElementById('growth-from')?.value;
+  const to = document.getElementById('growth-to')?.value;
+  const qs = [];
+  if (from) qs.push('from=' + from);
+  if (to) qs.push('to=' + to);
+  return qs.length ? '?' + qs.join('&') : '';
+}
+function downloadGrowthPdf() {
+  window.open('/api/report/growth-pdf' + growthQuery(), '_blank');
+}
 async function renderGrowthChart() {
   const svg = document.getElementById('growth-chart');
   if (!svg) return;
   let data;
   try {
-    const res = await fetch('/api/report/growth', { headers: (window.Auth ? Auth.headers() : {}) });
+    const res = await fetch('/api/report/growth' + growthQuery(), { headers: (window.Auth ? Auth.headers() : {}) });
     data = await res.json();
   } catch (e) { return; }
+  // 期間入力の初期値をサーバー既定（過去12ヶ月）に同期
+  const fromEl = document.getElementById('growth-from'), toEl = document.getElementById('growth-to');
+  if (fromEl && !fromEl.value && data.from) fromEl.value = data.from;
+  if (toEl && !toEl.value && data.to) toEl.value = data.to;
+
   const pts = data.points || [];
   const yen = v => '¥' + (Number(v) || 0).toLocaleString();
-  document.getElementById('growth-total-orders').textContent = yen(data.totalOrders);
-  document.getElementById('growth-total-receipts').textContent = yen(data.totalReceipts);
-  document.getElementById('growth-rate').textContent = data.totalOrders > 0 ? Math.round(data.totalReceipts / data.totalOrders * 100) + '%' : '-';
+  document.getElementById('growth-total-revenue').textContent = yen(data.totalRevenue);
+  document.getElementById('growth-total-profit').textContent = yen(data.totalProfit);
+  document.getElementById('growth-margin').textContent = data.totalRevenue > 0 ? Math.round(data.totalProfit / data.totalRevenue * 100) + '%' : '-';
 
   const W = 800, H = 320, mL = 60, mR = 20, mT = 20, mB = 44;
   const pw = W - mL - mR, ph = H - mT - mB;
   if (!pts.length) { svg.innerHTML = `<text x="${W/2}" y="${H/2}" text-anchor="middle" fill="#888" font-size="13">データがありません</text>`; return; }
-  const maxMonthly = Math.max(1, ...pts.map(p => p.orders));
-  const maxCum = Math.max(1, ...pts.map(p => p.cumOrders));
+  // 売上と利益の両方を同一スケールで（利益は負もありうる）
+  const vals = pts.flatMap(p => [p.revenue, p.profit]);
+  const maxV = Math.max(1, ...vals);
+  const minV = Math.min(0, ...vals);
+  const span = (maxV - minV) || 1;
+  const yOf = v => mT + ph - ((v - minV) / span) * ph;
+  const zeroY = yOf(0);
   const n = pts.length;
   const slot = pw / n;
-  const barW = Math.min(46, slot * 0.55);
+  const barW = Math.min(40, slot * 0.5);
   const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;');
   let el = '';
   // grid lines (4段)
   for (let g = 0; g <= 4; g++) {
+    const val = minV + span * (4 - g) / 4;
     const y = mT + ph * g / 4;
     el += `<line x1="${mL}" y1="${y.toFixed(1)}" x2="${W-mR}" y2="${y.toFixed(1)}" stroke="#e5e7eb" stroke-width="1"/>`;
-    el += `<text x="${mL-6}" y="${(y+3).toFixed(1)}" text-anchor="end" font-size="9" fill="#9ca3af">${Math.round(maxCum*(4-g)/4/10000).toLocaleString()}万</text>`;
+    el += `<text x="${mL-6}" y="${(y+3).toFixed(1)}" text-anchor="end" font-size="9" fill="#9ca3af">${Math.round(val/10000).toLocaleString()}万</text>`;
   }
-  // bars (月次受注額)
+  // bars (売上)
   pts.forEach((p, i) => {
-    const h = (p.orders / maxMonthly) * ph;
+    const y = yOf(Math.max(0, p.revenue));
     const x = mL + slot * i + (slot - barW) / 2;
-    const y = mT + ph - h;
+    const h = Math.abs(zeroY - y);
     el += `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${barW.toFixed(1)}" height="${Math.max(0,h).toFixed(1)}" rx="3" fill="#7c6cf6" opacity="0.55"/>`;
     el += `<text x="${(x+barW/2).toFixed(1)}" y="${(H-mB+16)}" text-anchor="middle" font-size="9" fill="#6b7280">${esc(p.ym.replace('-', '/').slice(2))}</text>`;
   });
-  // cumulative line (累計受注額)
+  // line (利益)
   const cx = i => mL + slot * i + slot / 2;
-  const cy = v => mT + ph - (v / maxCum) * ph;
   let dpath = '';
-  pts.forEach((p, i) => { dpath += (i ? 'L' : 'M') + cx(i).toFixed(1) + ' ' + cy(p.cumOrders).toFixed(1) + ' '; });
+  pts.forEach((p, i) => { dpath += (i ? 'L' : 'M') + cx(i).toFixed(1) + ' ' + yOf(p.profit).toFixed(1) + ' '; });
   el += `<path d="${dpath}" fill="none" stroke="#030424" stroke-width="2.5"/>`;
-  pts.forEach((p, i) => { el += `<circle cx="${cx(i).toFixed(1)}" cy="${cy(p.cumOrders).toFixed(1)}" r="3.5" fill="#030424"/>`; });
+  pts.forEach((p, i) => { el += `<circle cx="${cx(i).toFixed(1)}" cy="${yOf(p.profit).toFixed(1)}" r="3.5" fill="#030424"/>`; });
   svg.innerHTML = el;
   growthLoaded = true;
 }
@@ -813,6 +843,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   setReportType('customer');
 });
 </script>
-<script src="/notify.js?v=18"></script>
+<script src="/notify.js?v=19"></script>
 </body>
 </html>
