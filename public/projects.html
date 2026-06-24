@@ -7,10 +7,10 @@
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-<script src="/theme.js?v=31"></script>
-<script src="/sidebar.js?v=31"></script>
-<script src="/auth.js?v=31"></script>
-<script src="/header.js?v=31"></script>
+<script src="/theme.js?v=32"></script>
+<script src="/sidebar.js?v=32"></script>
+<script src="/auth.js?v=32"></script>
+<script src="/header.js?v=32"></script>
 <style>
 body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
@@ -860,9 +860,9 @@ async function sendEstimateEmail() {
 <div class="fixed inset-0 z-[150]" id="invoice-modal" style="display:none" onclick="closeInvoicePreview()">
   <div class="absolute inset-0 bg-inverse-surface/60 backdrop-blur-md"></div>
   <div class="flex items-center justify-center min-h-screen p-4" onclick="event.stopPropagation()">
-    <div class="bg-white w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden relative transform transition-all border border-outline-variant/30" onclick="event.stopPropagation()">
+    <div class="bg-white w-full max-w-2xl rounded-lg shadow-2xl overflow-hidden relative transform transition-all border border-outline-variant/30" onclick="event.stopPropagation()">
       <!-- Floating Email FAB -->
-      <button class="absolute bottom-6 right-6 w-14 h-14 bg-primary text-on-primary rounded-full flex items-center justify-center shadow-lg hover:shadow-xl hover:scale-110 transition-all" onclick="openInvoiceEmailForm()" title="メール送信">
+      <button class="absolute bottom-6 right-6 w-14 h-14 bg-primary text-on-primary rounded-lg flex items-center justify-center shadow-lg hover:shadow-xl hover:scale-110 transition-all" onclick="openInvoiceEmailForm()" title="メール送信">
         <span class="material-symbols-outlined text-[24px]">send</span>
       </button>
       <!-- Header -->
@@ -935,7 +935,7 @@ async function sendEstimateEmail() {
   </div>
   <!-- Email compose panel (shown on FAB click) -->
   <div class="fixed inset-0 z-[160] hidden flex items-center justify-center p-4 bg-black/20" id="invoice-email-panel" onclick="closeInvoiceEmailForm()">
-    <div class="bg-white rounded-3xl shadow-2xl w-full max-w-lg border border-outline-variant/30 overflow-hidden" onclick="event.stopPropagation()">
+    <div class="bg-white rounded-lg shadow-2xl w-full max-w-lg border border-outline-variant/30 overflow-hidden" onclick="event.stopPropagation()">
       <div class="px-6 py-4 border-b border-outline-variant flex justify-between items-center">
         <h3 class="text-sm font-bold text-on-surface flex items-center gap-2">
           <span class="material-symbols-outlined text-primary text-[18px]">mail</span>
@@ -973,8 +973,8 @@ async function sendEstimateEmail() {
 <div class="fixed inset-0 z-[150]" id="estimate-modal" style="display:none" onclick="closeEstimatePreview()">
   <div class="absolute inset-0 bg-inverse-surface/60 backdrop-blur-md"></div>
   <div class="flex items-center justify-center min-h-screen p-4" onclick="event.stopPropagation()">
-    <div class="bg-white w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden relative transform transition-all border border-outline-variant/30" onclick="event.stopPropagation()">
-      <button class="absolute bottom-6 right-6 w-14 h-14 bg-primary text-on-primary rounded-full flex items-center justify-center shadow-lg hover:shadow-xl hover:scale-110 transition-all" onclick="openEstimateEmailForm()" title="メール送信">
+    <div class="bg-white w-full max-w-2xl rounded-lg shadow-2xl overflow-hidden relative transform transition-all border border-outline-variant/30" onclick="event.stopPropagation()">
+      <button class="absolute bottom-6 right-6 w-14 h-14 bg-primary text-on-primary rounded-lg flex items-center justify-center shadow-lg hover:shadow-xl hover:scale-110 transition-all" onclick="openEstimateEmailForm()" title="メール送信">
         <span class="material-symbols-outlined text-[24px]">send</span>
       </button>
       <div class="px-6 py-4 border-b border-outline-variant flex justify-between items-center">
@@ -1044,7 +1044,7 @@ async function sendEstimateEmail() {
     </div>
   </div>
   <div class="fixed inset-0 z-[160] hidden flex items-center justify-center p-4 bg-black/20" id="estimate-email-panel" onclick="closeEstimateEmailForm()">
-    <div class="bg-white rounded-3xl shadow-2xl w-full max-w-lg border border-outline-variant/30 overflow-hidden" onclick="event.stopPropagation()">
+    <div class="bg-white rounded-lg shadow-2xl w-full max-w-lg border border-outline-variant/30 overflow-hidden" onclick="event.stopPropagation()">
       <div class="px-6 py-4 border-b border-outline-variant flex justify-between items-center">
         <h3 class="text-sm font-bold text-on-surface flex items-center gap-2">
           <span class="material-symbols-outlined text-primary text-[18px]">mail</span>
@@ -1078,6 +1078,6 @@ async function sendEstimateEmail() {
   </div>
 </div>
 
-<script src="/notify.js?v=31"></script>
+<script src="/notify.js?v=32"></script>
 </body>
 </html>
