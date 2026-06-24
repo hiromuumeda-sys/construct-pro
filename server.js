@@ -412,16 +412,37 @@ app.post('/api/receipts/import', h(async (req, res) => {
 // 売上サマリ
 app.get('/api/sales-summary', h(async (req, res) => {
   const projects = await q('SELECT * FROM projects ORDER BY id');
+  const now = new Date();
+  const ym = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+  const parseD = (s) => { if (!s) return null; const d = new Date(String(s).replace(/\//g, '-')); return isNaN(d) ? null : d; };
   const summary = [];
   for (const p of projects) {
-    const r = await one('SELECT COALESCE(SUM(amount),0) AS total FROM receipts WHERE project_id=$1', [p.id]);
-    const received = Number(r.total) || 0;
+    const rs = await q('SELECT * FROM receipts WHERE project_id=$1 ORDER BY received_date', [p.id]);
+    const received = rs.reduce((s, r) => s + (Number(r.amount) || 0), 0);
+    const thisMonthReceived = rs.filter(r => r.received_date && r.received_date.startsWith(ym)).reduce((s, r) => s + (Number(r.amount) || 0), 0);
+    const prevReceived = received - thisMonthReceived;
+    const lastReceiptDate = rs.length ? rs[rs.length - 1].received_date : null;
     const contract = Number(p.amount) || 0;
     let payStatus = '未入金';
     if (contract > 0 && received >= contract) payStatus = '入金済';
     else if (received > 0) payStatus = '一部入金';
-    const inv = await one('SELECT due_date FROM invoices WHERE project_id=$1 ORDER BY id DESC LIMIT 1', [p.id]);
-    summary.push({ id: p.id, project_no: p.project_no, name: p.name, client: p.client, contract_amount: contract, received_amount: received, outstanding: contract - received, pay_status: payStatus, due_date: inv ? inv.due_date : null, status: p.status });
+    const invs = await q('SELECT * FROM invoices WHERE project_id=$1', [p.id]);
+    const invoiceIssued = invs.length > 0;
+    const inv = invs.length ? invs[invs.length - 1] : null;
+    // 完成判定：工期終了日が今日以前なら「完成」
+    const en = parseD(p.endDate);
+    const completed = !!(en && en <= today);
+    const completedReceivable = completed ? Math.max(0, contract - received) : 0; // 完成工事未収入金
+    const advanceReceived = !completed ? received : 0;                              // 未成工事受入金
+    summary.push({
+      id: p.id, project_no: p.project_no, name: p.name, client: p.client, status: p.status,
+      contract_amount: contract, received_amount: received, outstanding: contract - received,
+      this_month_received: thisMonthReceived, prev_received: prevReceived, cum_received: received,
+      completed, completed_receivable: completedReceivable, advance_received: advanceReceived,
+      invoice_issued: invoiceIssued, last_receipt_date: lastReceiptDate,
+      pay_status: payStatus, due_date: inv ? inv.due_date : null,
+    });
   }
   res.json(summary);
 }));

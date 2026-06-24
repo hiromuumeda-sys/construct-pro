@@ -7,10 +7,10 @@
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-<script src="/theme.js?v=21"></script>
-<script src="/sidebar.js?v=21"></script>
-<script src="/auth.js?v=21"></script>
-<script src="/header.js?v=21"></script>
+<script src="/theme.js?v=22"></script>
+<script src="/sidebar.js?v=22"></script>
+<script src="/auth.js?v=22"></script>
+<script src="/header.js?v=22"></script>
 <style>
 body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
@@ -159,17 +159,22 @@ body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 
 <!-- Data Table（最大10件・以降スクロール） -->
 <div class="bg-surface-container-lowest border border-outline-variant rounded-lg overflow-hidden shadow-sm">
-<div class="overflow-y-auto" style="max-height: 600px;">
-<table class="w-full text-left border-separate border-spacing-0">
+<div class="overflow-auto" style="max-height: 600px;">
+<table class="text-left border-separate border-spacing-0 whitespace-nowrap">
 <thead>
 <tr class="bg-surface-container-low sticky top-0 z-10">
-<th class="px-3 py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant w-28">工番</th>
+<th class="px-3 py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant">工事番号</th>
+<th class="px-3 py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant">発注者</th>
 <th class="px-3 py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant">工事名</th>
-<th class="px-3 py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant">顧客</th>
+<th class="px-3 py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant text-center">契約</th>
+<th class="px-3 py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant text-center">請求書</th>
+<th class="px-3 py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant text-center">未完/入金日</th>
 <th class="px-3 py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant text-right">請負金額</th>
-<th class="px-3 py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant text-right">入金累計</th>
-<th class="px-3 py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant text-right">未収金</th>
-<th class="px-3 py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant text-center w-24">入金期日</th>
+<th class="px-3 py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant text-right">当月入金額</th>
+<th class="px-3 py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant text-right">前月までの入金額</th>
+<th class="px-3 py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant text-right">入金額累計</th>
+<th class="px-3 py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant text-right">完成工事未収入金</th>
+<th class="px-3 py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant text-right">未成工事受入金</th>
 <th class="px-3 py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant text-center w-24">ステータス</th>
 <th class="px-3 py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant text-center w-20">入金登録</th>
 </tr>
@@ -302,17 +307,22 @@ function renderSales() {
 
   const tbody = document.getElementById('sales-table-body');
   if (filtered.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="8" class="px-3 py-8 text-center text-on-surface-variant text-label-md">該当する案件がありません</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="14" class="px-3 py-8 text-center text-on-surface-variant text-label-md">該当する案件がありません</td></tr>';
   } else {
     tbody.innerHTML = filtered.map(s => `
     <tr class="${s.pay_status === '未入金' ? 'bg-yellow-50 hover:bg-yellow-100' : 'hover:bg-surface-container-low'} transition-colors">
       <td class="px-3 py-2.5 text-label-md font-label-md text-on-surface-variant tabular-numbers">${s.project_no || '-'}</td>
-      <td class="px-3 py-2.5 text-label-md font-label-md text-primary">${s.name}</td>
       <td class="px-3 py-2.5 text-label-md font-label-md text-on-surface-variant">${s.client}</td>
+      <td class="px-3 py-2.5 text-label-md font-label-md text-primary">${s.name}</td>
+      <td class="px-3 py-2.5 text-center"><span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] ${s.status === '受注' ? 'bg-secondary text-on-secondary' : 'bg-surface-container text-on-surface-variant'}">${s.status || '-'}</span></td>
+      <td class="px-3 py-2.5 text-center text-label-md font-label-md ${s.invoice_issued ? 'text-secondary' : 'text-on-surface-variant/50'}">${s.invoice_issued ? '発行済' : '未発行'}</td>
+      <td class="px-3 py-2.5 text-center text-label-md font-label-md ${s.completed ? 'text-on-surface-variant tabular-nums' : 'text-error'}">${s.completed ? (s.last_receipt_date || '完成') : '未完'}</td>
       <td class="px-3 py-2.5 text-label-md font-label-md text-right tabular-numbers">${fmt(s.contract_amount)}</td>
-      <td class="px-3 py-2.5 text-label-md font-label-md text-right tabular-numbers text-secondary">${fmt(s.received_amount)}</td>
-      <td class="px-3 py-2.5 text-label-md font-label-md text-right tabular-numbers ${s.outstanding > 0 ? 'text-error' : 'text-on-surface-variant'}">${fmt(s.outstanding)}</td>
-      <td class="px-3 py-2.5 text-label-md font-label-md text-center tabular-numbers text-on-surface-variant">${s.due_date || '-'}</td>
+      <td class="px-3 py-2.5 text-label-md font-label-md text-right tabular-numbers text-secondary">${fmt(s.this_month_received)}</td>
+      <td class="px-3 py-2.5 text-label-md font-label-md text-right tabular-numbers text-on-surface-variant">${fmt(s.prev_received)}</td>
+      <td class="px-3 py-2.5 text-label-md font-label-md text-right tabular-numbers">${fmt(s.cum_received)}</td>
+      <td class="px-3 py-2.5 text-label-md font-label-md text-right tabular-numbers ${s.completed_receivable > 0 ? 'text-error' : 'text-on-surface-variant'}">${fmt(s.completed_receivable)}</td>
+      <td class="px-3 py-2.5 text-label-md font-label-md text-right tabular-numbers ${s.advance_received > 0 ? 'text-tertiary' : 'text-on-surface-variant'}">${fmt(s.advance_received)}</td>
       <td class="px-3 py-2.5 text-center">${payStatusBadge(s.pay_status)}</td>
       <td class="px-3 py-2.5 text-center">
         <button class="material-symbols-outlined text-secondary hover:bg-secondary/10 rounded-full w-8 h-8" onclick="openReceiptModal(${s.id})" title="入金登録">add_circle</button>
@@ -433,5 +443,5 @@ async function importCSV(event) {
 loadAll();
 </script>
 
-<script src="/notify.js?v=21"></script>
+<script src="/notify.js?v=22"></script>
 </body></html>
