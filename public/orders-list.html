@@ -7,10 +7,10 @@
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-<script src="/theme.js?v=23"></script>
-<script src="/sidebar.js?v=23"></script>
-<script src="/auth.js?v=23"></script>
-<script src="/header.js?v=23"></script>
+<script src="/theme.js?v=24"></script>
+<script src="/sidebar.js?v=24"></script>
+<script src="/auth.js?v=24"></script>
+<script src="/header.js?v=24"></script>
 <style>
 body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
@@ -123,7 +123,24 @@ body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 </div>
 </div>
 </div>
-<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 max-h-[calc(100vh-300px)] overflow-y-auto pr-1" id="project-select-list"></div>
+<div class="border border-outline-variant rounded-lg overflow-hidden">
+<div class="overflow-auto" style="max-height:calc(100vh - 320px)">
+<table class="w-full text-left border-collapse">
+<thead class="bg-surface sticky top-0 z-10">
+<tr>
+<th class="px-3 py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider whitespace-nowrap">工番</th>
+<th class="px-3 py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider">工事名</th>
+<th class="px-3 py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider whitespace-nowrap">発注元</th>
+<th class="px-3 py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider whitespace-nowrap">工期</th>
+<th class="px-3 py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider text-right whitespace-nowrap">契約金額</th>
+<th class="px-3 py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider text-center whitespace-nowrap">状態</th>
+<th class="px-3 py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider text-center whitespace-nowrap"></th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant/40" id="project-select-list"></tbody>
+</table>
+</div>
+</div>
 </div>
 </div>
 
@@ -929,7 +946,7 @@ function renderProjectSelectList() {
         return true;
     });
     if (projects.length === 0) {
-        list.innerHTML = '<p class="col-span-full text-label-md text-on-surface-variant text-center py-10">該当する案件がありません</p>';
+        list.innerHTML = '<tr><td colspan="7" class="px-3 py-10 text-center text-label-md text-on-surface-variant">該当する案件がありません</td></tr>';
         return;
     }
     const stClass = (s) => ({
@@ -944,21 +961,15 @@ function renderProjectSelectList() {
         const period = (p.startDate && p.endDate) ? `${p.startDate} 〜 ${p.endDate}` : '工期未設定';
         const amount = p.amount ? ('¥' + Number(p.amount).toLocaleString()) : '—';
         return `
-        <button class="text-left bg-surface-container-lowest border border-outline-variant rounded-xl p-4 transition-all hover:border-secondary hover:shadow-md group flex flex-col" onclick="location.href='/orders-list.html?projectId=${p.id}'">
-            <div class="flex items-center justify-between mb-2">
-                <span class="text-label-sm font-bold text-on-surface-variant tabular-nums">${esc(p.project_no || '-')}</span>
-                <span class="px-2 py-0.5 rounded-full text-[10px] whitespace-nowrap ${stClass(p.status)}">${esc(p.status || '-')}</span>
-            </div>
-            <p class="text-label-md font-bold text-primary mb-3 leading-snug" style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">${esc(p.name)}</p>
-            <div class="space-y-1.5 text-label-sm text-on-surface-variant flex-1">
-                <div class="flex items-center gap-1.5"><span class="material-symbols-outlined text-[16px]">person</span><span class="truncate">${esc(p.client || '-')}</span></div>
-                <div class="flex items-center gap-1.5"><span class="material-symbols-outlined text-[16px]">event</span><span class="tabular-nums">${esc(period)}</span></div>
-                <div class="flex items-center gap-1.5"><span class="material-symbols-outlined text-[16px]">payments</span><span class="tabular-nums font-bold text-on-surface">${amount}</span></div>
-            </div>
-            <div class="mt-3 pt-2 border-t border-outline-variant/60 flex items-center justify-end text-secondary text-label-sm font-bold gap-1 group-hover:gap-2 transition-all">
-                工事計画を開く<span class="material-symbols-outlined text-[18px]">arrow_forward</span>
-            </div>
-        </button>
+        <tr class="hover:bg-surface-container-low cursor-pointer transition-colors" onclick="location.href='/orders-list.html?projectId=${p.id}'">
+            <td class="px-3 py-2.5 text-label-md text-on-surface-variant tabular-nums whitespace-nowrap">${esc(p.project_no || '-')}</td>
+            <td class="px-3 py-2.5 text-label-md font-label-md text-primary">${esc(p.name)}</td>
+            <td class="px-3 py-2.5 text-label-md text-on-surface-variant whitespace-nowrap">${esc(p.client || '-')}</td>
+            <td class="px-3 py-2.5 text-label-md text-on-surface-variant tabular-nums whitespace-nowrap">${esc(period)}</td>
+            <td class="px-3 py-2.5 text-label-md text-on-surface tabular-nums text-right whitespace-nowrap">${amount}</td>
+            <td class="px-3 py-2.5 text-center"><span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] whitespace-nowrap ${stClass(p.status)}">${esc(p.status || '-')}</span></td>
+            <td class="px-3 py-2.5 text-center"><span class="material-symbols-outlined text-secondary text-[20px]">chevron_right</span></td>
+        </tr>
     `;}).join('');
 }
 
@@ -1020,6 +1031,6 @@ function filterTable() {
 }
 
 </script>
-<script src="/notify.js?v=23"></script>
+<script src="/notify.js?v=24"></script>
 </body>
 </html>
