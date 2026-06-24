@@ -597,8 +597,37 @@ app.get('/api/dashboard', h(async (req, res) => {
     }
   });
   const totalPayable = orders.filter(o => monthProjectIds.has(o.project_id) && o.paymentStatus !== '支払済み').reduce((s, o) => s + (Number(o.decided) || 0), 0);
-  const thisMonthPayments = orders.filter(o => o.paymentStatus !== '支払済み' && o.paymentDate && o.paymentDate.startsWith(ym)).reduce((s, o) => s + (Number(o.decided) || 0), 0);
-  const thisMonthReceipts = receipts.filter(r => r.received_date && r.received_date.startsWith(ym)).reduce((s, r) => s + (Number(r.amount) || 0), 0);
+
+  // 翌月の年月
+  const nd = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+  const nextYm = `${nd.getFullYear()}-${String(nd.getMonth() + 1).padStart(2, '0')}`;
+  const invoices = await q('SELECT * FROM invoices');
+
+  // 当月売上・当月利益（売上＝工期開始月の契約金額、利益＝売上−注文確定額）
+  const monthRevProjects = allProjects.filter(p => ymOfDate(p.startDate) === ym);
+  const monthRevIds = new Set(monthRevProjects.map(p => p.id));
+  const thisMonthRevenue = monthRevProjects.reduce((s, p) => s + (Number(p.amount) || 0), 0);
+  const thisMonthRevCost = orders.filter(o => monthRevIds.has(o.project_id)).reduce((s, o) => s + (Number(o.decided) || 0), 0);
+  const thisMonthProfit = thisMonthRevenue - thisMonthRevCost;
+
+  // 入金予定＝請求書の支払期日が該当月のもの（請求総額）
+  const dueSum = (m) => invoices.filter(i => i.due_date && i.due_date.startsWith(m)).reduce((s, i) => s + (Number(i.total) || 0), 0);
+  const thisMonthReceipts = dueSum(ym);
+  const nextMonthReceipts = dueSum(nextYm);
+
+  // 支払予定＝注文の支払期日が該当月で未払いのもの
+  const paySum = (m) => orders.filter(o => o.paymentStatus !== '支払済み' && o.paymentDate && o.paymentDate.startsWith(m)).reduce((s, o) => s + (Number(o.decided) || 0), 0);
+  const thisMonthPayments = paySum(ym);
+  const nextMonthPayments = paySum(nextYm);
+
+  // 未入金総金額＝（請求済み総額 − 入金済み総額）の正値合計（案件単位）
+  let totalUnpaid = 0;
+  allProjects.forEach(p => {
+    const billed = invoices.filter(i => i.project_id === p.id).reduce((s, i) => s + (Number(i.total) || 0), 0);
+    const received = receipts.filter(r => r.project_id === p.id).reduce((s, r) => s + (Number(r.amount) || 0), 0);
+    const outstanding = billed - received;
+    if (outstanding > 0) totalUnpaid += outstanding;
+  });
 
   const projectProfit = projects.map(p => {
     const po = orders.filter(o => o.project_id === p.id);
@@ -613,7 +642,7 @@ app.get('/api/dashboard', h(async (req, res) => {
   const totalProfit = totalRevenue - totalCost;
   const avgMargin = totalRevenue > 0 ? Math.round((totalProfit / totalRevenue * 1000)) / 10 : 0;
 
-  res.json({ month: ym, activeCount: projects.length, totalReceivable, totalPayable, thisMonthReceipts, thisMonthPayments, totalRevenue, totalCost, totalProfit, avgMargin, projectProfit: projectProfit.sort((a, b) => b.revenue - a.revenue) });
+  res.json({ month: ym, activeCount: projects.length, totalReceivable, totalPayable, thisMonthRevenue, thisMonthProfit, thisMonthReceipts, thisMonthPayments, nextMonthReceipts, nextMonthPayments, totalUnpaid, totalRevenue, totalCost, totalProfit, avgMargin, projectProfit: projectProfit.sort((a, b) => b.revenue - a.revenue) });
 }));
 
 // ============ レポート（受注・入金推移）：月次の売上・利益 ============
