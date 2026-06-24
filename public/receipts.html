@@ -7,10 +7,10 @@
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-<script src="/theme.js?v=27"></script>
-<script src="/sidebar.js?v=27"></script>
-<script src="/auth.js?v=27"></script>
-<script src="/header.js?v=27"></script>
+<script src="/theme.js?v=28"></script>
+<script src="/sidebar.js?v=28"></script>
+<script src="/auth.js?v=28"></script>
+<script src="/header.js?v=28"></script>
 <style>
 body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
@@ -214,6 +214,39 @@ body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 </main>
 
 <!-- 入金登録モーダル -->
+<!-- 売上・入金 明細モーダル（閲覧専用・編集不可。案件情報は受注一覧で管理） -->
+<div class="fixed inset-0 z-[110] bg-primary/20 backdrop-blur-md" id="sales-detail-modal" style="display:none" onclick="closeSalesDetail()">
+<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-lg bg-surface-container-lowest rounded-lg custom-shadow overflow-hidden border border-outline-variant" onclick="event.stopPropagation()">
+<div class="px-lg py-md border-b border-outline-variant flex justify-between items-center bg-surface-container-low">
+<h3 class="text-label-md font-label-md text-primary flex items-center gap-1"><span class="material-symbols-outlined text-[18px]">savings</span>売上・入金 明細</h3>
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary" onclick="closeSalesDetail()">close</button>
+</div>
+<div class="p-lg space-y-3">
+<div><p class="text-[11px] text-on-surface-variant">工事名</p><p class="text-label-md font-bold text-primary" id="sd-name">-</p></div>
+<div class="grid grid-cols-2 gap-3">
+<div><p class="text-[11px] text-on-surface-variant">工事番号</p><p class="text-label-md text-on-surface tabular-numbers" id="sd-no">-</p></div>
+<div><p class="text-[11px] text-on-surface-variant">発注者</p><p class="text-label-md text-on-surface" id="sd-client">-</p></div>
+<div><p class="text-[11px] text-on-surface-variant">契約</p><p class="text-label-md text-on-surface" id="sd-status">-</p></div>
+<div><p class="text-[11px] text-on-surface-variant">請求書</p><p class="text-label-md text-on-surface" id="sd-invoice">-</p></div>
+<div><p class="text-[11px] text-on-surface-variant">未完/入金日</p><p class="text-label-md text-on-surface" id="sd-done">-</p></div>
+<div><p class="text-[11px] text-on-surface-variant">入金ステータス</p><span id="sd-pay"></span></div>
+</div>
+<div class="border-t border-outline-variant pt-3 grid grid-cols-2 gap-3">
+<div><p class="text-[11px] text-on-surface-variant">請負金額</p><p class="text-label-md font-bold text-on-surface tabular-numbers" id="sd-contract">-</p></div>
+<div><p class="text-[11px] text-on-surface-variant">入金額累計</p><p class="text-label-md text-on-surface tabular-numbers" id="sd-cum">-</p></div>
+<div><p class="text-[11px] text-on-surface-variant">当月入金額</p><p class="text-label-md text-secondary tabular-numbers" id="sd-thismonth">-</p></div>
+<div><p class="text-[11px] text-on-surface-variant">前月までの入金額</p><p class="text-label-md text-on-surface tabular-numbers" id="sd-prev">-</p></div>
+<div><p class="text-[11px] text-on-surface-variant">完成工事未収入金</p><p class="text-label-md text-error tabular-numbers" id="sd-recv">-</p></div>
+<div><p class="text-[11px] text-on-surface-variant">未成工事受入金</p><p class="text-label-md text-tertiary tabular-numbers" id="sd-adv">-</p></div>
+</div>
+<p class="text-[11px] text-on-surface-variant/70">※ 案件情報は「受注一覧」で管理されます。入金登録は一覧の＋ボタンから行えます。</p>
+</div>
+<div class="px-lg py-md border-t border-outline-variant flex justify-end bg-surface-container-low">
+<button class="px-4 py-1.5 text-label-md font-normal text-on-surface border border-outline-variant rounded-lg hover:bg-surface-container transition-all" onclick="closeSalesDetail()">閉じる</button>
+</div>
+</div>
+</div>
+
 <div class="fixed inset-0 z-[100] bg-primary/20 backdrop-blur-md" id="receipt-modal" style="display:none" onclick="closeReceiptModal()">
 <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-lg max-h-[90vh] bg-surface-container-lowest rounded-lg custom-shadow overflow-hidden border border-outline-variant flex flex-col" onclick="event.stopPropagation()">
 <div class="px-lg py-md border-b border-outline-variant flex justify-between items-center bg-surface-container-low shrink-0">
@@ -310,7 +343,7 @@ function renderSales() {
     tbody.innerHTML = '<tr><td colspan="14" class="px-3 py-8 text-center text-on-surface-variant text-label-md">該当する案件がありません</td></tr>';
   } else {
     tbody.innerHTML = filtered.map(s => `
-    <tr class="${s.pay_status === '未入金' ? 'bg-yellow-50 hover:bg-yellow-100' : 'hover:bg-surface-container-low'} transition-colors">
+    <tr class="${s.pay_status === '未入金' ? 'bg-yellow-50 hover:bg-yellow-100' : 'hover:bg-surface-container-low'} transition-colors cursor-pointer" onclick="openSalesDetail(${s.id})">
       <td class="px-3 py-2.5 text-label-md font-label-md text-on-surface-variant tabular-numbers">${s.project_no || '-'}</td>
       <td class="px-3 py-2.5 text-label-md font-label-md text-on-surface-variant">${s.client}</td>
       <td class="px-3 py-2.5 text-label-md font-label-md text-primary">${s.name}</td>
@@ -325,7 +358,7 @@ function renderSales() {
       <td class="px-3 py-2.5 text-label-md font-label-md text-right tabular-numbers ${s.advance_received > 0 ? 'text-tertiary' : 'text-on-surface-variant'}">${fmt(s.advance_received)}</td>
       <td class="px-3 py-2.5 text-center">${payStatusBadge(s.pay_status)}</td>
       <td class="px-3 py-2.5 text-center">
-        <button class="material-symbols-outlined text-secondary hover:bg-secondary/10 rounded-full w-8 h-8" onclick="openReceiptModal(${s.id})" title="入金登録">add_circle</button>
+        <button class="material-symbols-outlined text-secondary hover:bg-secondary/10 rounded-full w-8 h-8" onclick="event.stopPropagation(); openReceiptModal(${s.id})" title="入金登録">add_circle</button>
       </td>
     </tr>
   `).join('');
@@ -359,6 +392,32 @@ function renderReceipts() {
       </td>
     </tr>`;
   }).join('');
+}
+
+// 閲覧専用の売上・入金明細モーダル
+function openSalesDetail(id) {
+  const s = salesData.find(x => x.id === id);
+  if (!s) return;
+  const set = (eid, v) => { const el = document.getElementById(eid); if (el) el.textContent = v; };
+  set('sd-name', s.name || '-');
+  set('sd-no', s.project_no || '-');
+  set('sd-client', s.client || '-');
+  set('sd-status', s.status || '-');
+  set('sd-invoice', s.invoice_issued ? '発行済' : '未発行');
+  set('sd-done', s.completed ? (s.last_receipt_date || '完成') : '未完');
+  document.getElementById('sd-pay').innerHTML = payStatusBadge(s.pay_status);
+  set('sd-contract', fmt(s.contract_amount));
+  set('sd-cum', fmt(s.cum_received));
+  set('sd-thismonth', fmt(s.this_month_received));
+  set('sd-prev', fmt(s.prev_received));
+  set('sd-recv', fmt(s.completed_receivable));
+  set('sd-adv', fmt(s.advance_received));
+  document.getElementById('sales-detail-modal').style.display = 'block';
+  document.body.style.overflow = 'hidden';
+}
+function closeSalesDetail() {
+  document.getElementById('sales-detail-modal').style.display = 'none';
+  document.body.style.overflow = '';
 }
 
 function openReceiptModal(projectId) {
@@ -443,5 +502,5 @@ async function importCSV(event) {
 loadAll();
 </script>
 
-<script src="/notify.js?v=27"></script>
+<script src="/notify.js?v=28"></script>
 </body></html>

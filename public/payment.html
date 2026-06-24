@@ -7,10 +7,10 @@
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-<script src="/theme.js?v=27"></script>
-<script src="/sidebar.js?v=27"></script>
-<script src="/auth.js?v=27"></script>
-<script src="/header.js?v=27"></script>
+<script src="/theme.js?v=28"></script>
+<script src="/sidebar.js?v=28"></script>
+<script src="/auth.js?v=28"></script>
+<script src="/header.js?v=28"></script>
 <style>
 body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
@@ -163,55 +163,35 @@ body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 </footer>
 </main>
 
-<!-- 送金編集モーダル -->
+<!-- 支払明細モーダル（閲覧専用・編集不可。金額やステータスは工事計画で管理） -->
 <div class="fixed inset-0 z-[100] bg-primary/20 backdrop-blur-md" id="edit-modal" style="display:none" onclick="closeModal()">
-<div class="absolute inset-0 bg-primary/20 backdrop-blur-md" onclick="closeModal()"></div>
-<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl max-h-[90vh] bg-surface-container-lowest rounded-lg custom-shadow overflow-hidden border border-outline-variant">
-<div class="px-lg py-md border-b border-outline-variant flex justify-between items-center bg-surface-container-low sticky top-0">
-<h3 class="text-label-md font-label-md text-on-surface">支払管理の編集</h3>
-<button class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-surface-container transition-colors text-on-surface-variant" onclick="closeModal()">
-<span class="material-symbols-outlined">close</span>
-</button>
+<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-lg bg-surface-container-lowest rounded-lg custom-shadow overflow-hidden border border-outline-variant" onclick="event.stopPropagation()">
+<div class="px-lg py-md border-b border-outline-variant flex justify-between items-center bg-surface-container-low">
+<h3 class="text-label-md font-label-md text-primary flex items-center gap-1"><span class="material-symbols-outlined text-[18px]">payments</span>支払明細</h3>
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary" onclick="closeModal()">close</button>
 </div>
-<div class="p-lg space-y-md overflow-y-auto flex-1">
-<input id="edit-id" type="hidden"/>
-<div class="grid grid-cols-2 gap-md">
-<div class="col-span-2">
-<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">案件名</label>
-<input class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent transition-all" id="edit-project" type="text" readonly/>
+<div class="p-lg space-y-3">
+<div><p class="text-[11px] text-on-surface-variant">工事名</p><p class="text-label-md font-bold text-primary" id="pd-project">-</p></div>
+<div class="grid grid-cols-2 gap-3">
+<div><p class="text-[11px] text-on-surface-variant">工事区分</p><p class="text-label-md text-on-surface" id="pd-category">-</p></div>
+<div><p class="text-[11px] text-on-surface-variant">発注先</p><p class="text-label-md text-on-surface" id="pd-vendor">-</p></div>
+<div><p class="text-[11px] text-on-surface-variant">費用</p><p class="text-label-md text-on-surface tabular-numbers" id="pd-amount">-</p></div>
+<div><p class="text-[11px] text-on-surface-variant">支払期日</p><p class="text-label-md text-on-surface tabular-numbers" id="pd-date">-</p></div>
+<div class="col-span-2"><p class="text-[11px] text-on-surface-variant mb-0.5">入金ステータス</p><span id="pd-status"></span></div>
 </div>
-<div>
-<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">工事区分</label>
-<input class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent transition-all" id="edit-category" type="text" readonly/>
-</div>
-<div>
-<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">発注先</label>
-<input class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent transition-all" id="edit-vendor" type="text" readonly/>
-</div>
-<div>
-<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">費用</label>
-<input class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent transition-all tabular-numbers" id="edit-amount" type="text" readonly/>
-</div>
-<div>
-<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">入金ステータス</label>
-<select class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent transition-all" id="edit-status">
-<option value="未払い">未払い</option>
-<option value="部分払い">部分払い</option>
-<option value="支払済み">支払済み</option>
-</select>
-</div>
-<div>
-<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">支払期日</label>
-<input class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent transition-all" id="edit-payment-date" type="date"/>
-</div>
-<div class="col-span-2">
-<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">備考</label>
-<textarea class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent transition-all" id="edit-notes" rows="3"></textarea>
+<div class="border-t border-outline-variant pt-3">
+<p class="text-[11px] text-on-surface-variant mb-1 flex items-center gap-1"><span class="material-symbols-outlined text-[16px]">account_balance</span>振込先口座情報</p>
+<div class="grid grid-cols-2 gap-3">
+<div><p class="text-[11px] text-on-surface-variant">銀行名</p><p class="text-label-md text-on-surface" id="pd-bank-name">-</p></div>
+<div><p class="text-[11px] text-on-surface-variant">支店名</p><p class="text-label-md text-on-surface" id="pd-bank-branch">-</p></div>
+<div><p class="text-[11px] text-on-surface-variant">種別・口座番号</p><p class="text-label-md text-on-surface tabular-numbers" id="pd-bank-number">-</p></div>
+<div><p class="text-[11px] text-on-surface-variant">口座名義</p><p class="text-label-md text-on-surface" id="pd-bank-holder">-</p></div>
 </div>
 </div>
-<div class="px-lg py-md border-t border-outline-variant flex justify-end items-center gap-3 bg-surface-container-low sticky bottom-0">
-<button class="px-4 py-1.5 text-label-md font-normal text-on-surface border border-outline-variant rounded-lg hover:bg-surface-container transition-all" onclick="closeModal()">キャンセル</button>
-<button class="px-4 py-1.5 text-label-md font-normal text-on-primary bg-primary rounded-lg hover:opacity-90 transition-all" onclick="savePayment()">保存</button>
+<p class="text-[11px] text-on-surface-variant/70">※ 金額・ステータス・支払期日は「工事計画」で管理されます。</p>
+</div>
+<div class="px-lg py-md border-t border-outline-variant flex justify-end bg-surface-container-low">
+<button class="px-4 py-1.5 text-label-md font-normal text-on-surface border border-outline-variant rounded-lg hover:bg-surface-container transition-all" onclick="closeModal()">閉じる</button>
 </div>
 </div>
 </div>
@@ -327,29 +307,22 @@ function getStatusColor(status) {
   return colors[status] || 'bg-surface-container text-on-surface';
 }
 
+// 閲覧専用の支払明細モーダル（編集不可）
 function openModal(id) {
-  const payment = payments.find(p => p.id === id);
-  if (!payment) return;
-
-  document.getElementById('edit-id').value = payment.id;
-  document.getElementById('edit-project').value = payment.projectName;
-  document.getElementById('edit-category').value = payment.category;
-  document.getElementById('edit-vendor').value = payment.vendor;
-  document.getElementById('edit-amount').value = '¥' + payment.amount.toLocaleString();
-  document.getElementById('edit-status').value = payment.status;
-  document.getElementById('edit-notes').value = payment.notes || '';
-
-  if (payment.paymentDate) {
-    document.getElementById('edit-payment-date').value = payment.paymentDate;
-  } else if (payment.handover) {
-    const date = new Date(payment.handover);
-    if (!isNaN(date)) {
-      date.setMonth(date.getMonth() + 2);
-      date.setDate(5);
-      document.getElementById('edit-payment-date').value = date.toISOString().split('T')[0];
-    }
-  }
-
+  const p = payments.find(x => x.id === id);
+  if (!p) return;
+  const set = (eid, v) => { const el = document.getElementById(eid); if (el) el.textContent = v; };
+  set('pd-project', p.projectName || '-');
+  set('pd-category', p.category || '-');
+  set('pd-vendor', p.vendor || '-');
+  set('pd-amount', '¥' + (p.amount || 0).toLocaleString());
+  set('pd-date', p.paymentDate || '-');
+  document.getElementById('pd-status').innerHTML = `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] ${getStatusColor(p.status)}">${p.status}</span>`;
+  const b = p.bank || {};
+  set('pd-bank-name', b.name || '-');
+  set('pd-bank-branch', b.branch || '-');
+  set('pd-bank-number', (b.type || b.number) ? `${b.type || ''} ${b.number || ''}`.trim() : '-');
+  set('pd-bank-holder', b.holder || '-');
   document.getElementById('edit-modal').style.display = 'block';
   document.body.style.overflow = 'hidden';
 }
@@ -357,34 +330,6 @@ function openModal(id) {
 function closeModal() {
   document.getElementById('edit-modal').style.display = 'none';
   document.body.style.overflow = '';
-}
-
-async function savePayment() {
-  const id = parseInt(document.getElementById('edit-id').value);
-  const payment = payments.find(p => p.id === id);
-  if (!payment) return;
-
-  // 元のオーダーデータに支払いフィールドだけ上書きして送る
-  const data = {
-    ...payment._raw,
-    paymentStatus: document.getElementById('edit-status').value,
-    paymentDate: document.getElementById('edit-payment-date').value,
-    paymentNotes: document.getElementById('edit-notes').value
-  };
-
-  try {
-    await fetch(`/api/orders/${id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
-    });
-
-    // Reload latest data from server
-    await loadPayments();
-    closeModal();
-  } catch(e) {
-    console.error('Failed to save payment:', e);
-  }
 }
 
 // フィルタ機能
@@ -446,6 +391,6 @@ function filterTable() {
   `).join('');
 }
 </script>
-<script src="/notify.js?v=27"></script>
+<script src="/notify.js?v=28"></script>
 </body>
 </html>
