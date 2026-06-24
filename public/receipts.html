@@ -7,10 +7,10 @@
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-<script src="/theme.js?v=29"></script>
-<script src="/sidebar.js?v=29"></script>
-<script src="/auth.js?v=29"></script>
-<script src="/header.js?v=29"></script>
+<script src="/theme.js?v=30"></script>
+<script src="/sidebar.js?v=30"></script>
+<script src="/auth.js?v=30"></script>
+<script src="/header.js?v=30"></script>
 <style>
 body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
@@ -306,14 +306,29 @@ async function loadAll() {
   renderReceipts();
 }
 
-function payStatusBadge(status) {
+function payStatusClass(status) {
   const map = {
     '入金済': 'bg-secondary-container text-on-secondary-container',
     '一部入金': 'bg-tertiary-fixed text-on-tertiary-fixed-variant',
     '未入金': 'bg-error/10 text-error'
   };
-  const cls = map[status] || 'bg-surface-container text-on-surface';
-  return `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold ${cls}">${status}</span>`;
+  return map[status] || 'bg-surface-container text-on-surface';
+}
+function payStatusBadge(status) {
+  return `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold ${payStatusClass(status)}">${status}</span>`;
+}
+// 一覧から入金ステータスを変更（DB保存＋履歴記録）
+async function updateReceiptStatus(id, value) {
+  const s = salesData.find(x => x.id === id);
+  if (!s || s.pay_status === value) return;
+  try {
+    const res = await fetch(`/api/projects/${id}/receipt-status`, {
+      method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ value })
+    });
+    if (!res.ok) throw new Error('failed');
+    s.pay_status = value;
+    renderSales();
+  } catch (e) { alert('ステータス更新に失敗しました'); }
 }
 
 function clearReceiptFilters() {
@@ -356,7 +371,14 @@ function renderSales() {
       <td class="px-3 py-2.5 text-label-md font-label-md text-right tabular-numbers">${fmt(s.cum_received)}</td>
       <td class="px-3 py-2.5 text-label-md font-label-md text-right tabular-numbers ${s.completed_receivable > 0 ? 'text-error' : 'text-on-surface-variant'}">${fmt(s.completed_receivable)}</td>
       <td class="px-3 py-2.5 text-label-md font-label-md text-right tabular-numbers ${s.advance_received > 0 ? 'text-tertiary' : 'text-on-surface-variant'}">${fmt(s.advance_received)}</td>
-      <td class="px-3 py-2.5 text-center">${payStatusBadge(s.pay_status)}</td>
+      <td class="px-3 py-2.5 text-center" onclick="event.stopPropagation()">
+        <div class="relative inline-block">
+          <select onchange="updateReceiptStatus(${s.id}, this.value)" class="appearance-none text-[11px] font-bold rounded-md pl-2 pr-6 py-1 border border-outline-variant cursor-pointer hover:border-secondary focus:ring-2 focus:ring-secondary/30 ${payStatusClass(s.pay_status)}">
+            ${['未入金','一部入金','入金済'].map(o => `<option value="${o}" ${o === s.pay_status ? 'selected' : ''}>${o}</option>`).join('')}
+          </select>
+          <span class="material-symbols-outlined absolute right-0.5 top-1/2 -translate-y-1/2 text-[16px] pointer-events-none">arrow_drop_down</span>
+        </div>
+      </td>
       <td class="px-3 py-2.5 text-center">
         <button class="material-symbols-outlined text-secondary hover:bg-secondary/10 rounded-full w-8 h-8" onclick="event.stopPropagation(); openReceiptModal(${s.id})" title="入金登録">add_circle</button>
       </td>
@@ -502,5 +524,5 @@ async function importCSV(event) {
 loadAll();
 </script>
 
-<script src="/notify.js?v=29"></script>
+<script src="/notify.js?v=30"></script>
 </body></html>

@@ -51,7 +51,8 @@ create table projects (
   status        text,
   notes         text,
   paid          integer default 0,
-  project_no    text
+  project_no    text,
+  receipt_status text
 );
 
 -- 協力業者（発注先）

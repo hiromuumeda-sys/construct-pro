@@ -443,6 +443,8 @@ app.get('/api/sales-summary', h(async (req, res) => {
     let payStatus = '未入金';
     if (contract > 0 && received >= contract) payStatus = '入金済';
     else if (received > 0) payStatus = '一部入金';
+    // 手動上書き（receipt_status）があればそれを優先
+    if (p.receipt_status) payStatus = p.receipt_status;
     const invs = await q('SELECT * FROM invoices WHERE project_id=$1', [p.id]);
     const invoiceIssued = invs.length > 0;
     const inv = invs.length ? invs[invs.length - 1] : null;
@@ -461,6 +463,21 @@ app.get('/api/sales-summary', h(async (req, res) => {
     });
   }
   res.json(summary);
+}));
+
+// 入金ステータスの手動変更（DB保存＋履歴記録）
+app.put('/api/projects/:id/receipt-status', h(async (req, res) => {
+  const { value } = req.body;
+  const before = await one('SELECT * FROM projects WHERE id=$1', [req.params.id]);
+  if (!before) return res.status(404).json({ error: 'project not found' });
+  const prev = before.receipt_status || '(自動)';
+  await q('UPDATE projects SET receipt_status=$1 WHERE id=$2', [value, req.params.id]);
+  const userId = getUserId(req);
+  await logAudit(userId, 'UPDATE', 'receipts', parseInt(req.params.id), {
+    name: before.name,
+    changes: [`入金ステータスを ${prev} → ${value} に変更`],
+  });
+  res.json({ success: true });
 }));
 
 // ============ Invoices API (請求書 F4-2) ============
