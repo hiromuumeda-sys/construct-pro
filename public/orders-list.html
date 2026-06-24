@@ -7,10 +7,10 @@
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-<script src="/theme.js?v=24"></script>
-<script src="/sidebar.js?v=24"></script>
-<script src="/auth.js?v=24"></script>
-<script src="/header.js?v=24"></script>
+<script src="/theme.js?v=25"></script>
+<script src="/sidebar.js?v=25"></script>
+<script src="/auth.js?v=25"></script>
+<script src="/header.js?v=25"></script>
 <style>
 body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
@@ -436,42 +436,43 @@ function doneBadge(done) {
     return `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] ${cls} hover:opacity-80">${done ? '済' : '未'}</span>`;
 }
 
-// 未/済の手動変更はブラウザ単位で保持（localStorage）
-function getStatusOverrides() {
-    try { return JSON.parse(localStorage.getItem('order_status_overrides') || '{"ack":{},"invoice":{}}'); }
-    catch(e) { return { ack: {}, invoice: {} }; }
-}
-function setStatusOverride(kind, id, value) {
-    const o = getStatusOverrides();
-    if (!o[kind]) o[kind] = {};
-    o[kind][id] = value;
-    localStorage.setItem('order_status_overrides', JSON.stringify(o));
-}
-
-// 請書（注文請書）の受領状況：オーバーライド優先、なければ発注完了/支払済みを済とみなす
+// 請書（注文請書）の受領状況：DB列(ack_done)優先、未設定なら発注完了/支払済みを済とみなす
 function isAckDone(order) {
-    const ov = getStatusOverrides().ack;
-    if (ov && Object.prototype.hasOwnProperty.call(ov, order.id)) return !!ov[order.id];
+    if (order.ack_done === true || order.ack_done === false) return order.ack_done;
     return ['発注完了', '支払済み'].includes(order.status);
 }
-// 請求書の発行状況：オーバーライド優先、なければ該当案件に請求書が登録済みか
+// 請求書の発行状況：DB列(invoice_done)優先、未設定なら該当案件に請求書が登録済みか
 function isInvoiceDone(order) {
-    const ov = getStatusOverrides().invoice;
-    if (ov && Object.prototype.hasOwnProperty.call(ov, order.id)) return !!ov[order.id];
+    if (order.invoice_done === true || order.invoice_done === false) return order.invoice_done;
     const invoices = window.appCache.invoices || [];
     return invoices.some(inv => inv.project_id == order.project_id);
 }
 function ackBadge(order) { return doneBadge(isAckDone(order)); }
 function invoiceBadge(order) { return doneBadge(isInvoiceDone(order)); }
 
-// 確認ダイアログ付きで未/済を変更
+// 未/済を変更（DB保存＋履歴記録）
+async function setDocStatus(kind, id, value) {
+    const apply = (o) => { if (o) o[kind === 'invoice' ? 'invoice_done' : 'ack_done'] = value; };
+    try {
+        const res = await fetch(`/api/orders/${id}/doc-status`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ kind, value })
+        });
+        if (!res.ok) throw new Error('failed');
+        apply(orders.find(o => o.id === id));
+        apply(window.appCache.orders.find(o => o.id === id));
+        renderTable();
+    } catch (e) {
+        alert('更新に失敗しました');
+    }
+}
 function toggleAck(id) {
     const order = orders.find(o => o.id === id) || window.appCache.orders.find(o => o.id === id);
     if (!order) return;
     const cur = isAckDone(order);
     if (confirm(`請書のステータスを「${cur ? '済' : '未'}」→「${cur ? '未' : '済'}」に変更しますか？`)) {
-        setStatusOverride('ack', id, !cur);
-        renderTable();
+        setDocStatus('ack', id, !cur);
     }
 }
 function toggleInvoice(id) {
@@ -479,8 +480,7 @@ function toggleInvoice(id) {
     if (!order) return;
     const cur = isInvoiceDone(order);
     if (confirm(`請求書のステータスを「${cur ? '済' : '未'}」→「${cur ? '未' : '済'}」に変更しますか？`)) {
-        setStatusOverride('invoice', id, !cur);
-        renderTable();
+        setDocStatus('invoice', id, !cur);
     }
 }
 
@@ -1031,6 +1031,6 @@ function filterTable() {
 }
 
 </script>
-<script src="/notify.js?v=24"></script>
+<script src="/notify.js?v=25"></script>
 </body>
 </html>

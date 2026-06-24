@@ -98,7 +98,9 @@ create table orders (
   payment       text,
   "paymentStatus" text default '未払い',
   "paymentDate"   text,
-  "paymentNotes"  text
+  "paymentNotes"  text,
+  ack_done        boolean,
+  invoice_done    boolean
 );
 
 -- 顧客

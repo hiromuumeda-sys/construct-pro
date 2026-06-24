@@ -305,6 +305,22 @@ app.delete('/api/orders/:id', h(async (req, res) => {
   res.json({ success: true });
 }));
 
+// 請書／請求書の未済トグル（DB保存＋履歴記録）
+app.put('/api/orders/:id/doc-status', h(async (req, res) => {
+  const { kind, value } = req.body; // kind: 'ack' | 'invoice'
+  const col = kind === 'invoice' ? 'invoice_done' : 'ack_done';
+  const label = kind === 'invoice' ? '請求書' : '請書';
+  const before = await one('SELECT * FROM orders WHERE id=$1', [req.params.id]);
+  if (!before) return res.status(404).json({ error: 'order not found' });
+  await q(`UPDATE orders SET ${col}=$1 WHERE id=$2`, [!!value, req.params.id]);
+  const userId = getUserId(req);
+  await logAudit(userId, 'UPDATE', 'orders', parseInt(req.params.id), {
+    name: `${before.category || ''}（${before.vendor || ''}）`,
+    changes: [`${label}を ${value ? '未 → 済' : '済 → 未'} に変更`],
+  });
+  res.json({ success: true });
+}));
+
 // ============ Customers API ============
 app.get('/api/customers', h(async (req, res) => {
   res.json(await q('SELECT * FROM customers ORDER BY id'));
