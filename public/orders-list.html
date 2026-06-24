@@ -7,10 +7,10 @@
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-<script src="/theme.js?v=26"></script>
-<script src="/sidebar.js?v=26"></script>
-<script src="/auth.js?v=26"></script>
-<script src="/header.js?v=26"></script>
+<script src="/theme.js?v=27"></script>
+<script src="/sidebar.js?v=27"></script>
+<script src="/auth.js?v=27"></script>
+<script src="/header.js?v=27"></script>
 <style>
 body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
@@ -405,7 +405,7 @@ function renderTable() {
             <td class="px-3 py-1.5 text-label-md font-label-md text-right tabular-numbers cursor-pointer" onclick="openOrderDetailModal(${order.id})">${order.planned ? order.planned.toLocaleString() : '-'}</td>
             <td class="px-3 py-1.5 text-label-md font-label-md text-right tabular-numbers cursor-pointer" onclick="openOrderDetailModal(${order.id})">${order.decided ? order.decided.toLocaleString() : '-'}</td>
             <td class="px-3 py-1.5 text-label-md font-label-md text-center whitespace-nowrap cursor-pointer" onclick="openOrderDetailModal(${order.id})">
-                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] ${getStatusColor(order.status)}">${order.status}</span>
+                <select onclick="event.stopPropagation()" onchange="event.stopPropagation(); updateOrderStatus(${order.id}, this.value)" class="text-[11px] rounded-full px-2 py-1 border-0 cursor-pointer focus:ring-2 focus:ring-secondary/30 ${getStatusColor(order.status)}">${['未処理','見積待ち','決定済み','発注完了','支払済み'].map(s => `<option value="${s}" ${s === order.status ? 'selected' : ''}>${s}</option>`).join('')}</select>
             </td>
             <td class="px-3 py-1.5 text-center whitespace-nowrap"><input type="checkbox" ${isInvoiceDone(order) ? 'checked' : ''} onchange="setDocStatus('invoice', ${order.id}, this.checked)" class="w-4 h-4 accent-secondary cursor-pointer" title="請求書 発行済にチェック"/></td>
             <td class="px-3 py-1.5 text-center whitespace-nowrap"><input type="checkbox" ${isAckDone(order) ? 'checked' : ''} onchange="setDocStatus('ack', ${order.id}, this.checked)" class="w-4 h-4 accent-secondary cursor-pointer" title="請書 受領済にチェック"/></td>
@@ -481,6 +481,22 @@ function toggleInvoice(id) {
     const cur = isInvoiceDone(order);
     if (confirm(`請求書のステータスを「${cur ? '済' : '未'}」→「${cur ? '未' : '済'}」に変更しますか？`)) {
         setDocStatus('invoice', id, !cur);
+    }
+}
+
+// 一覧から直接ステータス変更（PUTで保存→履歴記録）
+async function updateOrderStatus(id, status) {
+    const o = window.appCache.orders.find(x => x.id === id);
+    if (!o || o.status === status) return;
+    const b = { project_id: o.project_id, category: o.category, vendor: o.vendor, estimate: o.estimate, planned: o.planned, decided: o.decided, status, details: o.details, site: o.site, period_start: o.period_start, period_end: o.period_end, handover: o.handover, payment: o.payment, paymentStatus: o.paymentStatus, paymentDate: o.paymentDate, paymentNotes: o.paymentNotes };
+    try {
+        const res = await fetch(`/api/orders/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(b) });
+        if (!res.ok) throw new Error('failed');
+        o.status = status;
+        const inView = orders.find(x => x.id === id); if (inView) inView.status = status;
+        filterTable();
+    } catch (e) {
+        alert('ステータス更新に失敗しました');
     }
 }
 
@@ -1024,13 +1040,13 @@ function filterTable() {
             <td class="px-3 py-1.5 text-label-md font-label-md text-right tabular-numbers">${order.planned ? order.planned.toLocaleString() : '-'}</td>
             <td class="px-3 py-1.5 text-label-md font-label-md text-right tabular-numbers">${order.decided ? order.decided.toLocaleString() : '-'}</td>
             <td class="px-3 py-1.5 text-label-md font-label-md text-center whitespace-nowrap">
-                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] ${getStatusColor(order.status)}">${order.status}</span>
+                <select onclick="event.stopPropagation()" onchange="event.stopPropagation(); updateOrderStatus(${order.id}, this.value)" class="text-[11px] rounded-full px-2 py-1 border-0 cursor-pointer focus:ring-2 focus:ring-secondary/30 ${getStatusColor(order.status)}">${['未処理','見積待ち','決定済み','発注完了','支払済み'].map(s => `<option value="${s}" ${s === order.status ? 'selected' : ''}>${s}</option>`).join('')}</select>
             </td>
         </tr>
     `).join('');
 }
 
 </script>
-<script src="/notify.js?v=26"></script>
+<script src="/notify.js?v=27"></script>
 </body>
 </html>
