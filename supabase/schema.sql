@@ -103,7 +103,8 @@ create table orders (
   "paymentDate"   text,
   "paymentNotes"  text,
   ack_done        boolean,
-  invoice_done    boolean
+  invoice_done    boolean,
+  remaining       bigint
 );
 
 -- 請書（注文請書）PDF。orders 1件につき1ファイル。
@@ -266,6 +267,9 @@ begin
     end loop;
   end loop;
 end $$;
+
+-- 残金の初期値＝費用（決定金額）
+update orders set remaining = decided;
 
 -- 入金データ（受注案件の着手金・中間金）
 insert into receipts (project_id, received_date, amount, month, memo) values

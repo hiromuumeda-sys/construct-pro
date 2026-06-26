@@ -6,10 +6,10 @@
 <title>工事計画 - WIN WIN様デモ</title>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
-<link rel="stylesheet" href="/styles.css?v=45"/>
-<script src="/sidebar.js?v=45"></script>
-<script src="/auth.js?v=45"></script>
-<script src="/header.js?v=45"></script>
+<link rel="stylesheet" href="/styles.css?v=46"/>
+<script src="/sidebar.js?v=46"></script>
+<script src="/auth.js?v=46"></script>
+<script src="/header.js?v=46"></script>
 <style>
 body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
@@ -194,8 +194,9 @@ CSV出力
 <table class="w-full text-left border-separate border-spacing-0">
 <thead>
 <tr class="bg-surface-container-low">
-<th class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant w-1/5">工事区分</th>
-<th class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant w-1/4">発注先</th>
+<th class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant w-[12%]">工事区分</th>
+<th class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant w-[14%]">発注先</th>
+<th class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant">備考</th>
 <th class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant text-right">見積額</th>
 <th class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant text-right">予定金額</th>
 <th class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant text-right">決定金額</th>
@@ -446,6 +447,7 @@ function renderTable() {
         <tr class="hover:bg-surface-container-low transition-colors group">
             <td class="px-3 py-1.5 text-label-md font-label-md text-on-surface cursor-pointer group-hover:text-primary transition-colors" onclick="openOrderDetailModal(${order.id})">${order.category || '-'}</td>
             <td class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant cursor-pointer" onclick="openOrderDetailModal(${order.id})">${order.vendor || '-'}</td>
+            <td class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant cursor-pointer" onclick="openOrderDetailModal(${order.id})" title="${(order.details || '').replace(/"/g, '&quot;')}">${order.details ? (order.details.length > 20 ? order.details.slice(0, 20) + '…' : order.details) : '-'}</td>
             <td class="px-3 py-1.5 text-label-md font-label-md text-right tabular-numbers cursor-pointer" onclick="openOrderDetailModal(${order.id})">${order.estimate ? order.estimate.toLocaleString() : '-'}</td>
             <td class="px-3 py-1.5 text-label-md font-label-md text-right tabular-numbers cursor-pointer" onclick="openOrderDetailModal(${order.id})">${order.planned ? order.planned.toLocaleString() : '-'}</td>
             <td class="px-3 py-1.5 text-label-md font-label-md text-right tabular-numbers cursor-pointer" onclick="openOrderDetailModal(${order.id})">${order.decided ? order.decided.toLocaleString() : '-'}</td>
@@ -788,7 +790,6 @@ function showPoModal(order, project) {
                 <div class="flex gap-3"><span class="w-14 shrink-0"></span><span class="w-16 shrink-0">会社名</span><span>株式会社WIN WIN</span></div>
                 <div class="flex gap-3 items-center"><span class="w-14 shrink-0"></span><span class="w-16 shrink-0">代表者名</span><span>磯田　裕晃</span><span class="ml-auto w-9 h-9 border border-outline-variant text-outline flex items-center justify-center text-[10px]">印</span></div>
               </div>
-              <p class="mt-6 text-[10px] text-on-surface-variant">※ PDFには2ページ目として「注文請書」が付きます。</p>
             </div>
           </div>
         </div>
@@ -1155,6 +1156,6 @@ function filterTable() {
 }
 
 </script>
-<script src="/notify.js?v=45"></script>
+<script src="/notify.js?v=46"></script>
 </body>
 </html>

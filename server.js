@@ -36,6 +36,9 @@ function ensureAux() {
         created_by  integer,
         created_at  timestamp default current_timestamp
       )`);
+      // 支払の残金（費用と同額を初期値）。未設定は決定金額で補完。
+      await createIfMissing('ALTER TABLE orders ADD COLUMN IF NOT EXISTS remaining bigint');
+      await q('UPDATE orders SET remaining = decided WHERE remaining IS NULL').catch(() => {});
     })().catch(e => { _auxReady = null; throw e; });
   }
   return _auxReady;
@@ -394,11 +397,14 @@ app.delete('/api/orders/:id/ack-file', h(async (req, res) => {
 }));
 
 app.post('/api/orders', h(async (req, res) => {
+  await ensureAux();
   const b = req.body;
   const ins = await one(
     `INSERT INTO orders (${ORDER_COLS}) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16) RETURNING id`,
     [b.project_id, b.category, b.vendor, b.estimate, b.planned, b.decided, b.status, b.details, b.site, b.period_start, b.period_end, b.handover, b.payment, b.paymentStatus || '未払い', b.paymentDate || '', b.paymentNotes || '']
   );
+  // 残金の初期値＝費用（決定金額）
+  await q('UPDATE orders SET remaining = $1 WHERE id = $2', [(b.remaining != null ? b.remaining : (b.decided || 0)), ins.id]);
   const userId = getUserId(req);
   await logAudit(userId, 'CREATE', 'orders', ins.id, { name: `${b.category || ''}（${b.vendor || ''}）`, changes: [`新規登録（工事区分: ${b.category || '-'} / 発注先: ${b.vendor || '-'}）`] });
   res.json({ id: ins.id, ...b });
@@ -436,6 +442,21 @@ app.put('/api/orders/:id/doc-status', h(async (req, res) => {
   await logAudit(userId, 'UPDATE', 'orders', parseInt(req.params.id), {
     name: `${before.category || ''}（${before.vendor || ''}）`,
     changes: [`${label}を ${value ? '未 → 済' : '済 → 未'} に変更`],
+  });
+  res.json({ success: true });
+}));
+
+// 残金（支払の残額）を更新
+app.put('/api/orders/:id/remaining', h(async (req, res) => {
+  await ensureAux();
+  const before = await one('SELECT * FROM orders WHERE id=$1', [req.params.id]);
+  if (!before) return res.status(404).json({ error: 'order not found' });
+  const value = Math.max(0, parseInt(req.body.value, 10) || 0);
+  await q('UPDATE orders SET remaining=$1 WHERE id=$2', [value, req.params.id]);
+  const prev = before.remaining != null ? before.remaining : before.decided;
+  await logAudit(getUserId(req), 'UPDATE', 'orders', parseInt(req.params.id), {
+    name: `${before.category || ''}（${before.vendor || ''}）`,
+    changes: [`残金を ${fmtVal(prev)} → ${fmtVal(value)} に変更`],
   });
   res.json({ success: true });
 }));
@@ -1055,8 +1076,6 @@ function buildPurchaseOrderPDF(order, project, vendor) {
       ['支払条件／支払方法', order.payment || '-'],
     ];
     renderOrderAckSheet(doc, 'order', { vendorName, vendorAddr, fields, wareki: toWareki(new Date()) });
-    doc.addPage();
-    renderOrderAckSheet(doc, 'ack', { vendorName, vendorAddr, fields, wareki: null });
     doc.end();
   });
 }

@@ -6,10 +6,10 @@
 <title>支払管理 - WIN WIN様デモ</title>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
-<link rel="stylesheet" href="/styles.css?v=45"/>
-<script src="/sidebar.js?v=45"></script>
-<script src="/auth.js?v=45"></script>
-<script src="/header.js?v=45"></script>
+<link rel="stylesheet" href="/styles.css?v=46"/>
+<script src="/sidebar.js?v=46"></script>
+<script src="/auth.js?v=46"></script>
+<script src="/header.js?v=46"></script>
 <style>
 body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
@@ -142,8 +142,8 @@ body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 <th class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant">案件名</th>
 <th class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant w-[10%]">工事区分</th>
 <th class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant w-[13%]">発注先</th>
-<th class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant">備考</th>
 <th class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant text-right">費用</th>
+<th class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant text-right">残金</th>
 <th class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant w-28">支払期日</th>
 <th class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant w-32">支払銀行</th>
 <th class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant text-center w-36">支払ステータス</th>
@@ -178,6 +178,14 @@ body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 <div><p class="text-[11px] text-on-surface-variant">費用</p><p class="text-label-md text-on-surface tabular-numbers" id="pd-amount">-</p></div>
 <div><p class="text-[11px] text-on-surface-variant">支払期日</p><p class="text-label-md text-on-surface tabular-numbers" id="pd-date">-</p></div>
 <div class="col-span-2"><p class="text-[11px] text-on-surface-variant mb-0.5">支払ステータス</p><span id="pd-status"></span></div>
+</div>
+<div class="border-t border-outline-variant pt-3">
+<p class="text-[11px] text-on-surface-variant mb-1">残金（編集可）</p>
+<div class="flex items-center gap-2">
+<span class="text-on-surface-variant">¥</span>
+<input id="pd-remaining" type="number" min="0" class="w-44 bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-3 py-1.5 tabular-numbers focus:ring-2 focus:ring-secondary/20 focus:border-transparent"/>
+<button onclick="saveRemaining()" class="px-3 py-1.5 text-label-md font-normal text-on-primary bg-secondary rounded-lg hover:opacity-90 transition-all">残金を保存</button>
+</div>
 </div>
 <div class="border-t border-outline-variant pt-3">
 <p class="text-[11px] text-on-surface-variant mb-1 flex items-center gap-1"><span class="material-symbols-outlined text-[16px]">account_balance</span>振込先口座情報</p>
@@ -233,6 +241,7 @@ async function loadPayments() {
       category: order.category || '-',
       vendor: order.vendor || '-',
       amount: order.decided || order.planned || 0,
+      remaining: (order.remaining != null ? order.remaining : (order.decided || order.planned || 0)),
       status: order.paymentStatus || '未払い',
       paymentDate: order.paymentDate || '',
       notes: order.paymentNotes || '',
@@ -253,8 +262,8 @@ function renderTable() {
       <td class="px-3 py-1.5 text-label-md font-label-md text-on-surface group-hover:text-primary transition-colors">${payment.projectName}</td>
       <td class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant">${payment.category}</td>
       <td class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant">${payment.vendor}</td>
-      <td class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant" title="${(payment.notes || '').replace(/"/g, '&quot;')}">${payment.notes ? (payment.notes.length > 15 ? payment.notes.slice(0, 15) + '…' : payment.notes) : '<span class="text-on-surface-variant/40">-</span>'}</td>
       <td class="px-3 py-1.5 text-label-md font-label-md text-right tabular-numbers">¥${payment.amount.toLocaleString()}</td>
+      <td class="px-3 py-1.5 text-label-md font-label-md text-right tabular-numbers text-error font-bold">¥${(payment.remaining ?? payment.amount).toLocaleString()}</td>
       <td class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant tabular-numbers">${payment.paymentDate || '-'}</td>
       <td class="px-3 py-1.5 text-label-md font-label-md">${payment.bank && payment.bank.name ? `<span class="text-on-surface">${payment.bank.name}</span>` : '<span class="text-on-surface-variant/40">-</span>'}</td>
       <td class="px-3 py-1.5 text-label-md font-label-md text-center whitespace-nowrap">
@@ -296,15 +305,18 @@ async function updatePaymentStatus(id, status) {
   }
 }
 
-// 閲覧専用の支払明細モーダル（編集不可）
+// 支払明細モーダル（残金のみ編集可。その他は工事計画で管理）
+let pdCurrentId = null;
 function openModal(id) {
   const p = payments.find(x => x.id === id);
   if (!p) return;
+  pdCurrentId = id;
   const set = (eid, v) => { const el = document.getElementById(eid); if (el) el.textContent = v; };
   set('pd-project', p.projectName || '-');
   set('pd-category', p.category || '-');
   set('pd-vendor', p.vendor || '-');
   set('pd-amount', '¥' + (p.amount || 0).toLocaleString());
+  document.getElementById('pd-remaining').value = (p.remaining != null ? p.remaining : p.amount) || 0;
   set('pd-date', p.paymentDate || '-');
   document.getElementById('pd-status').innerHTML = `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] ${getStatusColor(p.status)}">${p.status}</span>`;
   const b = p.bank || {};
@@ -319,6 +331,22 @@ function openModal(id) {
 function closeModal() {
   document.getElementById('edit-modal').style.display = 'none';
   document.body.style.overflow = '';
+}
+
+// 残金を保存（orders.remaining を更新）→ 一覧の赤字に反映
+async function saveRemaining() {
+  if (pdCurrentId == null) return;
+  const value = Math.max(0, parseInt(document.getElementById('pd-remaining').value, 10) || 0);
+  try {
+    const res = await fetch(`/api/orders/${pdCurrentId}/remaining`, {
+      method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ value })
+    });
+    if (!res.ok) throw new Error('failed');
+    const p = payments.find(x => x.id === pdCurrentId);
+    if (p) { p.remaining = value; if (p._raw) p._raw.remaining = value; }
+    renderTable();
+    closeModal();
+  } catch (e) { alert('残金の更新に失敗しました'); }
 }
 
 // フィルタ機能
@@ -370,8 +398,8 @@ function filterTable() {
       <td class="px-3 py-1.5 text-label-md font-label-md text-on-surface group-hover:text-primary transition-colors">${payment.projectName}</td>
       <td class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant">${payment.category}</td>
       <td class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant">${payment.vendor}</td>
-      <td class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant" title="${(payment.notes || '').replace(/"/g, '&quot;')}">${payment.notes ? (payment.notes.length > 15 ? payment.notes.slice(0, 15) + '…' : payment.notes) : '<span class="text-on-surface-variant/40">-</span>'}</td>
       <td class="px-3 py-1.5 text-label-md font-label-md text-right tabular-numbers">¥${payment.amount.toLocaleString()}</td>
+      <td class="px-3 py-1.5 text-label-md font-label-md text-right tabular-numbers text-error font-bold">¥${(payment.remaining ?? payment.amount).toLocaleString()}</td>
       <td class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant tabular-numbers">${payment.paymentDate || '-'}</td>
       <td class="px-3 py-1.5 text-label-md font-label-md">${payment.bank && payment.bank.name ? `<span class="text-on-surface">${payment.bank.name}</span>` : '<span class="text-on-surface-variant/40">-</span>'}</td>
       <td class="px-3 py-1.5 text-label-md font-label-md text-center whitespace-nowrap">
@@ -386,6 +414,6 @@ function filterTable() {
   `).join('');
 }
 </script>
-<script src="/notify.js?v=45"></script>
+<script src="/notify.js?v=46"></script>
 </body>
 </html>
