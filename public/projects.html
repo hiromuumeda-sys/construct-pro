@@ -665,9 +665,9 @@ function generateInvoice(projectId) {
 
   // Pre-fill email fields
   document.getElementById('invoice-email-to').value = project.clientEmail || '';
-  document.getElementById('invoice-email-subject').value = `【請求書】${project.name}`;
+  document.getElementById('invoice-email-subject').value = `【請求書送付】${project.name}`;
   document.getElementById('invoice-email-body').value =
-    `${project.clientCompany || project.client} ご担当者様\n\nお世話になっております。\n請求書をお送りいたします。\nご査収のほどよろしくお願いいたします。\n\n株式会社WIN WIN`;
+    `${project.clientCompany || project.client} ご担当者様\n\n平素より大変お世話になっております。\n株式会社WIN WINでございます。\n\n「${project.name}」につきまして、請求書を添付のとおりお送りいたします。\nお手数ですが、ご査収のほどよろしくお願い申し上げます。\n\nお振込みは、請求書記載の期日までにお願いいたします。\n今後とも変わらぬお引き立てを賜りますよう、お願い申し上げます。\n\n──────────────────\n株式会社WIN WIN\n〒604-0924 京都市中京区一之船入町537-20 FIS御池ビル505号\nTEL：075-777-1236\n──────────────────`;
 
   document.getElementById('invoice-modal').style.display = 'block';
   document.body.style.overflow = 'hidden';
@@ -681,7 +681,7 @@ function closeInvoicePreview() {
 
 function openInvoiceEmailForm(e) {
   if (e) e.stopPropagation();
-  document.getElementById('invoice-email-panel').style.display = 'block';
+  document.getElementById('invoice-email-panel').style.display = 'flex';
 }
 
 function closeInvoiceEmailForm() {
@@ -792,9 +792,9 @@ function generateEstimate(projectId) {
     : '<tr><td colspan="6" class="border border-outline-variant p-4 text-center text-on-surface-variant">注文データがありません</td></tr>';
 
   document.getElementById('estimate-email-to').value = project.clientEmail || '';
-  document.getElementById('estimate-email-subject').value = `【見積書】${project.name}`;
+  document.getElementById('estimate-email-subject').value = `【お見積書送付】${project.name}`;
   document.getElementById('estimate-email-body').value =
-    `${project.clientCompany || project.client} ご担当者様\n\nお世話になっております。\nお見積書をお送りいたします。\nご検討のほどよろしくお願いいたします。\n\n株式会社WIN WIN`;
+    `${project.clientCompany || project.client} ご担当者様\n\n平素より格別のお引き立てを賜り、厚く御礼申し上げます。\n株式会社WIN WINでございます。\n\nご依頼いただきました「${project.name}」につきまして、お見積書を添付のとおりお送りいたします。\nご多用のところ恐れ入りますが、ご検討のほどよろしくお願い申し上げます。\n\nご不明な点やご要望がございましたら、何なりとお申し付けください。\n\n──────────────────\n株式会社WIN WIN\n〒604-0924 京都市中京区一之船入町537-20 FIS御池ビル505号\nTEL：075-777-1236\n──────────────────`;
 
   document.getElementById('estimate-modal').style.display = 'block';
   document.body.style.overflow = 'hidden';
@@ -808,7 +808,7 @@ function closeEstimatePreview() {
 
 function openEstimateEmailForm(e) {
   if (e) e.stopPropagation();
-  document.getElementById('estimate-email-panel').style.display = 'block';
+  document.getElementById('estimate-email-panel').style.display = 'flex';
 }
 
 function closeEstimateEmailForm() {
@@ -967,7 +967,7 @@ async function sendEstimateEmail() {
         </div>
         <div>
           <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-2">本文</label>
-          <textarea id="invoice-email-body" rows="4" class="w-full bg-surface-container-low border border-outline-variant/50 rounded-xl text-sm px-4 py-3 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"></textarea>
+          <textarea id="invoice-email-body" rows="12" class="w-full bg-surface-container-low border border-outline-variant/50 rounded-xl text-sm px-4 py-3 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"></textarea>
         </div>
       </div>
       <div class="px-6 py-4 border-t border-outline-variant flex justify-end gap-3">
@@ -1078,7 +1078,7 @@ async function sendEstimateEmail() {
         </div>
         <div>
           <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-2">本文</label>
-          <textarea id="estimate-email-body" rows="4" class="w-full bg-surface-container-low border border-outline-variant/50 rounded-xl text-sm px-4 py-3 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"></textarea>
+          <textarea id="estimate-email-body" rows="12" class="w-full bg-surface-container-low border border-outline-variant/50 rounded-xl text-sm px-4 py-3 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"></textarea>
         </div>
       </div>
       <div class="px-6 py-4 border-t border-outline-variant flex justify-end gap-3">

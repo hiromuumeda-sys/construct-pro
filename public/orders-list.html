@@ -853,16 +853,26 @@ function openPoEmailForm() {
           </div>
           <div>
             <label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">件名</label>
-            <input id="po-email-subject" type="text" class="w-full bg-surface-container-low border border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent transition-all" value="【発注書】${order.category}工事"/>
+            <input id="po-email-subject" type="text" class="w-full bg-surface-container-low border border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent transition-all" value="【発注書送付】${project ? project.name : (order.category || '工事')}"/>
           </div>
           <div>
             <label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">本文</label>
-            <textarea id="po-email-body" rows="4" class="w-full bg-surface-container-low border border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent transition-all">お疲れ様です。
+            <textarea id="po-email-body" rows="11" class="w-full bg-surface-container-low border border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent transition-all">${order.vendor || 'ご担当者'} ご担当者様
 
-下記内容で発注書をお送りいたします。
+いつもお世話になっております。
+株式会社WIN WINでございます。
+
+このたびは「${project ? project.name : (order.category || '本工事')}」につきまして、発注書を添付のとおりお送りいたします。
+ご査収のうえ、注文請書のご返送を賜りますようお願い申し上げます。
+
 ご不明な点がございましたら、お気軽にお問い合わせください。
+今後とも何卒よろしくお願い申し上げます。
 
-株式会社WIN WIN</textarea>
+──────────────────
+株式会社WIN WIN
+〒604-0924 京都市中京区一之船入町537-20 FIS御池ビル505号
+TEL：075-777-1236
+──────────────────</textarea>
           </div>
           <label class="flex items-center gap-2 cursor-pointer select-none">
             <input id="po-attach-ack" type="checkbox" class="w-4 h-4 accent-secondary cursor-pointer"/>

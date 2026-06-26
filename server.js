@@ -1332,8 +1332,8 @@ app.post('/api/invitations', authMiddleware, h(async (req, res) => {
     await makeTransporter().sendMail({
       from: process.env.MAIL_FROM || 'CONSTRUCT_PRO <noreply@construct-pro.jp>',
       to: email,
-      subject: '【WIN WIN様デモ】アカウント発行のご案内',
-      text: `${name || ''} 様\n\nWIN WIN様 管理システムのアカウントが発行されました。\n権限: ${INVITE_ROLES[role]}\n\n下記リンクからパスワードを設定してログインしてください。\n${inviteUrl}\n\n※このリンクは発行から24時間有効です。期限を過ぎた場合は管理者へ再発行をご依頼ください。`,
+      subject: '【株式会社WIN WIN】アカウント発行のご案内',
+      text: `${name || 'ご担当者'} 様\n\nお世話になっております。株式会社WIN WINでございます。\nこのたび、業務管理システムのアカウントを発行いたしましたのでご案内申し上げます。\n\n　権限：${INVITE_ROLES[role]}\n\n下記URLよりパスワードをご設定のうえ、ログインをお願いいたします。\n${inviteUrl}\n\n※本URLの有効期限は発行から24時間です。期限を過ぎた場合は、お手数ですが管理者まで再発行をご依頼ください。\n\n本メールにお心当たりのない場合は、破棄いただきますようお願い申し上げます。\n\n──────────────────\n株式会社WIN WIN\n〒604-0924 京都市中京区一之船入町537-20 FIS御池ビル505号\nTEL：075-777-1236\n──────────────────`,
     });
     emailSent = true;
   } catch (e) {
