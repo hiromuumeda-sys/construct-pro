@@ -6,10 +6,10 @@
 <title>工事計画 - WIN WIN様デモ</title>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
-<link rel="stylesheet" href="/styles.css?v=48"/>
-<script src="/sidebar.js?v=48"></script>
-<script src="/auth.js?v=48"></script>
-<script src="/header.js?v=48"></script>
+<link rel="stylesheet" href="/styles.css?v=49"/>
+<script src="/sidebar.js?v=49"></script>
+<script src="/auth.js?v=49"></script>
+<script src="/header.js?v=49"></script>
 <style>
 body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
@@ -459,10 +459,10 @@ function renderTable() {
             </td>
             <td class="px-3 py-1.5 text-center whitespace-nowrap">${order.invoice_has_file
               ? `<button onclick="event.stopPropagation(); openDocModal(${order.id},'invoice')" class="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-secondary-container text-on-secondary-container text-[11px] font-bold hover:opacity-80 transition-opacity max-w-[120px]" title="請求書PDFを表示"><span class="material-symbols-outlined text-[15px]">picture_as_pdf</span><span class="truncate">請求書</span></button>`
-              : `<button onclick="event.stopPropagation(); requestDocUpload(${order.id},'invoice')" class="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-surface-container text-on-surface-variant text-[11px] hover:bg-surface-container-high transition-colors" title="請求書PDFをアップロード"><span class="material-symbols-outlined text-[14px]">upload</span>アップ</button>`}</td>
+              : `<button onclick="event.stopPropagation(); requestDocUpload(${order.id},'invoice')" class="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-surface-container text-on-surface-variant text-[11px] hover:bg-surface-container-high transition-colors" title="請求書PDFをアップロード"><span class="material-symbols-outlined text-[16px]">upload_file</span></button>`}</td>
             <td class="px-3 py-1.5 text-center whitespace-nowrap">${order.ack_has_file
               ? `<button onclick="event.stopPropagation(); openDocModal(${order.id},'ack')" class="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-secondary-container text-on-secondary-container text-[11px] font-bold hover:opacity-80 transition-opacity max-w-[120px]" title="請書PDFを表示"><span class="material-symbols-outlined text-[15px]">picture_as_pdf</span><span class="truncate">請書</span></button>`
-              : `<button onclick="event.stopPropagation(); requestDocUpload(${order.id},'ack')" class="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-surface-container text-on-surface-variant text-[11px] hover:bg-surface-container-high transition-colors" title="請書PDFをアップロード"><span class="material-symbols-outlined text-[14px]">upload</span>アップ</button>`}</td>
+              : `<button onclick="event.stopPropagation(); requestDocUpload(${order.id},'ack')" class="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-surface-container text-on-surface-variant text-[11px] hover:bg-surface-container-high transition-colors" title="請書PDFをアップロード"><span class="material-symbols-outlined text-[16px]">upload_file</span></button>`}</td>
             <td class="px-3 py-1.5 text-center">
               <button class="inline-flex items-center gap-1 px-2 py-1.5 rounded-lg bg-primary/10 text-primary text-[12px] font-normal hover:bg-primary/20 transition-colors whitespace-nowrap" onclick="event.stopPropagation(); showPoPreview(${order.id})" title="発注書プレビュー">
                 <span class="material-symbols-outlined text-[16px]">receipt_long</span>
@@ -1176,6 +1176,6 @@ function filterTable() {
 }
 
 </script>
-<script src="/notify.js?v=48"></script>
+<script src="/notify.js?v=49"></script>
 </body>
 </html>

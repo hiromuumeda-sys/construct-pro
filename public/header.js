@@ -50,10 +50,11 @@ document.addEventListener('DOMContentLoaded', () => {
   try {
     const u = (window.Auth && Auth.getUser) ? Auth.getUser() : null;
     if (u) {
+      const ROLE_LABEL = { admin: '管理者', accounting: '経理部', staff: '一般社員', user: '一般社員' };
       const n = document.getElementById('hdr-user-name');
       const r = document.getElementById('hdr-user-role');
       if (n) n.textContent = u.name || u.email || 'ユーザー';
-      if (r) r.textContent = u.role || 'user';
+      if (r) r.textContent = ROLE_LABEL[u.role] || u.role || '一般社員';
     }
   } catch (_) {}
 
