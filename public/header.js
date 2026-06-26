@@ -1,7 +1,18 @@
 // ヘッダー右側クラスター（通知ベル・ヘルプ・ユーザー情報・ログアウト）の共通化。
 // 左側の検索ボックスは各画面固有の挙動のためそのまま残す。
 // header 要素の「最後の子要素（=右側クラスター）」を統一マークアップで差し替える。
-const HEADER_RIGHT_HTML = `<div class="flex items-center gap-6">
+
+// 読み込み時のチラつき防止：差し替え前の静的な右側クラスターを不可視にしておく。
+// （差し替え後のクラスターには .hdr-ready が付くので表示される。スペースは確保＝レイアウト不動）
+(function injectHeaderAntiFlicker() {
+  const css = 'header > div:last-child:not(.hdr-ready){visibility:hidden}';
+  const style = document.createElement('style');
+  style.id = 'hdr-anti-flicker';
+  style.textContent = css;
+  (document.head || document.documentElement).appendChild(style);
+})();
+
+const HEADER_RIGHT_HTML = `<div class="hdr-ready flex items-center gap-6">
 <div class="flex items-center gap-4">
 <div class="relative" id="notif-wrap">
 <button class="material-symbols-outlined text-on-surface-variant hover:text-primary relative" onclick="toggleNotif(event)">notifications<span id="notif-badge" class="absolute -top-1 -right-1 bg-error text-on-error text-[9px] font-normal rounded-full min-w-[16px] h-4 px-1 flex items-center justify-center" style="display:none">0</span></button>
