@@ -4,6 +4,7 @@
 -- （再実行で初期状態に戻ります：全テーブルを DROP→再作成→シード）
 -- ============================================================
 
+drop table if exists payment_records cascade;
 drop table if exists invitations cascade;
 drop table if exists order_documents cascade;
 drop table if exists audit_logs cascade;
@@ -113,6 +114,16 @@ create table order_documents (
   filename    text,
   data_url    text,
   uploaded_at timestamp default current_timestamp
+);
+
+-- 支払登録明細（消し込み履歴）
+create table payment_records (
+  id         serial primary key,
+  order_id   integer,
+  paid_date  text,
+  amount     bigint,
+  note       text,
+  created_at timestamp default current_timestamp
 );
 
 -- アカウント招待（24時間有効の発行リンク）

@@ -39,6 +39,15 @@ function ensureAux() {
       // 支払の残金（費用と同額を初期値）。未設定は決定金額で補完。
       await createIfMissing('ALTER TABLE orders ADD COLUMN IF NOT EXISTS remaining bigint');
       await q('UPDATE orders SET remaining = decided WHERE remaining IS NULL').catch(() => {});
+      // 支払登録明細（消し込み履歴）
+      await createIfMissing(`CREATE TABLE IF NOT EXISTS payment_records (
+        id         serial primary key,
+        order_id   integer,
+        paid_date  text,
+        amount     bigint,
+        note       text,
+        created_at timestamp default current_timestamp
+      )`);
     })().catch(e => { _auxReady = null; throw e; });
   }
   return _auxReady;
@@ -458,6 +467,62 @@ app.put('/api/orders/:id/remaining', h(async (req, res) => {
     name: `${before.category || ''}（${before.vendor || ''}）`,
     changes: [`残金を ${fmtVal(prev)} → ${fmtVal(value)} に変更`],
   });
+  res.json({ success: true });
+}));
+
+// 支払登録明細（消し込み履歴）一覧
+app.get('/api/payment-records', h(async (req, res) => {
+  await ensureAux();
+  const rows = await q(`
+    SELECT pr.*, o.category, o.vendor, o.decided, o.remaining, p.name AS project_name
+    FROM payment_records pr
+    LEFT JOIN orders o ON pr.order_id = o.id
+    LEFT JOIN projects p ON o.project_id = p.id
+    ORDER BY pr.created_at DESC`);
+  res.json(rows);
+}));
+
+// 支払登録（残金から差し引き、必要に応じてステータス自動更新）
+app.post('/api/payment-records', h(async (req, res) => {
+  await ensureAux();
+  const { order_id, note } = req.body;
+  const amount = Math.max(0, parseInt(req.body.amount, 10) || 0);
+  const paid_date = req.body.paid_date || new Date().toISOString().slice(0, 10);
+  if (!order_id || amount <= 0) return res.status(400).json({ error: '支払額を入力してください' });
+  const order = await one('SELECT * FROM orders WHERE id=$1', [order_id]);
+  if (!order) return res.status(404).json({ error: 'order not found' });
+  const cur = order.remaining != null ? order.remaining : (order.decided || 0);
+  const newRemaining = Math.max(0, cur - amount);
+  let status = order.paymentStatus;
+  if (newRemaining <= 0) status = '支払済み';
+  else if (newRemaining < (order.decided || 0)) status = '部分払い';
+  await q('UPDATE orders SET remaining=$1, "paymentStatus"=$2 WHERE id=$3', [newRemaining, status, order_id]);
+  const rec = await one('INSERT INTO payment_records (order_id, paid_date, amount, note) VALUES ($1,$2,$3,$4) RETURNING id',
+    [order_id, paid_date, amount, note || '']);
+  await logAudit(getUserId(req), 'CREATE', 'orders', parseInt(order_id), {
+    name: `${order.category || ''}（${order.vendor || ''}）`,
+    changes: [`支払登録 ¥${amount.toLocaleString()}（残金 ${fmtVal(cur)} → ${fmtVal(newRemaining)}）`],
+  });
+  res.json({ success: true, id: rec.id, remaining: newRemaining, status });
+}));
+
+// 支払登録明細の削除（残金を戻す）
+app.delete('/api/payment-records/:id', h(async (req, res) => {
+  await ensureAux();
+  const rec = await one('SELECT * FROM payment_records WHERE id=$1', [req.params.id]);
+  if (rec) {
+    const order = await one('SELECT * FROM orders WHERE id=$1', [rec.order_id]);
+    if (order) {
+      const cur = order.remaining != null ? order.remaining : (order.decided || 0);
+      const restored = Math.min(order.decided || (cur + rec.amount), cur + (rec.amount || 0));
+      let status = order.paymentStatus;
+      if (restored >= (order.decided || 0)) status = '未払い';
+      else if (restored > 0) status = '部分払い';
+      await q('UPDATE orders SET remaining=$1, "paymentStatus"=$2 WHERE id=$3', [restored, status, rec.order_id]);
+    }
+    await q('DELETE FROM payment_records WHERE id=$1', [req.params.id]);
+    await logAudit(getUserId(req), 'DELETE', 'orders', rec.order_id, { name: `#${rec.order_id}`, changes: [`支払登録を取消（¥${(rec.amount || 0).toLocaleString()}）`] });
+  }
   res.json({ success: true });
 }));
 

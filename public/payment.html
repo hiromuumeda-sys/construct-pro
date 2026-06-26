@@ -6,10 +6,10 @@
 <title>支払管理 - WIN WIN様デモ</title>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
-<link rel="stylesheet" href="/styles.css?v=46"/>
-<script src="/sidebar.js?v=46"></script>
-<script src="/auth.js?v=46"></script>
-<script src="/header.js?v=46"></script>
+<link rel="stylesheet" href="/styles.css?v=47"/>
+<script src="/sidebar.js?v=47"></script>
+<script src="/auth.js?v=47"></script>
+<script src="/header.js?v=47"></script>
 <style>
 body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
@@ -138,15 +138,16 @@ body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 <table class="w-full text-left border-separate border-spacing-0">
 <thead>
 <tr class="bg-surface-container-low sticky top-0 z-10">
-<th class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant w-20">#</th>
-<th class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant">案件名</th>
+<th class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant w-16">#</th>
+<th class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant w-56">工事名</th>
 <th class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant w-[10%]">工事区分</th>
-<th class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant w-[13%]">発注先</th>
-<th class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant text-right">費用</th>
-<th class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant text-right">残金</th>
-<th class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant w-28">支払期日</th>
-<th class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant w-32">支払銀行</th>
-<th class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant text-center w-36">支払ステータス</th>
+<th class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant w-[12%]">発注先</th>
+<th class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant text-right w-28">費用</th>
+<th class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant text-right w-28">残金</th>
+<th class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant w-24">支払期日</th>
+<th class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant w-28">支払銀行</th>
+<th class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant text-center w-32">支払ステータス</th>
+<th class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant text-center w-24">支払登録</th>
 </tr>
 </thead>
 <tbody class="divide-y divide-outline-variant/20" id="payment-table-body">
@@ -154,6 +155,26 @@ body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 </tbody>
 </table>
 </div>
+</div>
+
+<!-- 支払明細（消し込み履歴） -->
+<div class="flex justify-between items-end mt-xl mb-md">
+<h2 class="text-[18px] font-label-md text-primary">支払明細</h2>
+</div>
+<div class="bg-surface-container-lowest border border-outline-variant rounded-lg overflow-hidden shadow-sm">
+<table class="w-full text-left border-separate border-spacing-0">
+<thead>
+<tr class="bg-surface-container-low">
+<th class="px-3 py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant w-32">支払日</th>
+<th class="px-3 py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant">工事名</th>
+<th class="px-3 py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant">発注先</th>
+<th class="px-3 py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant text-right w-32">支払額</th>
+<th class="px-3 py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant">備考</th>
+<th class="px-3 py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant text-center w-16"></th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant/20" id="payrec-table-body"></tbody>
+</table>
 </div>
 </div>
 <!-- Footer -->
@@ -180,12 +201,8 @@ body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 <div class="col-span-2"><p class="text-[11px] text-on-surface-variant mb-0.5">支払ステータス</p><span id="pd-status"></span></div>
 </div>
 <div class="border-t border-outline-variant pt-3">
-<p class="text-[11px] text-on-surface-variant mb-1">残金（編集可）</p>
-<div class="flex items-center gap-2">
-<span class="text-on-surface-variant">¥</span>
-<input id="pd-remaining" type="number" min="0" class="w-44 bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-3 py-1.5 tabular-numbers focus:ring-2 focus:ring-secondary/20 focus:border-transparent"/>
-<button onclick="saveRemaining()" class="px-3 py-1.5 text-label-md font-normal text-on-primary bg-secondary rounded-lg hover:opacity-90 transition-all">残金を保存</button>
-</div>
+<p class="text-[11px] text-on-surface-variant mb-0.5">残金</p>
+<p class="text-label-md font-bold text-error tabular-numbers" id="pd-remaining">-</p>
 </div>
 <div class="border-t border-outline-variant pt-3">
 <p class="text-[11px] text-on-surface-variant mb-1 flex items-center gap-1"><span class="material-symbols-outlined text-[16px]">account_balance</span>振込先口座情報</p>
@@ -201,6 +218,50 @@ body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 <div class="px-lg py-md border-t border-outline-variant flex justify-end bg-surface-container-low">
 <button class="px-4 py-1.5 text-label-md font-normal text-on-surface border border-outline-variant rounded-lg hover:bg-surface-container transition-all" onclick="closeModal()">閉じる</button>
 </div>
+</div>
+</div>
+</div>
+
+<!-- 支払登録モーダル -->
+<div class="fixed inset-0 z-[110] bg-primary/20 backdrop-blur-md items-center justify-center" id="pay-register-modal" style="display:none" onclick="closePayRegister()">
+<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-surface-container-lowest rounded-lg custom-shadow overflow-hidden border border-outline-variant" onclick="event.stopPropagation()">
+<div class="px-lg py-md border-b border-outline-variant flex justify-between items-center bg-surface-container-low">
+<h3 class="text-label-md font-label-md text-primary flex items-center gap-1"><span class="material-symbols-outlined text-[18px]">payments</span>支払登録</h3>
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary" onclick="closePayRegister()">close</button>
+</div>
+<div class="p-lg space-y-md">
+<div><p class="text-[11px] text-on-surface-variant">工事名</p><p class="text-label-md font-bold text-primary" id="pr-project">-</p></div>
+<div class="grid grid-cols-3 gap-3 bg-surface-container-low rounded-lg p-3">
+<div><p class="text-[11px] text-on-surface-variant">発注先</p><p class="text-label-md text-on-surface" id="pr-vendor">-</p></div>
+<div><p class="text-[11px] text-on-surface-variant">費用</p><p class="text-label-md font-bold tabular-numbers" id="pr-amount">¥0</p></div>
+<div><p class="text-[11px] text-on-surface-variant">現在の残金</p><p class="text-label-md font-bold text-error tabular-numbers" id="pr-remaining">¥0</p></div>
+</div>
+<div>
+<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">支払額 <span class="text-error">*</span></label>
+<div class="flex gap-2 mb-2">
+<button type="button" onclick="setPayFraction(2)" class="px-3 py-1.5 text-label-md border border-secondary text-secondary rounded-lg hover:bg-secondary/10 transition-all">1/2支払</button>
+<button type="button" onclick="setPayFraction(3)" class="px-3 py-1.5 text-label-md border border-secondary text-secondary rounded-lg hover:bg-secondary/10 transition-all">1/3支払</button>
+</div>
+<div class="flex items-center gap-2">
+<span class="text-on-surface-variant">¥</span>
+<input id="pr-pay-amount" type="number" min="0" placeholder="任意の金額を入力" class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-3 py-2 tabular-numbers focus:ring-2 focus:ring-secondary/20 focus:border-transparent"/>
+</div>
+<p class="text-[11px] text-on-surface-variant/70 mt-1">※ 1/2・1/3は費用を基準に自動計算されます。金額は手入力も可能です。</p>
+</div>
+<div class="grid grid-cols-2 gap-md">
+<div>
+<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">支払日</label>
+<input id="pr-date" type="date" class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-3 py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent"/>
+</div>
+<div>
+<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">備考</label>
+<input id="pr-note" type="text" class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-3 py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent"/>
+</div>
+</div>
+</div>
+<div class="px-lg py-md border-t border-outline-variant flex justify-end items-center gap-3 bg-surface-container-low">
+<button class="px-4 py-1.5 text-label-md font-normal text-on-surface border border-outline-variant rounded-lg hover:bg-surface-container transition-all" onclick="closePayRegister()">キャンセル</button>
+<button class="px-4 py-1.5 text-label-md font-normal text-on-primary bg-secondary rounded-lg hover:opacity-90 transition-all" onclick="submitPayRegister()">支払を登録</button>
 </div>
 </div>
 </div>
@@ -274,6 +335,11 @@ function renderTable() {
           <span class="material-symbols-outlined absolute right-0.5 top-1/2 -translate-y-1/2 text-[16px] pointer-events-none">expand_more</span>
         </div>
       </td>
+      <td class="px-3 py-1.5 text-center whitespace-nowrap" onclick="event.stopPropagation()">
+        ${payment.status === '部分払い'
+          ? `<button onclick="openPayRegister(${payment.id})" class="inline-flex items-center gap-0.5 px-2 py-1 rounded-md bg-secondary text-on-secondary text-[11px] font-normal hover:opacity-90 transition-all" title="支払を登録"><span class="material-symbols-outlined text-[14px]">add</span>支払登録</button>`
+          : ''}
+      </td>
     </tr>
   `).join('');
 }
@@ -291,15 +357,28 @@ function getStatusColor(status) {
 async function updatePaymentStatus(id, status) {
   const p = payments.find(x => x.id === id);
   if (!p || p.status === status) return;
+  const remaining = (p.remaining != null ? p.remaining : p.amount) || 0;
   try {
-    const res = await fetch(`/api/orders/${id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...p._raw, paymentStatus: status })
-    });
-    if (!res.ok) throw new Error('failed');
-    p.status = status; if (p._raw) p._raw.paymentStatus = status;
-    renderTable();
+    // 「支払済み」に変更：残額を支払登録として履歴に残し、残金を0にする
+    if (status === '支払済み' && remaining > 0) {
+      const res = await fetch('/api/payment-records', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ order_id: id, amount: remaining, note: 'ステータスを支払済に変更' })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'failed');
+      p.status = '支払済み'; p.remaining = 0;
+      if (p._raw) { p._raw.paymentStatus = '支払済み'; p._raw.remaining = 0; }
+      await loadPaymentRecords();
+    } else {
+      const res = await fetch(`/api/orders/${id}`, {
+        method: 'PUT', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...p._raw, paymentStatus: status })
+      });
+      if (!res.ok) throw new Error('failed');
+      p.status = status; if (p._raw) p._raw.paymentStatus = status;
+    }
+    filterTable();
   } catch (e) {
     alert('ステータス更新に失敗しました');
   }
@@ -316,7 +395,7 @@ function openModal(id) {
   set('pd-category', p.category || '-');
   set('pd-vendor', p.vendor || '-');
   set('pd-amount', '¥' + (p.amount || 0).toLocaleString());
-  document.getElementById('pd-remaining').value = (p.remaining != null ? p.remaining : p.amount) || 0;
+  set('pd-remaining', '¥' + ((p.remaining != null ? p.remaining : p.amount) || 0).toLocaleString());
   set('pd-date', p.paymentDate || '-');
   document.getElementById('pd-status').innerHTML = `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] ${getStatusColor(p.status)}">${p.status}</span>`;
   const b = p.bank || {};
@@ -333,31 +412,101 @@ function closeModal() {
   document.body.style.overflow = '';
 }
 
-// 残金を保存（orders.remaining を更新）→ 一覧の赤字に反映
-async function saveRemaining() {
-  if (pdCurrentId == null) return;
-  const value = Math.max(0, parseInt(document.getElementById('pd-remaining').value, 10) || 0);
+// ===== 支払登録モーダル =====
+let payRegId = null;
+function openPayRegister(id) {
+  const p = payments.find(x => x.id === id);
+  if (!p) return;
+  payRegId = id;
+  const remaining = (p.remaining != null ? p.remaining : p.amount) || 0;
+  document.getElementById('pr-project').textContent = p.projectName || '-';
+  document.getElementById('pr-vendor').textContent = p.vendor || '-';
+  document.getElementById('pr-amount').textContent = '¥' + (p.amount || 0).toLocaleString();
+  document.getElementById('pr-remaining').textContent = '¥' + remaining.toLocaleString();
+  document.getElementById('pr-pay-amount').value = '';
+  document.getElementById('pr-date').value = new Date().toISOString().slice(0, 10);
+  document.getElementById('pr-note').value = '';
+  document.getElementById('pay-register-modal').style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+function closePayRegister() {
+  document.getElementById('pay-register-modal').style.display = 'none';
+  document.body.style.overflow = '';
+  payRegId = null;
+}
+// 1/2・1/3ボタン：費用を基準に自動計算して金額欄へ
+function setPayFraction(denom) {
+  const p = payments.find(x => x.id === payRegId);
+  if (!p) return;
+  document.getElementById('pr-pay-amount').value = Math.round((p.amount || 0) / denom);
+}
+async function submitPayRegister() {
+  if (payRegId == null) return;
+  const amount = Math.max(0, parseInt(document.getElementById('pr-pay-amount').value, 10) || 0);
+  const paid_date = document.getElementById('pr-date').value;
+  const note = document.getElementById('pr-note').value;
+  if (amount <= 0) { alert('支払額を入力してください'); return; }
   try {
-    const res = await fetch(`/api/orders/${pdCurrentId}/remaining`, {
-      method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ value })
+    const res = await fetch('/api/payment-records', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ order_id: payRegId, amount, paid_date, note })
     });
-    if (!res.ok) throw new Error('failed');
-    const p = payments.find(x => x.id === pdCurrentId);
-    if (p) { p.remaining = value; if (p._raw) p._raw.remaining = value; }
-    renderTable();
-    closeModal();
-  } catch (e) { alert('残金の更新に失敗しました'); }
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'failed');
+    const p = payments.find(x => x.id === payRegId);
+    if (p) { p.remaining = data.remaining; p.status = data.status; if (p._raw) { p._raw.remaining = data.remaining; p._raw.paymentStatus = data.status; } }
+    closePayRegister();
+    await loadPaymentRecords();
+    filterTable();
+  } catch (e) { alert('支払登録に失敗しました: ' + e.message); }
 }
 
 // フィルタ機能
 document.addEventListener('DOMContentLoaded', async () => {
   await initializeCache();
   await loadPayments();
+  await loadPaymentRecords();
 
   document.getElementById('status-filter').addEventListener('change', filterTable);
   document.getElementById('due-filter').addEventListener('change', filterTable);
   document.getElementById('keyword-search').addEventListener('input', filterTable);
 });
+
+// 支払登録明細（消し込み履歴）
+let paymentRecords = [];
+async function loadPaymentRecords() {
+  try {
+    const res = await fetch('/api/payment-records');
+    paymentRecords = res.ok ? await res.json() : [];
+  } catch (e) { paymentRecords = []; }
+  renderPaymentRecords();
+}
+function renderPaymentRecords() {
+  const tbody = document.getElementById('payrec-table-body');
+  if (!tbody) return;
+  if (!paymentRecords.length) {
+    tbody.innerHTML = '<tr><td colspan="6" class="px-3 py-8 text-center text-on-surface-variant text-label-md">支払登録の履歴がありません</td></tr>';
+    return;
+  }
+  tbody.innerHTML = paymentRecords.map(r => `
+    <tr class="hover:bg-surface-container-low transition-colors">
+      <td class="px-3 py-2.5 text-label-md font-label-md text-on-surface-variant tabular-numbers">${r.paid_date || '-'}</td>
+      <td class="px-3 py-2.5 text-label-md font-label-md text-on-surface">${r.project_name || '案件#' + r.order_id}</td>
+      <td class="px-3 py-2.5 text-label-md font-label-md text-on-surface-variant">${r.vendor || '-'}</td>
+      <td class="px-3 py-2.5 text-label-md font-label-md text-right tabular-numbers text-secondary">¥${(r.amount || 0).toLocaleString()}</td>
+      <td class="px-3 py-2.5 text-label-md font-label-md text-on-surface-variant">${r.note || '-'}</td>
+      <td class="px-3 py-2.5 text-center"><button class="material-symbols-outlined text-error/70 hover:bg-error/10 rounded-full w-8 h-8 text-[20px]" onclick="deletePaymentRecord(${r.id})" title="取消">delete</button></td>
+    </tr>`).join('');
+}
+async function deletePaymentRecord(id) {
+  if (!confirm('この支払登録を取り消しますか？（残金が戻ります）')) return;
+  try {
+    const res = await fetch('/api/payment-records/' + id, { method: 'DELETE' });
+    if (!res.ok) throw new Error('failed');
+    await loadPayments();
+    await loadPaymentRecords();
+  } catch (e) { alert('取消に失敗しました'); }
+}
 
 // 支払期日が指定バケットに合致するか判定
 function matchDueBucket(dateStr, bucket) {
@@ -410,10 +559,15 @@ function filterTable() {
           <span class="material-symbols-outlined absolute right-0.5 top-1/2 -translate-y-1/2 text-[16px] pointer-events-none">expand_more</span>
         </div>
       </td>
+      <td class="px-3 py-1.5 text-center whitespace-nowrap" onclick="event.stopPropagation()">
+        ${payment.status === '部分払い'
+          ? `<button onclick="openPayRegister(${payment.id})" class="inline-flex items-center gap-0.5 px-2 py-1 rounded-md bg-secondary text-on-secondary text-[11px] font-normal hover:opacity-90 transition-all" title="支払を登録"><span class="material-symbols-outlined text-[14px]">add</span>支払登録</button>`
+          : ''}
+      </td>
     </tr>
   `).join('');
 }
 </script>
-<script src="/notify.js?v=46"></script>
+<script src="/notify.js?v=47"></script>
 </body>
 </html>
