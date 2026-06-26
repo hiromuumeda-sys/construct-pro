@@ -6,6 +6,7 @@
 
 drop table if exists payment_records cascade;
 drop table if exists invitations cascade;
+drop table if exists order_files cascade;
 drop table if exists order_documents cascade;
 drop table if exists audit_logs cascade;
 drop table if exists users cascade;
@@ -114,6 +115,16 @@ create table order_documents (
   filename    text,
   data_url    text,
   uploaded_at timestamp default current_timestamp
+);
+
+-- 添付書類（請書/請求書のPDF）。orders × kind ごとに1件。
+create table order_files (
+  order_id    integer,
+  kind        text,
+  filename    text,
+  data_url    text,
+  uploaded_at timestamp default current_timestamp,
+  primary key (order_id, kind)
 );
 
 -- 支払登録明細（消し込み履歴）

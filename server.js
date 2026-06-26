@@ -39,6 +39,19 @@ function ensureAux() {
       // 支払の残金（費用と同額を初期値）。未設定は決定金額で補完。
       await createIfMissing('ALTER TABLE orders ADD COLUMN IF NOT EXISTS remaining bigint');
       await q('UPDATE orders SET remaining = decided WHERE remaining IS NULL').catch(() => {});
+      // 添付書類（請書/請求書のPDF）。orders × kind ごとに1件。
+      await createIfMissing(`CREATE TABLE IF NOT EXISTS order_files (
+        order_id    integer,
+        kind        text,
+        filename    text,
+        data_url    text,
+        uploaded_at timestamp default current_timestamp,
+        primary key (order_id, kind)
+      )`);
+      // 旧 order_documents（請書）から移行
+      await q(`INSERT INTO order_files (order_id, kind, filename, data_url, uploaded_at)
+               SELECT order_id, 'ack', filename, data_url, uploaded_at FROM order_documents
+               ON CONFLICT (order_id, kind) DO NOTHING`).catch(() => {});
       // 支払登録明細（消し込み履歴）
       await createIfMissing(`CREATE TABLE IF NOT EXISTS payment_records (
         id         serial primary key,
@@ -74,7 +87,7 @@ const app = express();
 
 // Middleware
 app.use(cors());
-app.use(express.json({ limit: '5mb' }));
+app.use(express.json({ limit: '25mb' })); // 請書/請求書PDF(base64)アップロードを許容
 // 静的ファイルのキャッシュ戦略（表示速度最適化）
 //  - HTML: 毎回再検証（更新を即反映、コストは小さい）
 //  - JS/CSS/画像など: ?v=N でバージョン管理しているため長期キャッシュ＋Vercelエッジキャッシュ(immutable)
@@ -345,62 +358,73 @@ const ORDER_COLS = 'project_id, category, vendor, estimate, planned, decided, st
 
 app.get('/api/orders', h(async (req, res) => {
   await ensureAux();
-  const [orders, docs] = await Promise.all([
+  const [orders, files] = await Promise.all([
     q('SELECT * FROM orders ORDER BY id'),
-    q('SELECT order_id, filename FROM order_documents'),
+    q("SELECT order_id, kind, filename FROM order_files"),
   ]);
-  const docMap = new Map(docs.map(d => [d.order_id, d.filename]));
+  const key = (id, kind) => `${id}:${kind}`;
+  const fmap = new Map(files.map(f => [key(f.order_id, f.kind), f.filename]));
   res.json(orders.map(o => ({
     ...o,
-    ack_has_file: docMap.has(o.id),
-    ack_filename: docMap.get(o.id) || null,
+    ack_has_file: fmap.has(key(o.id, 'ack')),
+    ack_filename: fmap.get(key(o.id, 'ack')) || null,
+    invoice_has_file: fmap.has(key(o.id, 'invoice')),
+    invoice_filename: fmap.get(key(o.id, 'invoice')) || null,
   })));
 }));
 
-// 請書PDF アップロード（チェック時に保存）→ ack_done=true
-app.post('/api/orders/:id/ack-file', h(async (req, res) => {
+// 添付PDF（請書/請求書）の種別ラベル
+const FILE_KIND_LABEL = { ack: '請書', invoice: '請求書' };
+const FILE_KIND_DONE = { ack: 'ack_done', invoice: 'invoice_done' };
+
+// 請書/請求書 PDF アップロード → 対応する done フラグを true に
+app.post('/api/orders/:id/file/:kind', h(async (req, res) => {
   await ensureAux();
+  const kind = req.params.kind === 'invoice' ? 'invoice' : 'ack';
   const { filename, dataUrl } = req.body;
   if (!dataUrl || !/^data:application\/pdf/.test(dataUrl)) {
     return res.status(400).json({ error: 'PDFファイルを指定してください' });
   }
   const order = await one('SELECT * FROM orders WHERE id=$1', [req.params.id]);
   if (!order) return res.status(404).json({ error: 'order not found' });
+  const fallback = kind === 'invoice' ? 'invoice.pdf' : 'ukesho.pdf';
   await q(
-    `INSERT INTO order_documents (order_id, filename, data_url, uploaded_at)
-     VALUES ($1,$2,$3, current_timestamp)
-     ON CONFLICT (order_id) DO UPDATE SET filename=$2, data_url=$3, uploaded_at=current_timestamp`,
-    [req.params.id, filename || 'ukesho.pdf', dataUrl]
+    `INSERT INTO order_files (order_id, kind, filename, data_url, uploaded_at)
+     VALUES ($1,$2,$3,$4, current_timestamp)
+     ON CONFLICT (order_id, kind) DO UPDATE SET filename=$3, data_url=$4, uploaded_at=current_timestamp`,
+    [req.params.id, kind, filename || fallback, dataUrl]
   );
-  await q('UPDATE orders SET ack_done=true WHERE id=$1', [req.params.id]);
+  await q(`UPDATE orders SET ${FILE_KIND_DONE[kind]}=true WHERE id=$1`, [req.params.id]);
   await logAudit(getUserId(req), 'UPDATE', 'orders', parseInt(req.params.id), {
     name: `${order.category || ''}（${order.vendor || ''}）`,
-    changes: [`請書PDFをアップロード（${filename || 'ukesho.pdf'}）／受領済に変更`],
+    changes: [`${FILE_KIND_LABEL[kind]}PDFをアップロード（${filename || fallback}）／済に変更`],
   });
   res.json({ success: true });
 }));
 
-// 請書PDF 表示（モーダルの iframe から参照。インライン表示）
-app.get('/api/orders/:id/ack-file', h(async (req, res) => {
+// 請書/請求書 PDF 表示（iframe からインライン参照）
+app.get('/api/orders/:id/file/:kind', h(async (req, res) => {
   await ensureAux();
-  const doc = await one('SELECT * FROM order_documents WHERE order_id=$1', [req.params.id]);
+  const kind = req.params.kind === 'invoice' ? 'invoice' : 'ack';
+  const doc = await one('SELECT * FROM order_files WHERE order_id=$1 AND kind=$2', [req.params.id, kind]);
   if (!doc || !doc.data_url) return res.status(404).json({ error: 'file not found' });
   const b64 = doc.data_url.replace(/^data:application\/pdf;base64,/, '');
   const buf = Buffer.from(b64, 'base64');
   res.setHeader('Content-Type', 'application/pdf');
-  res.setHeader('Content-Disposition', `inline; filename="${doc.filename || 'ukesho.pdf'}"`);
+  res.setHeader('Content-Disposition', `inline; filename="${doc.filename || (kind + '.pdf')}"`);
   res.send(buf);
 }));
 
-// 請書PDF 削除 → ack_done=false（未受領に戻す）
-app.delete('/api/orders/:id/ack-file', h(async (req, res) => {
+// 請書/請求書 PDF 削除 → 対応する done フラグを false に
+app.delete('/api/orders/:id/file/:kind', h(async (req, res) => {
   await ensureAux();
+  const kind = req.params.kind === 'invoice' ? 'invoice' : 'ack';
   const order = await one('SELECT * FROM orders WHERE id=$1', [req.params.id]);
-  await q('DELETE FROM order_documents WHERE order_id=$1', [req.params.id]);
-  await q('UPDATE orders SET ack_done=false WHERE id=$1', [req.params.id]);
+  await q('DELETE FROM order_files WHERE order_id=$1 AND kind=$2', [req.params.id, kind]);
+  await q(`UPDATE orders SET ${FILE_KIND_DONE[kind]}=false WHERE id=$1`, [req.params.id]);
   await logAudit(getUserId(req), 'UPDATE', 'orders', parseInt(req.params.id), {
     name: order ? `${order.category || ''}（${order.vendor || ''}）` : `#${req.params.id}`,
-    changes: ['請書PDFを削除／未受領に変更'],
+    changes: [`${FILE_KIND_LABEL[kind]}PDFを削除／未に変更`],
   });
   res.json({ success: true });
 }));

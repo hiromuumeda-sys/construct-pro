@@ -6,10 +6,10 @@
 <title>工事計画 - WIN WIN様デモ</title>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
-<link rel="stylesheet" href="/styles.css?v=47"/>
-<script src="/sidebar.js?v=47"></script>
-<script src="/auth.js?v=47"></script>
-<script src="/header.js?v=47"></script>
+<link rel="stylesheet" href="/styles.css?v=48"/>
+<script src="/sidebar.js?v=48"></script>
+<script src="/auth.js?v=48"></script>
+<script src="/header.js?v=48"></script>
 <style>
 body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
@@ -367,22 +367,22 @@ CSV出力
 </div>
 </div>
 
-<!-- 請書PDF アップロード用（非表示） -->
-<input type="file" id="ack-file-input" accept="application/pdf,.pdf" style="display:none"/>
+<!-- 請書/請求書PDF アップロード用（非表示・共通） -->
+<input type="file" id="doc-file-input" accept="application/pdf,.pdf" style="display:none"/>
 
-<!-- 請書PDF 表示モーダル -->
-<div class="fixed inset-0 z-[110] bg-primary/20 backdrop-blur-md" id="ack-modal" style="display:none" onclick="closeAckModal()">
+<!-- 請書/請求書PDF 表示モーダル（共通） -->
+<div class="fixed inset-0 z-[110] bg-primary/20 backdrop-blur-md" id="doc-modal" style="display:none" onclick="closeDocModal()">
 <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-3xl h-[80vh] bg-surface-container-lowest rounded-lg custom-shadow border border-outline-variant overflow-hidden flex flex-col" onclick="event.stopPropagation()">
 <div class="px-lg py-md flex justify-between items-center border-b border-outline-variant bg-surface-container-low">
-<h3 class="text-label-md font-label-md text-primary flex items-center gap-1"><span class="material-symbols-outlined text-[18px]">picture_as_pdf</span>請書（注文請書）<span id="ack-modal-name" class="text-on-surface-variant font-normal"></span></h3>
-<button class="material-symbols-outlined text-on-surface-variant hover:text-primary" onclick="closeAckModal()">close</button>
+<h3 class="text-label-md font-label-md text-primary flex items-center gap-1"><span class="material-symbols-outlined text-[18px]">picture_as_pdf</span><span id="doc-modal-title">書類</span><span id="doc-modal-name" class="text-on-surface-variant font-normal"></span></h3>
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary" onclick="closeDocModal()">close</button>
 </div>
 <div class="flex-1 bg-surface-container">
-<iframe id="ack-frame" class="w-full h-full border-0" title="請書PDF"></iframe>
+<iframe id="doc-frame" class="w-full h-full border-0" title="PDF"></iframe>
 </div>
 <div class="px-lg py-md border-t border-outline-variant flex justify-between items-center bg-surface-container-low">
-<button class="inline-flex items-center gap-1 px-3 py-1.5 text-label-md font-normal text-error border border-error/40 rounded-lg hover:bg-error/10 transition-all" onclick="deleteAckFile()"><span class="material-symbols-outlined text-[16px]">delete</span>請書を削除（未受領に戻す）</button>
-<button class="px-4 py-1.5 text-label-md font-normal text-on-surface border border-outline-variant rounded-lg hover:bg-surface-container transition-all" onclick="closeAckModal()">閉じる</button>
+<button class="inline-flex items-center gap-1 px-3 py-1.5 text-label-md font-normal text-error border border-error/40 rounded-lg hover:bg-error/10 transition-all" onclick="deleteDocFile()"><span class="material-symbols-outlined text-[16px]">delete</span>削除</button>
+<button class="px-4 py-1.5 text-label-md font-normal text-on-surface border border-outline-variant rounded-lg hover:bg-surface-container transition-all" onclick="closeDocModal()">閉じる</button>
 </div>
 </div>
 </div>
@@ -457,10 +457,12 @@ function renderTable() {
                   <span class="material-symbols-outlined absolute right-0.5 top-1/2 -translate-y-1/2 text-[16px] pointer-events-none">expand_more</span>
                 </div>
             </td>
-            <td class="px-3 py-1.5 text-center whitespace-nowrap"><input type="checkbox" ${isInvoiceDone(order) ? 'checked' : ''} onchange="setDocStatus('invoice', ${order.id}, this.checked)" class="w-4 h-4 accent-secondary cursor-pointer" title="請求書 発行済にチェック"/></td>
+            <td class="px-3 py-1.5 text-center whitespace-nowrap">${order.invoice_has_file
+              ? `<button onclick="event.stopPropagation(); openDocModal(${order.id},'invoice')" class="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-secondary-container text-on-secondary-container text-[11px] font-bold hover:opacity-80 transition-opacity max-w-[120px]" title="請求書PDFを表示"><span class="material-symbols-outlined text-[15px]">picture_as_pdf</span><span class="truncate">請求書</span></button>`
+              : `<button onclick="event.stopPropagation(); requestDocUpload(${order.id},'invoice')" class="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-surface-container text-on-surface-variant text-[11px] hover:bg-surface-container-high transition-colors" title="請求書PDFをアップロード"><span class="material-symbols-outlined text-[14px]">upload</span>アップ</button>`}</td>
             <td class="px-3 py-1.5 text-center whitespace-nowrap">${order.ack_has_file
-              ? `<button onclick="event.stopPropagation(); openAckModal(${order.id})" class="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-secondary-container text-on-secondary-container text-[11px] font-bold hover:opacity-80 transition-opacity max-w-[140px]" title="請書PDFを表示"><span class="material-symbols-outlined text-[15px]">picture_as_pdf</span><span class="truncate">請書</span></button>`
-              : `<input type="checkbox" onchange="event.stopPropagation(); requestAckUpload(${order.id}, this)" class="w-4 h-4 accent-secondary cursor-pointer" title="チェックすると請書PDFをアップロードします"/>`}</td>
+              ? `<button onclick="event.stopPropagation(); openDocModal(${order.id},'ack')" class="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-secondary-container text-on-secondary-container text-[11px] font-bold hover:opacity-80 transition-opacity max-w-[120px]" title="請書PDFを表示"><span class="material-symbols-outlined text-[15px]">picture_as_pdf</span><span class="truncate">請書</span></button>`
+              : `<button onclick="event.stopPropagation(); requestDocUpload(${order.id},'ack')" class="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-surface-container text-on-surface-variant text-[11px] hover:bg-surface-container-high transition-colors" title="請書PDFをアップロード"><span class="material-symbols-outlined text-[14px]">upload</span>アップ</button>`}</td>
             <td class="px-3 py-1.5 text-center">
               <button class="inline-flex items-center gap-1 px-2 py-1.5 rounded-lg bg-primary/10 text-primary text-[12px] font-normal hover:bg-primary/20 transition-colors whitespace-nowrap" onclick="event.stopPropagation(); showPoPreview(${order.id})" title="発注書プレビュー">
                 <span class="material-symbols-outlined text-[16px]">receipt_long</span>
@@ -519,26 +521,26 @@ async function setDocStatus(kind, id, value) {
         alert('更新に失敗しました');
     }
 }
-// ② 請書チェック時にPDFアップロードを要求。チェックは保留し、アップロード成功で確定する。
-let _ackUploadId = null;
-function requestAckUpload(id, checkbox) {
-    if (!checkbox.checked) return;            // 未チェックへの操作は無視
-    checkbox.checked = false;                 // 成功するまでチェックは付けない（キャンセル対策）
-    _ackUploadId = id;
-    const input = document.getElementById('ack-file-input');
+// 請書/請求書 PDF アップロード（グレーのアップボタン押下→ファイル選択→保存）
+const DOC_LABEL = { ack: '請書', invoice: '請求書' };
+let _docUpload = { id: null, kind: null };
+function requestDocUpload(id, kind) {
+    _docUpload = { id, kind };
+    const input = document.getElementById('doc-file-input');
     input.value = '';
     input.click();
 }
 document.addEventListener('DOMContentLoaded', () => {
-    const input = document.getElementById('ack-file-input');
-    if (input) input.addEventListener('change', handleAckFileSelected);
+    const input = document.getElementById('doc-file-input');
+    if (input) input.addEventListener('change', handleDocFileSelected);
 });
-async function handleAckFileSelected(e) {
+async function handleDocFileSelected(e) {
     const file = e.target.files && e.target.files[0];
-    const id = _ackUploadId;
+    const { id, kind } = _docUpload;
     if (!file || id == null) return;
-    if (file.type !== 'application/pdf' && !/\.pdf$/i.test(file.name)) { alert('PDFファイルを選択してください'); return; }
-    if (file.size > 4 * 1024 * 1024) { alert('ファイルサイズは4MBまでにしてください'); return; }
+    const label = DOC_LABEL[kind] || '書類';
+    if (file.type !== 'application/pdf' && !/\.pdf$/i.test(file.name)) { alert('PDFファイルを選択してください'); _docUpload = { id: null, kind: null }; return; }
+    if (file.size > 15 * 1024 * 1024) { alert('ファイルサイズは15MBまでにしてください'); _docUpload = { id: null, kind: null }; return; }
     const dataUrl = await new Promise((resolve, reject) => {
         const r = new FileReader();
         r.onload = () => resolve(r.result);
@@ -546,53 +548,61 @@ async function handleAckFileSelected(e) {
         r.readAsDataURL(file);
     });
     try {
-        const res = await fetch(`/api/orders/${id}/ack-file`, {
+        const res = await fetch(`/api/orders/${id}/file/${kind}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ filename: file.name, dataUrl })
         });
-        if (!res.ok) throw new Error('failed');
-        const mark = (o) => { if (o) { o.ack_has_file = true; o.ack_filename = file.name; o.ack_done = true; } };
+        if (!res.ok) { const d = await res.json().catch(() => ({})); throw new Error(d.error || `HTTP ${res.status}`); }
+        const mark = (o) => {
+            if (!o) return;
+            if (kind === 'invoice') { o.invoice_has_file = true; o.invoice_filename = file.name; o.invoice_done = true; }
+            else { o.ack_has_file = true; o.ack_filename = file.name; o.ack_done = true; }
+        };
         mark(orders.find(o => o.id === id));
         mark(window.appCache.orders.find(o => o.id === id));
         renderTable();
     } catch (err) {
-        alert('請書のアップロードに失敗しました');
+        alert(`${label}のアップロードに失敗しました：` + err.message);
     } finally {
-        _ackUploadId = null;
+        _docUpload = { id: null, kind: null };
     }
 }
 
-// ③ 受領済みの請書PDFをモーダルで表示
-let _ackModalId = null;
-function openAckModal(id) {
-    _ackModalId = id;
+// アップ済みPDFをモーダルで表示
+let _docModal = { id: null, kind: null };
+function openDocModal(id, kind) {
+    _docModal = { id, kind };
     const order = orders.find(o => o.id === id) || window.appCache.orders.find(o => o.id === id);
-    document.getElementById('ack-modal-name').textContent = order ? `（${order.category || ''} / ${order.vendor || ''}）` : '';
-    document.getElementById('ack-frame').src = `/api/orders/${id}/ack-file#toolbar=1&view=FitH`;
-    document.getElementById('ack-modal').style.display = 'block';
+    document.getElementById('doc-modal-title').textContent = DOC_LABEL[kind] || '書類';
+    document.getElementById('doc-modal-name').textContent = order ? `（${order.category || ''} / ${order.vendor || ''}）` : '';
+    document.getElementById('doc-frame').src = `/api/orders/${id}/file/${kind}#toolbar=1&view=FitH`;
+    document.getElementById('doc-modal').style.display = 'block';
 }
-function closeAckModal() {
-    document.getElementById('ack-modal').style.display = 'none';
-    document.getElementById('ack-frame').src = 'about:blank';
-    _ackModalId = null;
+function closeDocModal() {
+    document.getElementById('doc-modal').style.display = 'none';
+    document.getElementById('doc-frame').src = 'about:blank';
+    _docModal = { id: null, kind: null };
 }
-
-// ④ 請書PDFを削除してチェック解除（未受領）に戻す
-async function deleteAckFile() {
-    const id = _ackModalId;
+async function deleteDocFile() {
+    const { id, kind } = _docModal;
     if (id == null) return;
-    if (!confirm('請書PDFを削除し、未受領（チェック解除）に戻します。よろしいですか？')) return;
+    const label = DOC_LABEL[kind] || '書類';
+    if (!confirm(`${label}PDFを削除します。よろしいですか？`)) return;
     try {
-        const res = await fetch(`/api/orders/${id}/ack-file`, { method: 'DELETE' });
+        const res = await fetch(`/api/orders/${id}/file/${kind}`, { method: 'DELETE' });
         if (!res.ok) throw new Error('failed');
-        const mark = (o) => { if (o) { o.ack_has_file = false; o.ack_filename = null; o.ack_done = false; } };
+        const mark = (o) => {
+            if (!o) return;
+            if (kind === 'invoice') { o.invoice_has_file = false; o.invoice_filename = null; o.invoice_done = false; }
+            else { o.ack_has_file = false; o.ack_filename = null; o.ack_done = false; }
+        };
         mark(orders.find(o => o.id === id));
         mark(window.appCache.orders.find(o => o.id === id));
-        closeAckModal();
+        closeDocModal();
         renderTable();
     } catch (err) {
-        alert('請書の削除に失敗しました');
+        alert(`${label}の削除に失敗しました`);
     }
 }
 
@@ -1166,6 +1176,6 @@ function filterTable() {
 }
 
 </script>
-<script src="/notify.js?v=47"></script>
+<script src="/notify.js?v=48"></script>
 </body>
 </html>
