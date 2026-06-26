@@ -93,6 +93,8 @@ aside nav .group p { font-size: 10px !important; font-weight: 600 !important; }
 main input, main select, main textarea { font-size: 13px !important; }
 main button { font-size: 13px !important; }
 main button .material-symbols-outlined, main button.material-symbols-outlined { font-size: 18px !important; }
+/* 一覧のステータス変更プルダウンは小さめ・太字にしない（全画面共通） */
+main select.appearance-none { font-size: 11px !important; font-weight: 400 !important; }
 `;
   const style = document.createElement('style');
   style.id = 'sidebar-size-fix';
