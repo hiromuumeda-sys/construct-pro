@@ -6,10 +6,10 @@
 <title>工事計画 - WIN WIN様デモ</title>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
-<link rel="stylesheet" href="/styles.css?v=38"/>
-<script src="/sidebar.js?v=38"></script>
-<script src="/auth.js?v=38"></script>
-<script src="/header.js?v=38"></script>
+<link rel="stylesheet" href="/styles.css?v=39"/>
+<script src="/sidebar.js?v=39"></script>
+<script src="/auth.js?v=39"></script>
+<script src="/header.js?v=39"></script>
 <style>
 body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
@@ -152,7 +152,7 @@ body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 <p class="text-label-md text-on-surface-variant" id="project-name"></p>
 </div>
 <div class="flex gap-md">
-<button class="px-4 py-1.5 border border-outline text-primary font-label-md rounded-lg hover:bg-surface-container transition-colors flex items-center gap-2">
+<button class="px-4 py-1.5 border border-outline text-primary font-label-md rounded-lg hover:bg-surface-container transition-colors flex items-center gap-2" onclick="exportOrdersCSV()">
 <span class="material-symbols-outlined">download</span>
 CSV出力
 </button>
@@ -414,6 +414,32 @@ function loadOrders() {
 }
 
 // テーブルの描画
+// 表示中の工事計画（案件の注文明細）をCSVでダウンロード
+function exportOrdersCSV() {
+    if (!orders || orders.length === 0) { alert('出力する工事計画データがありません'); return; }
+    const cols = [
+        ['工事区分', 'category'], ['発注先', 'vendor'], ['見積額', 'estimate'], ['予定金額', 'planned'],
+        ['決定金額', 'decided'], ['ステータス', 'status'], ['工事場所', 'site'],
+        ['工事開始日', 'period_start'], ['工事終了日', 'period_end'], ['検査・引渡時期', 'handover'],
+        ['支払条件', 'payment'], ['支払状況', 'paymentStatus'], ['支払期日', 'paymentDate'], ['工事内容', 'details'],
+    ];
+    const esc = (v) => {
+        const s = (v === null || v === undefined) ? '' : String(v);
+        return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+    };
+    const header = cols.map(c => c[0]).join(',');
+    const body = orders.map(o => cols.map(c => esc(o[c[1]])).join(',')).join('\n');
+    const pname = (document.getElementById('project-name').textContent || '工事計画').trim();
+    const blob = new Blob(['﻿' + header + '\n' + body + '\n'], { type: 'text/csv;charset=utf-8;' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `工事計画_${pname || projectId || ''}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(a.href);
+}
+
 function renderTable() {
     const tbody = document.getElementById('orders-table-body');
     tbody.innerHTML = orders.map((order) => `
@@ -1151,6 +1177,6 @@ function filterTable() {
 }
 
 </script>
-<script src="/notify.js?v=38"></script>
+<script src="/notify.js?v=39"></script>
 </body>
 </html>
