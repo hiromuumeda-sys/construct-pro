@@ -8,11 +8,29 @@ function setConfirmedNotif(arr) {
   localStorage.setItem('notif_confirmed', JSON.stringify(arr));
 }
 let __notifItems = [];
-async function loadNotif() {
-  try {
-    const res = await fetch('/api/notifications');
-    __notifItems = await res.json();
-  } catch(e) { return; }
+// 通知はsessionStorageにキャッシュし、画面遷移のたびに取得しない（TTL内はキャッシュ表示）。
+// 最新化はベルを開いた時のみ（loadNotif(true)）。
+const NOTIF_TTL = 5 * 60 * 1000;
+function __readNotifCache() {
+  try { const c = JSON.parse(sessionStorage.getItem('notif_cache') || 'null'); if (c && Array.isArray(c.items)) return c; } catch (_) {}
+  return null;
+}
+let __notifFetching = null;
+async function loadNotif(force) {
+  const cache = __readNotifCache();
+  if (!force && cache && (Date.now() - cache.ts) < NOTIF_TTL) {
+    __notifItems = cache.items; renderNotif(); return;   // TTL内は取得しない
+  }
+  if (cache) { __notifItems = cache.items; renderNotif(); } // 期限切れでもまずキャッシュ表示（チラ防止）
+  // 同時呼び出し（notify.js末尾＋header.js）は1回の取得にまとめる
+  if (!__notifFetching) {
+    __notifFetching = fetch('/api/notifications')
+      .then(r => r.json())
+      .then(items => { __notifItems = items; try { sessionStorage.setItem('notif_cache', JSON.stringify({ ts: Date.now(), items })); } catch (_) {} })
+      .catch(() => {})
+      .finally(() => { __notifFetching = null; });
+  }
+  await __notifFetching;
   renderNotif();
 }
 function renderNotif() {
@@ -65,7 +83,9 @@ function confirmNotif(i) {
 function toggleNotif(e) {
   e.stopPropagation();
   const panel = document.getElementById('notif-panel');
-  panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+  const opening = panel.style.display === 'none';
+  panel.style.display = opening ? 'block' : 'none';
+  if (opening) loadNotif(true); // 開いた時だけ最新化
 }
 document.addEventListener('click', () => {
   const panel = document.getElementById('notif-panel');
