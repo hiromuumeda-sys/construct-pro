@@ -1048,7 +1048,8 @@ app.get('/api/report/growth-pdf', h(async (req, res) => {
 
 // ============ Cache endpoint ============
 app.get('/api/cache', h(async (req, res) => {
-  const [projects, vendors, categories, orders, customers, receipts, invoices] = await Promise.all([
+  await ensureAux();
+  const [projects, vendors, categories, orders, customers, receipts, invoices, files] = await Promise.all([
     q('SELECT * FROM projects ORDER BY id'),
     q('SELECT * FROM vendors ORDER BY id'),
     q('SELECT * FROM categories ORDER BY "order"'),
@@ -1056,8 +1057,19 @@ app.get('/api/cache', h(async (req, res) => {
     q('SELECT * FROM customers ORDER BY id'),
     q('SELECT * FROM receipts ORDER BY received_date DESC'),
     q('SELECT * FROM invoices ORDER BY id DESC'),
+    q('SELECT order_id, kind, filename FROM order_files'),
   ]);
-  res.json({ projects, vendors, categories, orders, customers, receipts, invoices });
+  // 請書/請求書PDFの添付状況をマージ（/api/orders と同じ）
+  const fkey = (id, kind) => `${id}:${kind}`;
+  const fmap = new Map(files.map(f => [fkey(f.order_id, f.kind), f.filename]));
+  const ordersWithFiles = orders.map(o => ({
+    ...o,
+    ack_has_file: fmap.has(fkey(o.id, 'ack')),
+    ack_filename: fmap.get(fkey(o.id, 'ack')) || null,
+    invoice_has_file: fmap.has(fkey(o.id, 'invoice')),
+    invoice_filename: fmap.get(fkey(o.id, 'invoice')) || null,
+  }));
+  res.json({ projects, vendors, categories, orders: ordersWithFiles, customers, receipts, invoices });
 }));
 
 app.get('/api/test', (req, res) => res.json({ status: 'ok', message: 'Server is running' }));
