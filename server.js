@@ -22,11 +22,18 @@ const app = express();
 // Middleware
 app.use(cors());
 app.use(express.json({ limit: '5mb' }));
-// デモは頻繁に更新するため静的ファイルはキャッシュさせない
+// 静的ファイルのキャッシュ戦略（表示速度最適化）
+//  - HTML: 毎回再検証（更新を即反映、コストは小さい）
+//  - JS/CSS/画像など: ?v=N でバージョン管理しているため長期キャッシュ＋Vercelエッジキャッシュ(immutable)
 app.use(express.static(path.join(__dirname, 'public'), {
-  etag: false,
-  lastModified: false,
-  setHeaders: (res) => res.setHeader('Cache-Control', 'no-store, must-revalidate'),
+  etag: true,
+  setHeaders: (res, filePath) => {
+    if (filePath.endsWith('.html')) {
+      res.setHeader('Cache-Control', 'public, max-age=0, must-revalidate');
+    } else {
+      res.setHeader('Cache-Control', 'public, max-age=31536000, s-maxage=31536000, immutable');
+    }
+  },
 }));
 
 // 非同期ハンドラのエラー処理ラッパ
