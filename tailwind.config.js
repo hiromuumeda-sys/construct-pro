@@ -23,7 +23,7 @@ module.exports = {
         'on-tertiary-fixed-variant': '#005236', 'background': '#f7f9fb', 'secondary': '#4648d4',
         'primary-fixed': '#e0e0ff', 'on-secondary-container': '#fffbff',
       },
-      borderRadius: { DEFAULT: '0.25rem', lg: '16px', xl: '24px', full: '9999px' },
+      borderRadius: { none: '0px', sm: '2px', DEFAULT: '3px', md: '4px', lg: '6px', xl: '8px', '2xl': '10px', '3xl': '12px', full: '9999px' },
       spacing: {
         xl: '32px', 'margin-mobile': '16px', 'container-max': '1440px', md: '16px', sm: '12px',
         'margin-desktop': '24px', gutter: '20px', xs: '8px', lg: '20px', base: '4px',

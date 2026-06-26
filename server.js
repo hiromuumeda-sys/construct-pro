@@ -1074,7 +1074,7 @@ function buildDocumentPDF(kind, project, orders) {
     doc.on('end', () => resolve(Buffer.concat(chunks)));
     doc.on('error', reject);
     useJpFont(doc);
-    const navy = '#030424', gray = '#6b7280';
+    const navy = '#030424', gray = '#6b7280', accent = '#7030A0'; // accent=Excelテンプレの紫
     const L = 50, R = 545, W = R - L;
     const now = new Date();
     const due = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
@@ -1087,8 +1087,9 @@ function buildDocumentPDF(kind, project, orders) {
 
     let y = 50;
     // タイトル（中央）
-    doc.fillColor('#000').fontSize(22).text(title, 0, y, { align: 'center', characterSpacing: 8, width: pageW });
-    doc.moveTo(pageW / 2 - 78, y + 30).lineTo(pageW / 2 + 78, y + 30).lineWidth(1).strokeColor('#000').stroke();
+    doc.fillColor(accent).fontSize(22).text(title, 0, y, { align: 'center', characterSpacing: 8, width: pageW });
+    doc.moveTo(pageW / 2 - 78, y + 30).lineTo(pageW / 2 + 78, y + 30).lineWidth(1).strokeColor(accent).stroke();
+    doc.fillColor('#000');
     y += 54;
     // 宛先（左）
     const client = (project.clientCompany || project.client || '') + '　御中';
@@ -1108,9 +1109,9 @@ function buildDocumentPDF(kind, project, orders) {
     doc.text(isInvoice ? '下記のとおり御請求申し上げます。' : '下記のとおり御見積申し上げます。', L, y); y += 20;
     // 合計金額ボックス＋日付
     const boxW = 250, boxH = 46;
-    doc.lineWidth(1.2).strokeColor(navy).rect(L, y, boxW, boxH).stroke();
-    doc.fontSize(10).fillColor('#000').text(isInvoice ? '合計金額（税込）' : '御見積金額（税込）', L + 8, y + 6);
-    doc.fontSize(18).fillColor(navy).text('¥' + total.toLocaleString(), L + 6, y + 20, { width: boxW - 12, align: 'right' });
+    doc.lineWidth(1.2).strokeColor(accent).rect(L, y, boxW, boxH).stroke();
+    doc.fontSize(10).fillColor(accent).text(isInvoice ? '合計金額（税込）' : '御見積金額（税込）', L + 8, y + 6);
+    doc.fontSize(18).fillColor('#000').text('¥' + total.toLocaleString(), L + 6, y + 20, { width: boxW - 12, align: 'right' });
     doc.fillColor('#000').fontSize(9);
     doc.text((isInvoice ? '請求日：' : '見積日：') + fmtDateJa(now), L + boxW + 24, y + 8);
     doc.text((isInvoice ? 'お支払期限：' : '有効期限：') + fmtDateJa(due), L + boxW + 24, y + 26);
@@ -1130,11 +1131,12 @@ function buildDocumentPDF(kind, project, orders) {
     const rowH = 22;
     const drawRow = (vals, opts = {}) => {
       let cx = L;
+      const isH = opts.headerBg;
       cols.forEach(c => {
-        if (opts.headerBg) doc.fillColor('#eef0f6').rect(cx, y, c.w, rowH).fill();
-        doc.lineWidth(0.6).strokeColor('#999').rect(cx, y, c.w, rowH).stroke();
+        if (isH) doc.fillColor(accent).rect(cx, y, c.w, rowH).fill();
+        doc.lineWidth(0.6).strokeColor(isH ? accent : '#999').rect(cx, y, c.w, rowH).stroke();
         const v = vals[c.k];
-        if (v !== undefined && v !== '') doc.fillColor('#000').fontSize(9).text(String(v), cx + 4, y + 6, { width: c.w - 8, align: c.align });
+        if (v !== undefined && v !== '') doc.fillColor(isH ? '#fff' : '#000').fontSize(9).text(String(v), cx + 4, y + 6, { width: c.w - 8, align: c.align });
         cx += c.w;
       });
       y += rowH;
@@ -1157,10 +1159,10 @@ function buildDocumentPDF(kind, project, orders) {
     y += 10;
     const tlX = R - 220, tvX = R - 100;
     const totalRow = (label, val, bold) => {
-      doc.lineWidth(0.6).strokeColor('#999');
+      doc.lineWidth(bold ? 1 : 0.6).strokeColor(bold ? accent : '#999');
       doc.rect(tlX, y, 120, 20).stroke();
       doc.rect(tlX + 120, y, 100, 20).stroke();
-      doc.fillColor('#000').fontSize(bold ? 11 : 9).text(label, tlX + 6, y + (bold ? 4 : 6));
+      doc.fillColor(bold ? accent : '#000').fontSize(bold ? 11 : 9).text(label, tlX + 6, y + (bold ? 4 : 6));
       doc.fontSize(bold ? 11 : 9).text(val, tlX + 124, y + (bold ? 4 : 6), { width: 92, align: 'right' });
       y += 20;
     };

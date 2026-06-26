@@ -6,10 +6,10 @@
 <title>工事計画 - WIN WIN様デモ</title>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
-<link rel="stylesheet" href="/styles.css?v=43"/>
-<script src="/sidebar.js?v=43"></script>
-<script src="/auth.js?v=43"></script>
-<script src="/header.js?v=43"></script>
+<link rel="stylesheet" href="/styles.css?v=45"/>
+<script src="/sidebar.js?v=45"></script>
+<script src="/auth.js?v=45"></script>
+<script src="/header.js?v=45"></script>
 <style>
 body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
@@ -452,7 +452,7 @@ function renderTable() {
             <td class="px-3 py-1.5 text-label-md font-label-md text-center whitespace-nowrap cursor-pointer" onclick="openOrderDetailModal(${order.id})">
                 <div class="relative inline-block" onclick="event.stopPropagation()">
                   <select onchange="updateOrderStatus(${order.id}, this.value)" class="appearance-none text-[11px] font-normal rounded-md pl-2 pr-6 py-1 border border-outline-variant cursor-pointer hover:border-secondary focus:ring-2 focus:ring-secondary/30 ${getStatusColor(order.status)}">${['未処理','見積待ち','決定済み','発注完了','支払済み'].map(s => `<option value="${s}" ${s === order.status ? 'selected' : ''}>${s}</option>`).join('')}</select>
-                  <span class="material-symbols-outlined absolute right-0.5 top-1/2 -translate-y-1/2 text-[16px] pointer-events-none">arrow_drop_down</span>
+                  <span class="material-symbols-outlined absolute right-0.5 top-1/2 -translate-y-1/2 text-[16px] pointer-events-none">expand_more</span>
                 </div>
             </td>
             <td class="px-3 py-1.5 text-center whitespace-nowrap"><input type="checkbox" ${isInvoiceDone(order) ? 'checked' : ''} onchange="setDocStatus('invoice', ${order.id}, this.checked)" class="w-4 h-4 accent-secondary cursor-pointer" title="請求書 発行済にチェック"/></td>
@@ -737,7 +737,21 @@ function showPoModal(order, project) {
 
     const periodStart = order.period_start;
     const periodEnd = order.period_end;
-    const period = (periodStart && periodEnd) ? (periodStart + ' 〜 ' + periodEnd) : '---';
+    const period = (periodStart && periodEnd) ? `着手予定　${periodStart}　～　完成予定　${periodEnd}` : '---';
+    const vendorName = order.vendor || '---';
+    const net = Number(order.decided || order.planned || order.estimate) || 0;
+    const tax = Math.floor(net * 0.1), total = net + tax;
+    const _d = new Date(), wy = _d.getFullYear() - 2018, wm = _d.getMonth() + 1, wd = _d.getDate();
+    const poFields = [
+      ['工事名', project ? project.name : (order.details || '---')],
+      ['工事内容', order.category || order.details || '---'],
+      ['工事場所', order.site || '---'],
+      ['工事期間', period],
+      ['検査及び引渡し時期（施主に対して）', order.handover || '---'],
+      ['請負代金', `￥${total.toLocaleString()}（内消費税額　￥${tax.toLocaleString()}　）`],
+      ['支払条件／支払方法', order.payment || '---'],
+    ];
+    const poRows = poFields.map(([l, v]) => `<tr><td class="border border-outline-variant p-2 align-top w-[34%] bg-surface-container-low/50">□ ${l}</td><td class="border border-outline-variant p-2 align-top">${v}</td></tr>`).join('');
 
     modal.innerHTML = `
       <div class="absolute inset-0 bg-inverse-surface/60 backdrop-blur-md"></div>
@@ -761,62 +775,20 @@ function showPoModal(order, project) {
             </div>
           </div>
           <div class="p-5 bg-surface-container-low/30 overflow-y-auto max-h-[70vh]">
-            <div class="bg-white p-12 shadow-sm min-h-[600px] border border-outline-variant/60 text-on-surface rounded-lg flex flex-col">
-              <div class="flex justify-between items-start mb-12">
-                <div>
-                  <h1 class="text-3xl font-bold tracking-[0.3em] mb-6 text-on-surface">発注書</h1>
-                  <p class="text-lg border-b-2 border-on-surface pb-1 inline-block">${order.vendor || '---'} 御中</p>
-                </div>
-                <div class="text-right">
-                  <p class="font-bold text-lg mb-1 tracking-tight">WIN WIN様</p>
-                  <p class="text-[10px] text-on-surface-variant leading-relaxed">
-                    〒600-8009<br/>京都府京都市下京区四条通<br/>室町東入函谷鉾町 101<br/>TEL: 075-123-4567
-                  </p>
-                </div>
+            <div class="bg-white p-10 shadow-sm border border-outline-variant/60 text-on-surface" style="line-height:1.6">
+              <h1 class="text-2xl text-center" style="letter-spacing:.4em">注文書</h1>
+              <div class="w-28 h-px bg-on-surface mx-auto mt-1 mb-6"></div>
+              <p class="text-base mb-3">${vendorName}　殿</p>
+              <p class="text-xs">貴社に対し下記のとおりご注文申し上げます。</p>
+              <p class="text-xs mb-4">なお、工事注文確認の為、注文請書のご返送よろしくお願いいたします。</p>
+              <table class="w-full text-xs mb-6" style="border-collapse:collapse">${poRows}</table>
+              <p class="text-xs mb-4">令和　${wy}年 ${wm}月　${wd}日</p>
+              <div class="text-xs space-y-1">
+                <div class="flex gap-3"><span class="w-14 shrink-0">注文者</span><span class="w-16 shrink-0">住所</span><span>京都市中京区河原町通二条下る一之船入町537-20 FIS御池ビル505号</span></div>
+                <div class="flex gap-3"><span class="w-14 shrink-0"></span><span class="w-16 shrink-0">会社名</span><span>株式会社WIN WIN</span></div>
+                <div class="flex gap-3 items-center"><span class="w-14 shrink-0"></span><span class="w-16 shrink-0">代表者名</span><span>磯田　裕晃</span><span class="ml-auto w-9 h-9 border border-outline-variant text-outline flex items-center justify-center text-[10px]">印</span></div>
               </div>
-              <div class="border-b-2 border-primary py-6 mb-10 flex justify-between items-end">
-                <span class="text-sm font-bold">発注金額合計 (税込)</span>
-                <span class="text-3xl font-bold tabular-numbers text-primary">¥${(order.decided || order.planned || order.estimate || 0).toLocaleString()}-</span>
-              </div>
-              <div class="grid grid-cols-2 gap-y-6 text-xs mb-10 border-t border-b border-outline-variant/20 py-6">
-                <div class="flex flex-col gap-1">
-                  <span class="text-on-surface-variant font-bold uppercase tracking-wider text-[10px]">工事場所</span>
-                  <span class="font-medium">${order.site || '---'}</span>
-                </div>
-                <div class="flex flex-col gap-1">
-                  <span class="text-on-surface-variant font-bold uppercase tracking-wider text-[10px]">工事期間</span>
-                  <span class="font-medium">${period}</span>
-                </div>
-                <div class="flex flex-col gap-1">
-                  <span class="text-on-surface-variant font-bold uppercase tracking-wider text-[10px]">検査・引渡時期</span>
-                  <span class="font-medium">${order.handover || '---'}</span>
-                </div>
-                <div class="flex flex-col gap-1">
-                  <span class="text-on-surface-variant font-bold uppercase tracking-wider text-[10px]">支払条件</span>
-                  <span class="font-medium text-[11px]">${order.payment || '---'}</span>
-                </div>
-                <div class="col-span-2 flex flex-col gap-1 border-t border-outline-variant/10 pt-4 mt-2">
-                  <span class="text-on-surface-variant font-bold uppercase tracking-wider text-[10px]">工事内容</span>
-                  <span class="whitespace-pre-wrap font-medium leading-relaxed text-sm">${order.details || '---'}</span>
-                </div>
-              </div>
-              <table class="w-full text-sm flex-grow">
-                <thead>
-                  <tr class="border-b border-on-surface font-bold">
-                    <th class="py-3 text-left">内容・品名</th>
-                    <th class="py-3 text-right">金額 (税込)</th>
-                  </tr>
-                </thead>
-                <tbody class="divide-y divide-outline-variant/10">
-                  <tr>
-                    <td class="py-8 font-medium">${order.category || '一式'}</td>
-                    <td class="py-8 text-right font-bold tabular-numbers text-lg">¥${(order.decided || order.planned || order.estimate || 0).toLocaleString()}</td>
-                  </tr>
-                </tbody>
-              </table>
-              <div class="mt-12 border-t border-outline-variant pt-4 text-[10px] text-on-surface-variant">
-                <p>備考：本発注書の内容に基づき、指定の期日までに納品をお願いいたします。</p>
-              </div>
+              <p class="mt-6 text-[10px] text-on-surface-variant">※ PDFには2ページ目として「注文請書」が付きます。</p>
             </div>
           </div>
         </div>
@@ -1175,7 +1147,7 @@ function filterTable() {
             <td class="px-3 py-1.5 text-label-md font-label-md text-center whitespace-nowrap">
                 <div class="relative inline-block" onclick="event.stopPropagation()">
                   <select onchange="updateOrderStatus(${order.id}, this.value)" class="appearance-none text-[11px] font-normal rounded-md pl-2 pr-6 py-1 border border-outline-variant cursor-pointer hover:border-secondary focus:ring-2 focus:ring-secondary/30 ${getStatusColor(order.status)}">${['未処理','見積待ち','決定済み','発注完了','支払済み'].map(s => `<option value="${s}" ${s === order.status ? 'selected' : ''}>${s}</option>`).join('')}</select>
-                  <span class="material-symbols-outlined absolute right-0.5 top-1/2 -translate-y-1/2 text-[16px] pointer-events-none">arrow_drop_down</span>
+                  <span class="material-symbols-outlined absolute right-0.5 top-1/2 -translate-y-1/2 text-[16px] pointer-events-none">expand_more</span>
                 </div>
             </td>
         </tr>
@@ -1183,6 +1155,6 @@ function filterTable() {
 }
 
 </script>
-<script src="/notify.js?v=43"></script>
+<script src="/notify.js?v=45"></script>
 </body>
 </html>

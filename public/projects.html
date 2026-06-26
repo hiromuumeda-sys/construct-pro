@@ -6,10 +6,10 @@
 <title>受注一覧 - WIN WIN様デモ</title>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
-<link rel="stylesheet" href="/styles.css?v=43"/>
-<script src="/sidebar.js?v=43"></script>
-<script src="/auth.js?v=43"></script>
-<script src="/header.js?v=43"></script>
+<link rel="stylesheet" href="/styles.css?v=45"/>
+<script src="/sidebar.js?v=45"></script>
+<script src="/auth.js?v=45"></script>
+<script src="/header.js?v=45"></script>
 <style>
 body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
@@ -157,7 +157,7 @@ CSV出力
 <th class="w-[42%] px-lg py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider">備考</th>
 <th class="w-28 px-lg py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider">工期</th>
 <th class="w-28 px-lg py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider text-right">契約金額</th>
-<th class="w-20 px-lg py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider">状態</th>
+<th class="w-28 px-lg py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider">状態</th>
 <th class="w-28 px-lg py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider text-center">工事計画</th>
 <th class="w-36 px-lg py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider text-center">操作</th>
 </tr>
@@ -425,12 +425,12 @@ function renderTable(projects) {
       <td class="w-[42%] px-lg py-2 text-label-md font-label-md text-on-surface-variant align-top break-words whitespace-normal">${p.notes || '-'}</td>
       <td class="w-28 px-lg py-2 text-label-md font-label-md text-on-surface-variant tabular-numbers align-top">${p.startDate || '-'} 〜 ${p.endDate || '-'}</td>
       <td class="w-28 px-lg py-2 text-label-md font-label-md text-primary tabular-numbers text-right align-top">¥${p.amount.toLocaleString()}</td>
-      <td class="w-24 px-lg py-2 align-top" onclick="event.stopPropagation()">
+      <td class="w-28 px-lg py-2 align-top" onclick="event.stopPropagation()">
         <div class="relative inline-block">
           <select onchange="updateProjectStatus(${p.id}, this.value)" class="appearance-none text-[11px] font-normal rounded-md pl-2 pr-6 py-1 border border-outline-variant cursor-pointer hover:border-secondary focus:ring-2 focus:ring-secondary/30 ${getStatusClass(p.status)}">
             ${['未対応','提案中','見積確認中','受注','失注'].map(s => `<option value="${s}" ${s === p.status ? 'selected' : ''}>${s}</option>`).join('')}
           </select>
-          <span class="material-symbols-outlined absolute right-0.5 top-1/2 -translate-y-1/2 text-[16px] pointer-events-none">arrow_drop_down</span>
+          <span class="material-symbols-outlined absolute right-0.5 top-1/2 -translate-y-1/2 text-[16px] pointer-events-none">expand_more</span>
         </div>
       </td>
       <td class="w-28 px-lg py-2 text-center align-top">
@@ -642,7 +642,7 @@ function generateInvoice(projectId) {
   // Populate invoice document
   document.getElementById('inv-client').textContent = (project.clientCompany || project.client) + ' 御中';
   document.getElementById('inv-project-name').textContent = project.name;
-  document.getElementById('inv-number').textContent = `請求№: INV-${String(projectId).padStart(5, '0')}`;
+  document.getElementById('inv-number').textContent = `請求№　WW-${String(projectId).padStart(3, '0')}`;
 
   const now = new Date();
   const due = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
@@ -660,8 +660,8 @@ function generateInvoice(projectId) {
 
   const tbody = document.getElementById('inv-order-rows');
   tbody.innerHTML = orders.length
-    ? orders.map(o => `<tr><td class="py-3 font-medium">${o.category || '一式'}</td><td class="py-3 text-right tabular-numbers">¥${(o.decided || 0).toLocaleString()}</td></tr>`).join('')
-    : '<tr><td colspan="2" class="py-6 text-center text-on-surface-variant text-sm">注文データがありません</td></tr>';
+    ? orders.map(o => { const a = o.decided || 0; return `<tr><td class="border border-outline-variant p-1.5">${o.category || '一式'}</td><td class="border border-outline-variant p-1.5 text-right">1</td><td class="border border-outline-variant p-1.5 text-center">式</td><td class="border border-outline-variant p-1.5 text-right tabular-numbers">¥${a.toLocaleString()}</td><td class="border border-outline-variant p-1.5 text-right tabular-numbers">¥${a.toLocaleString()}</td><td class="border border-outline-variant p-1.5"></td></tr>`; }).join('')
+    : '<tr><td colspan="6" class="border border-outline-variant p-4 text-center text-on-surface-variant">注文データがありません</td></tr>';
 
   // Pre-fill email fields
   document.getElementById('invoice-email-to').value = project.clientEmail || '';
@@ -771,7 +771,7 @@ function generateEstimate(projectId) {
 
   document.getElementById('est-client').textContent = (project.clientCompany || project.client) + ' 御中';
   document.getElementById('est-project-name').textContent = project.name;
-  document.getElementById('est-number').textContent = `見積№: EST-${String(projectId).padStart(5, '0')}`;
+  document.getElementById('est-number').textContent = `見積№　EST-${String(projectId).padStart(3, '0')}`;
 
   const now = new Date();
   const valid = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
@@ -788,8 +788,8 @@ function generateEstimate(projectId) {
 
   const tbody = document.getElementById('est-order-rows');
   tbody.innerHTML = orders.length
-    ? orders.map(o => `<tr><td class="py-3 font-medium">${o.category || '一式'}</td><td class="py-3 text-right tabular-numbers">¥${amt(o).toLocaleString()}</td></tr>`).join('')
-    : '<tr><td colspan="2" class="py-6 text-center text-on-surface-variant text-sm">注文データがありません</td></tr>';
+    ? orders.map(o => { const a = amt(o); return `<tr><td class="border border-outline-variant p-1.5">${o.category || '一式'}</td><td class="border border-outline-variant p-1.5 text-right">1</td><td class="border border-outline-variant p-1.5 text-center">式</td><td class="border border-outline-variant p-1.5 text-right tabular-numbers">¥${a.toLocaleString()}</td><td class="border border-outline-variant p-1.5 text-right tabular-numbers">¥${a.toLocaleString()}</td><td class="border border-outline-variant p-1.5"></td></tr>`; }).join('')
+    : '<tr><td colspan="6" class="border border-outline-variant p-4 text-center text-on-surface-variant">注文データがありません</td></tr>';
 
   document.getElementById('estimate-email-to').value = project.clientEmail || '';
   document.getElementById('estimate-email-subject').value = `【見積書】${project.name}`;
@@ -890,52 +890,55 @@ async function sendEstimateEmail() {
       </div>
       <!-- Invoice document -->
       <div class="p-5 bg-surface-container-low/30 overflow-y-auto max-h-[70vh]">
-        <div class="bg-white p-12 shadow-sm min-h-[600px] border border-outline-variant/60 text-on-surface rounded-xl flex flex-col">
-          <div class="flex justify-between items-start mb-12">
+        <div class="bg-white p-10 shadow-sm border border-outline-variant/60 text-on-surface" style="line-height:1.6">
+          <h1 class="text-2xl text-center text-[#7030A0]" style="letter-spacing:.4em">請　求　書</h1>
+          <div class="w-32 h-px bg-[#7030A0] mx-auto mt-1 mb-5"></div>
+          <div class="flex justify-between items-start mb-4">
             <div>
-              <h1 class="text-3xl font-bold tracking-[0.3em] mb-6 text-on-surface">請　求　書</h1>
               <p class="text-lg border-b-2 border-on-surface pb-1 inline-block" id="inv-client">--- 御中</p>
-              <p class="text-sm mt-2 text-on-surface-variant" id="inv-project-name"></p>
+              <p class="text-xs mt-2">件名：<span id="inv-project-name"></span></p>
+              <p class="text-xs">下記のとおり御請求申し上げます。</p>
             </div>
-            <div class="text-right">
-              <p class="font-bold text-lg mb-1 tracking-tight">株式会社WIN WIN</p>
-              <p class="text-[10px] text-on-surface-variant leading-relaxed">
-                〒604-0924<br/>京都市中京区一之船入町537-20<br/>FIS御池ビル505号<br/>TEL: 075-777-1236
-              </p>
-              <p class="text-[10px] mt-2 font-medium" id="inv-number">請求№: INV-00000</p>
-              <p class="text-[9px] text-on-surface-variant">適格: T8130001068355</p>
-            </div>
-          </div>
-          <div class="border-b-2 border-primary py-6 mb-10 flex justify-between items-end">
-            <span class="text-sm font-bold">ご請求金額（税込）</span>
-            <span class="text-3xl font-bold tabular-numbers text-primary">¥<span id="inv-total">0</span>-</span>
-          </div>
-          <div class="grid grid-cols-2 gap-y-4 text-xs mb-8 border-t border-b border-outline-variant/20 py-6">
-            <div class="flex flex-col gap-1">
-              <span class="text-on-surface-variant font-bold uppercase tracking-wider text-[10px]">請求日</span>
-              <span class="font-medium" id="inv-date">---</span>
-            </div>
-            <div class="flex flex-col gap-1">
-              <span class="text-on-surface-variant font-bold uppercase tracking-wider text-[10px]">お支払期限</span>
-              <span class="font-medium" id="inv-due">---</span>
+            <div class="text-right text-[10px] text-on-surface-variant leading-relaxed">
+              <p class="text-[10px] font-medium text-on-surface" id="inv-number">請求№　WW-000</p>
+              <p>適格請求書発行事業者登録番号　T8130001068355</p>
+              <p class="font-bold text-sm text-on-surface mt-1">株式会社WIN WIN</p>
+              <p>〒604-0924</p>
+              <p>京都市中京区一之船入町537-20 FIS御池ビル505号</p>
+              <p>TEL : 075-777-1236</p>
             </div>
           </div>
-          <table class="w-full text-sm mb-6 flex-grow">
+          <div class="flex items-stretch gap-4 mb-3">
+            <div class="border-2 border-[#7030A0] px-4 py-2 min-w-[240px]">
+              <div class="text-[11px] text-[#7030A0] font-bold">合計金額（税込）</div>
+              <div class="text-2xl font-bold tabular-numbers text-right">¥<span id="inv-total">0</span></div>
+            </div>
+            <div class="text-xs flex flex-col justify-center gap-1">
+              <div>請求日：<span id="inv-date">---</span></div>
+              <div>お支払期限：<span id="inv-due">---</span></div>
+            </div>
+          </div>
+          <p class="text-[11px] mb-2">[振込先]　〇〇銀行 京都支店　／　口座番号　(普)0777777</p>
+          <table class="w-full text-xs mb-4" style="border-collapse:collapse">
             <thead>
-              <tr class="border-b border-on-surface font-bold">
-                <th class="py-3 text-left">品名</th>
-                <th class="py-3 text-right">金額</th>
+              <tr class="text-white" style="background:#7030A0">
+                <th class="border border-[#7030A0] p-1.5 text-left">品　名</th>
+                <th class="border border-[#7030A0] p-1.5 w-12">数量</th>
+                <th class="border border-[#7030A0] p-1.5 w-12">単位</th>
+                <th class="border border-[#7030A0] p-1.5 w-24 text-right">単価</th>
+                <th class="border border-[#7030A0] p-1.5 w-24 text-right">金額</th>
+                <th class="border border-[#7030A0] p-1.5 w-20">摘要</th>
               </tr>
             </thead>
-            <tbody id="inv-order-rows" class="divide-y divide-outline-variant/10"></tbody>
-            <tfoot class="border-t-2 border-on-surface">
-              <tr><td class="py-3 text-right font-bold pr-4">小計</td><td class="py-3 text-right tabular-numbers font-bold" id="inv-subtotal">¥0</td></tr>
-              <tr><td class="py-2 text-right pr-4 text-on-surface-variant">消費税（10%）</td><td class="py-2 text-right tabular-numbers text-on-surface-variant" id="inv-tax">¥0</td></tr>
-              <tr class="border-t border-outline-variant"><td class="py-3 text-right font-bold pr-4">合計</td><td class="py-3 text-right font-bold text-lg tabular-numbers text-primary" id="inv-grand">¥0</td></tr>
-            </tfoot>
+            <tbody id="inv-order-rows"></tbody>
           </table>
-          <div class="mt-auto border-t border-outline-variant pt-4 text-[10px] text-on-surface-variant">
-            <p>[振込先] 〇〇銀行 京都支店 ／ 口座番号：(普)0777777</p>
+          <div class="flex justify-end">
+            <table class="text-xs" style="border-collapse:collapse">
+              <tr><td class="border border-outline-variant px-3 py-1 w-24">小　計</td><td class="border border-outline-variant px-3 py-1 w-28 text-right tabular-numbers" id="inv-subtotal">¥0</td></tr>
+              <tr><td class="border border-outline-variant px-3 py-1">税率</td><td class="border border-outline-variant px-3 py-1 text-right">10%</td></tr>
+              <tr><td class="border border-outline-variant px-3 py-1">消費税</td><td class="border border-outline-variant px-3 py-1 text-right tabular-numbers" id="inv-tax">¥0</td></tr>
+              <tr><td class="border border-[#7030A0] px-3 py-1 font-bold text-[#7030A0]">合　計</td><td class="border border-[#7030A0] px-3 py-1 text-right font-bold tabular-numbers text-[#7030A0]" id="inv-grand">¥0</td></tr>
+            </table>
           </div>
         </div>
       </div>
@@ -1000,53 +1003,55 @@ async function sendEstimateEmail() {
         </div>
       </div>
       <div class="p-5 bg-surface-container-low/30 overflow-y-auto max-h-[70vh]">
-        <div class="bg-white p-12 shadow-sm min-h-[600px] border border-outline-variant/60 text-on-surface rounded-xl flex flex-col">
-          <div class="flex justify-between items-start mb-12">
+        <div class="bg-white p-10 shadow-sm border border-outline-variant/60 text-on-surface" style="line-height:1.6">
+          <h1 class="text-2xl text-center text-[#7030A0]" style="letter-spacing:.4em">見　積　書</h1>
+          <div class="w-32 h-px bg-[#7030A0] mx-auto mt-1 mb-5"></div>
+          <div class="flex justify-between items-start mb-4">
             <div>
-              <h1 class="text-3xl font-bold tracking-[0.3em] mb-6 text-on-surface">見　積　書</h1>
               <p class="text-lg border-b-2 border-on-surface pb-1 inline-block" id="est-client">--- 御中</p>
-              <p class="text-sm mt-2 text-on-surface-variant" id="est-project-name"></p>
+              <p class="text-xs mt-2">件名：<span id="est-project-name"></span></p>
+              <p class="text-xs">下記のとおり御見積申し上げます。</p>
             </div>
-            <div class="text-right">
-              <p class="font-bold text-lg mb-1 tracking-tight">株式会社WIN WIN</p>
-              <p class="text-[10px] text-on-surface-variant leading-relaxed">
-                〒604-0924<br/>京都市中京区一之船入町537-20<br/>FIS御池ビル505号<br/>TEL: 075-777-1236
-              </p>
-              <p class="text-[10px] mt-2 font-medium" id="est-number">見積№: EST-00000</p>
-              <p class="text-[9px] text-on-surface-variant">適格: T8130001068355</p>
-            </div>
-          </div>
-          <div class="border-b-2 border-primary py-6 mb-10 flex justify-between items-end">
-            <span class="text-sm font-bold">お見積金額（税込）</span>
-            <span class="text-3xl font-bold tabular-numbers text-primary">¥<span id="est-total">0</span>-</span>
-          </div>
-          <div class="grid grid-cols-2 gap-y-4 text-xs mb-8 border-t border-b border-outline-variant/20 py-6">
-            <div class="flex flex-col gap-1">
-              <span class="text-on-surface-variant font-bold uppercase tracking-wider text-[10px]">見積日</span>
-              <span class="font-medium" id="est-date">---</span>
-            </div>
-            <div class="flex flex-col gap-1">
-              <span class="text-on-surface-variant font-bold uppercase tracking-wider text-[10px]">有効期限</span>
-              <span class="font-medium" id="est-valid">---</span>
+            <div class="text-right text-[10px] text-on-surface-variant leading-relaxed">
+              <p class="text-[10px] font-medium text-on-surface" id="est-number">見積№　EST-000</p>
+              <p class="font-bold text-sm text-on-surface mt-1">株式会社WIN WIN</p>
+              <p>〒604-0924</p>
+              <p>京都市中京区一之船入町537-20 FIS御池ビル505号</p>
+              <p>TEL : 075-777-1236</p>
             </div>
           </div>
-          <table class="w-full text-sm mb-6 flex-grow">
+          <div class="flex items-stretch gap-4 mb-3">
+            <div class="border-2 border-[#7030A0] px-4 py-2 min-w-[240px]">
+              <div class="text-[11px] text-[#7030A0] font-bold">御見積金額（税込）</div>
+              <div class="text-2xl font-bold tabular-numbers text-right">¥<span id="est-total">0</span></div>
+            </div>
+            <div class="text-xs flex flex-col justify-center gap-1">
+              <div>見積日：<span id="est-date">---</span></div>
+              <div>有効期限：<span id="est-valid">---</span></div>
+            </div>
+          </div>
+          <table class="w-full text-xs mb-4" style="border-collapse:collapse">
             <thead>
-              <tr class="border-b border-on-surface font-bold">
-                <th class="py-3 text-left">品名</th>
-                <th class="py-3 text-right">金額</th>
+              <tr class="text-white" style="background:#7030A0">
+                <th class="border border-[#7030A0] p-1.5 text-left">品　名</th>
+                <th class="border border-[#7030A0] p-1.5 w-12">数量</th>
+                <th class="border border-[#7030A0] p-1.5 w-12">単位</th>
+                <th class="border border-[#7030A0] p-1.5 w-24 text-right">単価</th>
+                <th class="border border-[#7030A0] p-1.5 w-24 text-right">金額</th>
+                <th class="border border-[#7030A0] p-1.5 w-20">摘要</th>
               </tr>
             </thead>
-            <tbody id="est-order-rows" class="divide-y divide-outline-variant/10"></tbody>
-            <tfoot class="border-t-2 border-on-surface">
-              <tr><td class="py-3 text-right font-bold pr-4">小計</td><td class="py-3 text-right tabular-numbers font-bold" id="est-subtotal">¥0</td></tr>
-              <tr><td class="py-2 text-right pr-4 text-on-surface-variant">消費税（10%）</td><td class="py-2 text-right tabular-numbers text-on-surface-variant" id="est-tax">¥0</td></tr>
-              <tr class="border-t border-outline-variant"><td class="py-3 text-right font-bold pr-4">合計</td><td class="py-3 text-right font-bold text-lg tabular-numbers text-primary" id="est-grand">¥0</td></tr>
-            </tfoot>
+            <tbody id="est-order-rows"></tbody>
           </table>
-          <div class="mt-auto border-t border-outline-variant pt-4 text-[10px] text-on-surface-variant">
-            <p>※本見積書の有効期限は発行日より30日間です。</p>
+          <div class="flex justify-end">
+            <table class="text-xs" style="border-collapse:collapse">
+              <tr><td class="border border-outline-variant px-3 py-1 w-24">小　計</td><td class="border border-outline-variant px-3 py-1 w-28 text-right tabular-numbers" id="est-subtotal">¥0</td></tr>
+              <tr><td class="border border-outline-variant px-3 py-1">税率</td><td class="border border-outline-variant px-3 py-1 text-right">10%</td></tr>
+              <tr><td class="border border-outline-variant px-3 py-1">消費税</td><td class="border border-outline-variant px-3 py-1 text-right tabular-numbers" id="est-tax">¥0</td></tr>
+              <tr><td class="border border-[#7030A0] px-3 py-1 font-bold text-[#7030A0]">合　計</td><td class="border border-[#7030A0] px-3 py-1 text-right font-bold tabular-numbers text-[#7030A0]" id="est-grand">¥0</td></tr>
+            </table>
           </div>
+          <p class="mt-4 text-[10px] text-on-surface-variant">※本見積書の有効期限は発行日より30日間です。</p>
         </div>
       </div>
     </div>
@@ -1086,6 +1091,6 @@ async function sendEstimateEmail() {
   </div>
 </div>
 
-<script src="/notify.js?v=43"></script>
+<script src="/notify.js?v=45"></script>
 </body>
 </html>
