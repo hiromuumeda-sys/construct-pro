@@ -141,7 +141,7 @@ body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 </main>
 <!-- Edit Modal -->
 <div class="fixed inset-0 z-[100] bg-primary/20 backdrop-blur-md" id="edit-modal" style="display:none" onclick="closeModal('edit-modal')">
-<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl max-h-[90vh] bg-surface-container-lowest rounded-lg custom-shadow border border-outline-variant overflow-hidden" onclick="event.stopPropagation()">
+<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl max-h-[90vh] bg-surface-container-lowest rounded-lg custom-shadow border border-outline-variant overflow-hidden flex flex-col" onclick="event.stopPropagation()">
 <div class="px-lg py-md flex justify-between items-center border-b border-outline-variant bg-surface-container-low">
 <h3 class="text-label-md font-label-md text-primary">発注先情報の編集</h3>
 <button class="material-symbols-outlined text-on-surface-variant hover:text-primary" id="btn-close-edit-modal">close</button>
@@ -211,7 +211,7 @@ body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 
 <!-- Register Modal -->
 <div class="fixed inset-0 z-[100] bg-primary/20 backdrop-blur-md" id="new-registration-modal" style="display:none" onclick="closeModal('new-registration-modal')">
-<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl max-h-[90vh] bg-surface-container-lowest rounded-lg custom-shadow border border-outline-variant overflow-hidden" onclick="event.stopPropagation()">
+<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl max-h-[90vh] bg-surface-container-lowest rounded-lg custom-shadow border border-outline-variant overflow-hidden flex flex-col" onclick="event.stopPropagation()">
 <div class="px-lg py-md flex justify-between items-center border-b border-outline-variant bg-surface-container-low">
 <h3 class="text-label-md font-label-md text-primary">新規発注先登録</h3>
 <button class="material-symbols-outlined text-on-surface-variant hover:text-primary" id="btn-close-new-modal">close</button>
