@@ -70,7 +70,7 @@ body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 <div class="bg-surface-container-lowest border border-outline-variant rounded-lg p-md">
 <div class="grid grid-cols-1 md:grid-cols-2 gap-md">
 <div>
-<label class="block text-label-md text-on-surface-variant font-bold mb-2">テーブル</label>
+<label class="block text-label-md text-on-surface-variant font-bold mb-2">対象画面</label>
 <select id="table-filter" class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-md py-2 text-body-md focus:ring-2 focus:ring-secondary/20" onchange="loadLogs()">
 <option value="">すべて</option>
 <option value="projects">受注一覧</option>
@@ -79,6 +79,7 @@ body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 <option value="vendors">発注先マスタ</option>
 <option value="categories">工事区分マスタ</option>
 <option value="receipts">売上・入金管理</option>
+<option value="invitations">アカウント発行</option>
 </select>
 </div>
 <div>
@@ -181,7 +182,7 @@ async function loadLogs() {
 
     emptyState.classList.add('hidden');
     // 種別は画面名（サイドメニュー）で表示する
-    const TABLE_LABEL = { projects:'受注一覧', orders:'工事計画', vendors:'発注先マスタ', categories:'工事区分マスタ', customers:'顧客マスタ', receipts:'売上・入金管理', invoices:'受注一覧', users:'ログイン' };
+    const TABLE_LABEL = { projects:'受注一覧', orders:'工事計画', vendors:'発注先マスタ', categories:'工事区分マスタ', customers:'顧客マスタ', receipts:'売上・入金管理', invoices:'受注一覧', users:'ログイン', invitations:'アカウント発行' };
     const ACTION_LABEL = { CREATE:'新規作成', UPDATE:'更新', DELETE:'削除' };
     tbody.innerHTML = filtered.map(log => {
       const dt = new Date(log.created_at);
