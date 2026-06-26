@@ -6,10 +6,10 @@
 <title>受注一覧 - WIN WIN様デモ</title>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
-<link rel="stylesheet" href="/styles.css?v=55"/>
-<script src="/sidebar.js?v=55"></script>
-<script src="/auth.js?v=55"></script>
-<script src="/header.js?v=55"></script>
+<link rel="stylesheet" href="/styles.css?v=56"/>
+<script src="/sidebar.js?v=56"></script>
+<script src="/auth.js?v=56"></script>
+<script src="/header.js?v=56"></script>
 <style>
 body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
@@ -427,7 +427,7 @@ function renderTable(projects) {
       <td class="w-28 px-lg py-2 text-label-md font-label-md text-primary tabular-numbers text-right align-top">¥${p.amount.toLocaleString()}</td>
       <td class="w-28 px-lg py-2 align-top" onclick="event.stopPropagation()">
         <div class="relative inline-block">
-          <select onchange="updateProjectStatus(${p.id}, this.value)" class="appearance-none text-[11px] font-normal rounded-md pl-2 pr-6 py-1 border border-outline-variant cursor-pointer hover:border-secondary focus:ring-2 focus:ring-secondary/30 ${getStatusClass(p.status)}">
+          <select onchange="updateProjectStatus(${p.id}, this.value)" class="appearance-none text-[11px] font-medium rounded-full pl-3 pr-6 py-1 border border-transparent ring-1 ring-inset ring-black/5 cursor-pointer hover:opacity-90 focus:ring-2 focus:ring-secondary/40 shadow-sm transition-all ${getStatusClass(p.status)}">
             ${['未対応','提案中','見積確認中','受注','失注'].map(s => `<option value="${s}" ${s === p.status ? 'selected' : ''}>${s}</option>`).join('')}
           </select>
           <span class="material-symbols-outlined absolute right-0.5 top-1/2 -translate-y-1/2 text-[16px] pointer-events-none">expand_more</span>
@@ -1091,6 +1091,6 @@ async function sendEstimateEmail() {
   </div>
 </div>
 
-<script src="/notify.js?v=55"></script>
+<script src="/notify.js?v=56"></script>
 </body>
 </html>
