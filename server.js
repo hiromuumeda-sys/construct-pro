@@ -142,6 +142,19 @@ const fmtVal = (v) => {
   return s;
 };
 
+// 対象月度を「YYYY/MM」の年月形式に正規化（「6月」等や入金日から補完）
+const toYM = (v, dateStr) => {
+  if (v) {
+    let m = String(v).match(/(\d{4})[-/年.\s]*(\d{1,2})/);
+    if (m) return `${m[1]}/${String(m[2]).padStart(2, '0')}`;
+    m = String(v).match(/^\s*(\d{1,2})\s*月?\s*$/);
+    if (m && dateStr) { const y = (String(dateStr).match(/(\d{4})/) || [])[1]; if (y) return `${y}/${String(m[1]).padStart(2, '0')}`; }
+  }
+  const d = String(dateStr || '').match(/^(\d{4})-(\d{2})/);
+  if (d) return `${d[1]}/${d[2]}`;
+  return v || '';
+};
+
 // 旧行と新body を比較し「ラベル: 旧 → 新」の配列を返す
 const diffChanges = (table, oldRow, body) => {
   const labels = FIELD_LABELS[table] || {};
@@ -465,7 +478,8 @@ app.get('/api/receipts', h(async (req, res) => {
 }));
 
 app.post('/api/receipts', h(async (req, res) => {
-  const { project_id, received_date, amount, month, memo } = req.body;
+  const { project_id, received_date, amount, memo } = req.body;
+  const month = toYM(req.body.month, received_date);
   const ins = await one('INSERT INTO receipts (project_id, received_date, amount, month, memo) VALUES ($1,$2,$3,$4,$5) RETURNING id',
     [project_id, received_date, amount, month, memo]);
   const userId = getUserId(req);
@@ -474,7 +488,8 @@ app.post('/api/receipts', h(async (req, res) => {
 }));
 
 app.put('/api/receipts/:id', h(async (req, res) => {
-  const { project_id, received_date, amount, month, memo } = req.body;
+  const { project_id, received_date, amount, memo } = req.body;
+  const month = toYM(req.body.month, received_date);
   const before = await one('SELECT * FROM receipts WHERE id=$1', [req.params.id]);
   await q('UPDATE receipts SET project_id=$1, received_date=$2, amount=$3, month=$4, memo=$5 WHERE id=$6',
     [project_id, received_date, amount, month, memo, req.params.id]);
@@ -494,7 +509,7 @@ app.delete('/api/receipts/:id', h(async (req, res) => {
 // 入金取込フォーマット（テンプレート）ダウンロード F5-3
 app.get('/api/receipts/template', (req, res) => {
   const header = '工番,入金日,入金額,対象月度,備考';
-  const sample = ['WW7-0001,2026-06-30,5000000,6月,着手金', 'WW7-0003,2026-06-30,3000000,6月,中間金'].join('\n');
+  const sample = ['WW7-0001,2026-06-30,5000000,2026/06,着手金', 'WW7-0003,2026-06-30,3000000,2026/06,中間金'].join('\n');
   res.setHeader('Content-Type', 'text/csv; charset=utf-8');
   res.setHeader('Content-Disposition', 'attachment; filename="receipts_template.csv"');
   res.send('﻿' + header + '\n' + sample + '\n');
@@ -525,7 +540,7 @@ app.post('/api/receipts/import', h(async (req, res) => {
     if (!project) { errors.push(`${rowNum}行目: 工番「${projectNo}」が見つかりません`); continue; }
     const amount = parseInt(String(amountStr).replace(/[¥,]/g, ''), 10);
     if (isNaN(amount)) { errors.push(`${rowNum}行目: 入金額「${amountStr}」が不正です`); continue; }
-    await q('INSERT INTO receipts (project_id, received_date, amount, month, memo) VALUES ($1,$2,$3,$4,$5)', [project.id, date, amount, month || '', memo || '']);
+    await q('INSERT INTO receipts (project_id, received_date, amount, month, memo) VALUES ($1,$2,$3,$4,$5)', [project.id, date, amount, toYM(month, date), memo || '']);
     imported++;
   }
   res.json({ imported, errors, total: dataLines.length });
@@ -720,6 +735,7 @@ app.get('/api/export/:type', h(async (req, res) => {
     filename = 'sales.csv';
   } else if (type === 'receipts') {
     const rows = await q('SELECT r.*, p.name AS project_name, p.project_no FROM receipts r LEFT JOIN projects p ON r.project_id = p.id ORDER BY r.received_date DESC');
+    rows.forEach(r => { r.month = toYM(r.month, r.received_date); });
     csv = toCSV(rows, [{ key: 'received_date', label: '入金日' }, { key: 'project_no', label: '工番' }, { key: 'project_name', label: '工事名' }, { key: 'amount', label: '入金額' }, { key: 'month', label: '対象月度' }, { key: 'memo', label: '備考' }]);
     filename = 'receipts.csv';
   } else if (type === 'payments') {

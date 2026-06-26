@@ -6,10 +6,10 @@
 <title>売上・入金管理 - WIN WIN様デモ</title>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
-<link rel="stylesheet" href="/styles.css?v=37"/>
-<script src="/sidebar.js?v=37"></script>
-<script src="/auth.js?v=37"></script>
-<script src="/header.js?v=37"></script>
+<link rel="stylesheet" href="/styles.css?v=38"/>
+<script src="/sidebar.js?v=38"></script>
+<script src="/auth.js?v=38"></script>
+<script src="/header.js?v=38"></script>
 <style>
 body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
@@ -162,6 +162,8 @@ body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 <table class="text-left border-separate border-spacing-0 whitespace-nowrap">
 <thead>
 <tr class="bg-surface-container-low sticky top-0 z-10">
+<th class="px-3 py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant text-center w-20">入金登録</th>
+<th class="px-3 py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant text-center w-24">消し込み履歴</th>
 <th class="px-3 py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant">工事番号</th>
 <th class="px-3 py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant">発注者</th>
 <th class="px-3 py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant">工事名</th>
@@ -175,7 +177,6 @@ body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 <th class="px-3 py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant text-right">完成工事未収入金</th>
 <th class="px-3 py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant text-right">未成工事受入金</th>
 <th class="px-3 py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant text-center w-24">ステータス</th>
-<th class="px-3 py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant text-center w-20">入金登録</th>
 </tr>
 </thead>
 <tbody class="divide-y divide-outline-variant/20" id="sales-table-body">
@@ -269,7 +270,7 @@ body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 </div>
 <div>
 <label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">対象月度</label>
-<input class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent" id="receipt-month" placeholder="例：6月" type="text"/>
+<input class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent" id="receipt-month" type="month"/>
 </div>
 </div>
 <div>
@@ -288,11 +289,51 @@ body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 </div>
 </div>
 
+<!-- 消し込み履歴モーダル（案件ごとの入金履歴） -->
+<div class="fixed inset-0 z-[110] bg-primary/20 backdrop-blur-md" id="history-modal" style="display:none" onclick="closeHistoryModal()">
+<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl max-h-[85vh] bg-surface-container-lowest rounded-lg custom-shadow overflow-hidden border border-outline-variant flex flex-col" onclick="event.stopPropagation()">
+<div class="px-lg py-md border-b border-outline-variant flex justify-between items-center bg-surface-container-low shrink-0">
+<h3 class="text-label-md font-label-md text-primary flex items-center gap-1"><span class="material-symbols-outlined text-[18px]">receipt_long</span>消し込み履歴 <span id="hist-project" class="text-on-surface-variant font-normal"></span></h3>
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary" onclick="closeHistoryModal()">close</button>
+</div>
+<div class="overflow-y-auto flex-1">
+<table class="w-full text-left border-separate border-spacing-0">
+<thead><tr class="bg-surface-container-low sticky top-0">
+<th class="px-3 py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant w-32">入金日</th>
+<th class="px-3 py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant text-right">入金額</th>
+<th class="px-3 py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant w-24">対象月度</th>
+<th class="px-3 py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant">備考</th>
+<th class="px-3 py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant text-center w-16"></th>
+</tr></thead>
+<tbody class="divide-y divide-outline-variant/20" id="hist-table-body"></tbody>
+</table>
+</div>
+<div class="px-lg py-md border-t border-outline-variant flex justify-between items-center bg-surface-container-low shrink-0">
+<span class="text-label-md font-label-md text-on-surface-variant">合計 <span id="hist-total" class="text-secondary font-bold tabular-numbers">¥0</span></span>
+<button class="px-4 py-1.5 text-label-md font-normal text-on-surface border border-outline-variant rounded-lg hover:bg-surface-container transition-all" onclick="closeHistoryModal()">閉じる</button>
+</div>
+</div>
+</div>
+
 <script>
 let salesData = [];
 let receiptsData = [];
+let histProjectId = null;
 
 function fmt(n) { return '¥' + (n || 0).toLocaleString(); }
+
+// 対象月度を「YYYY/MM」の年月形式に正規化する（文字列「6月」等や入金日から補完）
+function toYearMonth(v, dateStr) {
+  if (v) {
+    let m = String(v).match(/(\d{4})[-/年.\s]*(\d{1,2})/);   // 2026-06 / 2026/06 / 2026年6月
+    if (m) return `${m[1]}/${String(m[2]).padStart(2, '0')}`;
+    m = String(v).match(/^\s*(\d{1,2})\s*月?\s*$/);          // 「6月」など年なし → 入金日の年で補完
+    if (m && dateStr) { const y = (String(dateStr).match(/(\d{4})/) || [])[1]; if (y) return `${y}/${String(m[1]).padStart(2, '0')}`; }
+  }
+  const d = String(dateStr || '').match(/^(\d{4})-(\d{2})/);  // 未入力なら入金日から
+  if (d) return `${d[1]}/${d[2]}`;
+  return v || '-';
+}
 
 async function loadAll() {
   const [salesRes, receiptsRes] = await Promise.all([
@@ -303,6 +344,7 @@ async function loadAll() {
   receiptsData = await receiptsRes.json();
   renderSales();
   renderReceipts();
+  if (histProjectId != null && document.getElementById('history-modal').style.display === 'block') renderHistory();
 }
 
 function payStatusClass(status) {
@@ -354,10 +396,16 @@ function renderSales() {
 
   const tbody = document.getElementById('sales-table-body');
   if (filtered.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="14" class="px-3 py-8 text-center text-on-surface-variant text-label-md">該当する案件がありません</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="15" class="px-3 py-8 text-center text-on-surface-variant text-label-md">該当する案件がありません</td></tr>';
   } else {
     tbody.innerHTML = filtered.map(s => `
     <tr class="${s.pay_status === '未入金' ? 'bg-yellow-50 hover:bg-yellow-100' : 'hover:bg-surface-container-low'} transition-colors cursor-pointer" onclick="openSalesDetail(${s.id})">
+      <td class="px-3 py-2.5 text-center">
+        <button class="material-symbols-outlined text-secondary hover:bg-secondary/10 rounded-full w-8 h-8" onclick="event.stopPropagation(); openReceiptModal(${s.id})" title="入金登録">add_circle</button>
+      </td>
+      <td class="px-3 py-2.5 text-center">
+        <button class="material-symbols-outlined text-on-surface-variant hover:text-secondary hover:bg-secondary/10 rounded-full w-8 h-8" onclick="event.stopPropagation(); openHistoryModal(${s.id})" title="消し込み履歴">receipt_long</button>
+      </td>
       <td class="px-3 py-2.5 text-label-md font-label-md text-on-surface-variant tabular-numbers">${s.project_no || '-'}</td>
       <td class="px-3 py-2.5 text-label-md font-label-md text-on-surface-variant">${s.client}</td>
       <td class="px-3 py-2.5 text-label-md font-label-md text-primary">${s.name}</td>
@@ -377,9 +425,6 @@ function renderSales() {
           </select>
           <span class="material-symbols-outlined absolute right-0.5 top-1/2 -translate-y-1/2 text-[16px] pointer-events-none">arrow_drop_down</span>
         </div>
-      </td>
-      <td class="px-3 py-2.5 text-center">
-        <button class="material-symbols-outlined text-secondary hover:bg-secondary/10 rounded-full w-8 h-8" onclick="event.stopPropagation(); openReceiptModal(${s.id})" title="入金登録">add_circle</button>
       </td>
     </tr>
   `).join('');
@@ -406,7 +451,7 @@ function renderReceipts() {
       <td class="px-3 py-2.5 text-label-md font-label-md text-on-surface-variant tabular-numbers">${r.received_date}</td>
       <td class="px-3 py-2.5 text-label-md font-label-md text-on-surface">${project ? project.name : '案件#' + r.project_id}</td>
       <td class="px-3 py-2.5 text-label-md font-label-md text-right tabular-numbers text-secondary">${fmt(r.amount)}</td>
-      <td class="px-3 py-2.5 text-label-md font-label-md text-on-surface-variant">${r.month || '-'}</td>
+      <td class="px-3 py-2.5 text-label-md font-label-md text-on-surface-variant tabular-numbers">${toYearMonth(r.month, r.received_date)}</td>
       <td class="px-3 py-2.5 text-label-md font-label-md text-on-surface-variant">${r.memo || '-'}</td>
       <td class="px-3 py-2.5 text-center">
         <button class="material-symbols-outlined text-error/70 hover:bg-error/10 rounded-full w-8 h-8 text-[20px]" onclick="deleteReceipt(${r.id})" title="削除">delete</button>
@@ -459,11 +504,48 @@ function closeReceiptModal() {
   document.getElementById('receipt-modal').style.display = 'none';
 }
 
+// 消し込み履歴モーダル（案件ごとの入金履歴）
+function openHistoryModal(projectId) {
+  histProjectId = projectId;
+  const s = salesData.find(x => x.id === projectId);
+  document.getElementById('hist-project').textContent = s ? `（${s.name}）` : '';
+  renderHistory();
+  document.getElementById('history-modal').style.display = 'block';
+  document.body.style.overflow = 'hidden';
+}
+function closeHistoryModal() {
+  document.getElementById('history-modal').style.display = 'none';
+  document.body.style.overflow = '';
+  histProjectId = null;
+}
+function renderHistory() {
+  if (histProjectId == null) return;
+  const rows = receiptsData.filter(r => r.project_id === histProjectId)
+    .sort((a, b) => String(b.received_date).localeCompare(String(a.received_date)));
+  const tbody = document.getElementById('hist-table-body');
+  if (rows.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="5" class="px-3 py-8 text-center text-on-surface-variant text-label-md">入金実績がありません</td></tr>';
+  } else {
+    tbody.innerHTML = rows.map(r => `
+      <tr class="hover:bg-surface-container-low transition-colors">
+        <td class="px-3 py-2.5 text-label-md font-label-md text-on-surface-variant tabular-numbers">${r.received_date}</td>
+        <td class="px-3 py-2.5 text-label-md font-label-md text-right tabular-numbers text-secondary">${fmt(r.amount)}</td>
+        <td class="px-3 py-2.5 text-label-md font-label-md text-on-surface-variant tabular-numbers">${toYearMonth(r.month, r.received_date)}</td>
+        <td class="px-3 py-2.5 text-label-md font-label-md text-on-surface-variant">${r.memo || '-'}</td>
+        <td class="px-3 py-2.5 text-center">
+          <button class="material-symbols-outlined text-error/70 hover:bg-error/10 rounded-full w-8 h-8 text-[20px]" onclick="deleteReceipt(${r.id})" title="削除">delete</button>
+        </td>
+      </tr>`).join('');
+  }
+  const total = rows.reduce((a, r) => a + (Number(r.amount) || 0), 0);
+  document.getElementById('hist-total').textContent = fmt(total);
+}
+
 async function saveReceipt() {
   const project_id = parseInt(document.getElementById('receipt-project-id').value);
   const received_date = document.getElementById('receipt-date').value;
   const amount = parseInt(document.getElementById('receipt-amount').value);
-  const month = document.getElementById('receipt-month').value;
+  const month = toYearMonth(document.getElementById('receipt-month').value, received_date);
   const memo = document.getElementById('receipt-memo').value;
 
   if (!received_date || !amount) {
@@ -523,5 +605,5 @@ async function importCSV(event) {
 loadAll();
 </script>
 
-<script src="/notify.js?v=37"></script>
+<script src="/notify.js?v=38"></script>
 </body></html>
