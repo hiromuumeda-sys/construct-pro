@@ -6,10 +6,10 @@
 <title>支払管理 - WIN WIN様デモ</title>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
-<link rel="stylesheet" href="/styles.css?v=39"/>
-<script src="/sidebar.js?v=39"></script>
-<script src="/auth.js?v=39"></script>
-<script src="/header.js?v=39"></script>
+<link rel="stylesheet" href="/styles.css?v=40"/>
+<script src="/sidebar.js?v=40"></script>
+<script src="/auth.js?v=40"></script>
+<script src="/header.js?v=40"></script>
 <style>
 body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
@@ -140,8 +140,9 @@ body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 <tr class="bg-surface-container-low sticky top-0 z-10">
 <th class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant w-20">#</th>
 <th class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant">案件名</th>
-<th class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant w-1/5">工事区分</th>
-<th class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant w-1/4">発注先</th>
+<th class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant w-[10%]">工事区分</th>
+<th class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant w-[13%]">発注先</th>
+<th class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant">備考</th>
 <th class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant text-right">費用</th>
 <th class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant w-28">支払期日</th>
 <th class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant w-32">支払銀行</th>
@@ -252,6 +253,7 @@ function renderTable() {
       <td class="px-3 py-1.5 text-label-md font-label-md text-on-surface group-hover:text-primary transition-colors">${payment.projectName}</td>
       <td class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant">${payment.category}</td>
       <td class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant">${payment.vendor}</td>
+      <td class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant" title="${(payment.notes || '').replace(/"/g, '&quot;')}">${payment.notes ? (payment.notes.length > 15 ? payment.notes.slice(0, 15) + '…' : payment.notes) : '<span class="text-on-surface-variant/40">-</span>'}</td>
       <td class="px-3 py-1.5 text-label-md font-label-md text-right tabular-numbers">¥${payment.amount.toLocaleString()}</td>
       <td class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant tabular-numbers">${payment.paymentDate || '-'}</td>
       <td class="px-3 py-1.5 text-label-md font-label-md">${payment.bank && payment.bank.name ? `<span class="text-on-surface">${payment.bank.name}</span>` : '<span class="text-on-surface-variant/40">-</span>'}</td>
@@ -368,6 +370,7 @@ function filterTable() {
       <td class="px-3 py-1.5 text-label-md font-label-md text-on-surface group-hover:text-primary transition-colors">${payment.projectName}</td>
       <td class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant">${payment.category}</td>
       <td class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant">${payment.vendor}</td>
+      <td class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant" title="${(payment.notes || '').replace(/"/g, '&quot;')}">${payment.notes ? (payment.notes.length > 15 ? payment.notes.slice(0, 15) + '…' : payment.notes) : '<span class="text-on-surface-variant/40">-</span>'}</td>
       <td class="px-3 py-1.5 text-label-md font-label-md text-right tabular-numbers">¥${payment.amount.toLocaleString()}</td>
       <td class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant tabular-numbers">${payment.paymentDate || '-'}</td>
       <td class="px-3 py-1.5 text-label-md font-label-md">${payment.bank && payment.bank.name ? `<span class="text-on-surface">${payment.bank.name}</span>` : '<span class="text-on-surface-variant/40">-</span>'}</td>
@@ -383,6 +386,6 @@ function filterTable() {
   `).join('');
 }
 </script>
-<script src="/notify.js?v=39"></script>
+<script src="/notify.js?v=40"></script>
 </body>
 </html>
