@@ -6,10 +6,10 @@
 <title>工事計画 - WIN WIN様デモ</title>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
-<link rel="stylesheet" href="/styles.css?v=42"/>
-<script src="/sidebar.js?v=42"></script>
-<script src="/auth.js?v=42"></script>
-<script src="/header.js?v=42"></script>
+<link rel="stylesheet" href="/styles.css?v=43"/>
+<script src="/sidebar.js?v=43"></script>
+<script src="/auth.js?v=43"></script>
+<script src="/header.js?v=43"></script>
 <style>
 body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
@@ -891,6 +891,10 @@ function openPoEmailForm() {
 
 株式会社WIN WIN</textarea>
           </div>
+          <label class="flex items-center gap-2 cursor-pointer select-none">
+            <input id="po-attach-ack" type="checkbox" class="w-4 h-4 accent-secondary cursor-pointer"/>
+            <span class="text-label-md font-label-md text-on-surface flex items-center gap-1"><span class="material-symbols-outlined text-[18px] text-on-surface-variant">attach_file</span>請書フォーマットを添付する</span>
+          </label>
         </div>
         <div class="px-lg py-md border-t border-outline-variant flex justify-end gap-3">
           <button class="px-4 py-2 text-label-md font-normal text-on-surface border border-outline-variant rounded-lg hover:bg-surface-container transition-all" onclick="closePoEmailForm()">キャンセル</button>
@@ -1179,6 +1183,6 @@ function filterTable() {
 }
 
 </script>
-<script src="/notify.js?v=42"></script>
+<script src="/notify.js?v=43"></script>
 </body>
 </html>
