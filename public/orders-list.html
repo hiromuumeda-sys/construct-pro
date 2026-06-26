@@ -6,10 +6,10 @@
 <title>工事計画 - WIN WIN様デモ</title>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
-<link rel="stylesheet" href="/styles.css?v=56"/>
-<script src="/sidebar.js?v=56"></script>
-<script src="/auth.js?v=56"></script>
-<script src="/header.js?v=56"></script>
+<link rel="stylesheet" href="/styles.css?v=57"/>
+<script src="/sidebar.js?v=57"></script>
+<script src="/auth.js?v=57"></script>
+<script src="/header.js?v=57"></script>
 <style>
 body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
@@ -454,7 +454,7 @@ function renderTable() {
             <td class="px-3 py-1.5 text-label-md font-label-md text-right tabular-numbers cursor-pointer" onclick="openOrderDetailModal(${order.id})">${order.decided ? order.decided.toLocaleString() : '-'}</td>
             <td class="px-3 py-1.5 text-label-md font-label-md text-center whitespace-nowrap cursor-pointer" onclick="openOrderDetailModal(${order.id})">
                 <div class="relative inline-block" onclick="event.stopPropagation()">
-                  <select onchange="updateOrderStatus(${order.id}, this.value)" class="appearance-none text-[11px] font-medium rounded-full pl-3 pr-6 py-1 border border-transparent ring-1 ring-inset ring-black/5 cursor-pointer hover:opacity-90 focus:ring-2 focus:ring-secondary/40 shadow-sm transition-all ${getStatusColor(order.status)}">${['未処理','見積待ち','決定済み','発注完了','支払済み'].map(s => `<option value="${s}" ${s === order.status ? 'selected' : ''}>${s}</option>`).join('')}</select>
+                  <select onchange="updateOrderStatus(${order.id}, this.value)" class="appearance-none text-[11px] font-medium rounded-full pl-5 pr-5 py-1 text-center border border-transparent ring-1 ring-inset ring-black/5 cursor-pointer hover:opacity-90 focus:ring-2 focus:ring-secondary/40 shadow-sm transition-all ${getStatusColor(order.status)}">${['未処理','見積待ち','決定済み','発注完了','支払済み'].map(s => `<option value="${s}" ${s === order.status ? 'selected' : ''}>${s}</option>`).join('')}</select>
                   <span class="material-symbols-outlined absolute right-0.5 top-1/2 -translate-y-1/2 text-[16px] pointer-events-none">expand_more</span>
                 </div>
             </td>
@@ -1171,7 +1171,7 @@ function filterTable() {
             <td class="px-3 py-1.5 text-label-md font-label-md text-right tabular-numbers">${order.decided ? order.decided.toLocaleString() : '-'}</td>
             <td class="px-3 py-1.5 text-label-md font-label-md text-center whitespace-nowrap">
                 <div class="relative inline-block" onclick="event.stopPropagation()">
-                  <select onchange="updateOrderStatus(${order.id}, this.value)" class="appearance-none text-[11px] font-medium rounded-full pl-3 pr-6 py-1 border border-transparent ring-1 ring-inset ring-black/5 cursor-pointer hover:opacity-90 focus:ring-2 focus:ring-secondary/40 shadow-sm transition-all ${getStatusColor(order.status)}">${['未処理','見積待ち','決定済み','発注完了','支払済み'].map(s => `<option value="${s}" ${s === order.status ? 'selected' : ''}>${s}</option>`).join('')}</select>
+                  <select onchange="updateOrderStatus(${order.id}, this.value)" class="appearance-none text-[11px] font-medium rounded-full pl-5 pr-5 py-1 text-center border border-transparent ring-1 ring-inset ring-black/5 cursor-pointer hover:opacity-90 focus:ring-2 focus:ring-secondary/40 shadow-sm transition-all ${getStatusColor(order.status)}">${['未処理','見積待ち','決定済み','発注完了','支払済み'].map(s => `<option value="${s}" ${s === order.status ? 'selected' : ''}>${s}</option>`).join('')}</select>
                   <span class="material-symbols-outlined absolute right-0.5 top-1/2 -translate-y-1/2 text-[16px] pointer-events-none">expand_more</span>
                 </div>
             </td>
@@ -1180,6 +1180,6 @@ function filterTable() {
 }
 
 </script>
-<script src="/notify.js?v=56"></script>
+<script src="/notify.js?v=57"></script>
 </body>
 </html>
