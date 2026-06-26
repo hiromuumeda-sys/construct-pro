@@ -100,6 +100,9 @@ main select.appearance-none {
   background-image: none !important; background-position: right .25rem center !important;
   padding-right: 1.25rem !important; text-overflow: ellipsis;
 }
+/* ピル型ステータス選択の文字を中央寄せ（Safariは select の text-align を無視するため
+   text-align-last も併用）。フィルター用select(rounded-lg)は対象外。 */
+main select.appearance-none.rounded-full { text-align: center !important; text-align-last: center !important; padding-left: 1.25rem !important; }
 `;
   const style = document.createElement('style');
   style.id = 'sidebar-size-fix';
