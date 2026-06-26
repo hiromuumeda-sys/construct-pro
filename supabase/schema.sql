@@ -4,6 +4,8 @@
 -- （再実行で初期状態に戻ります：全テーブルを DROP→再作成→シード）
 -- ============================================================
 
+drop table if exists invitations cascade;
+drop table if exists order_documents cascade;
 drop table if exists audit_logs cascade;
 drop table if exists users cascade;
 drop table if exists invoices cascade;
@@ -102,6 +104,27 @@ create table orders (
   "paymentNotes"  text,
   ack_done        boolean,
   invoice_done    boolean
+);
+
+-- 請書（注文請書）PDF。orders 1件につき1ファイル。
+create table order_documents (
+  order_id    integer primary key,
+  filename    text,
+  data_url    text,
+  uploaded_at timestamp default current_timestamp
+);
+
+-- アカウント招待（24時間有効の発行リンク）
+create table invitations (
+  id          serial primary key,
+  email       text not null,
+  name        text,
+  role        text not null default 'staff',
+  token       text not null unique,
+  expires_at  timestamp not null,
+  accepted_at timestamp,
+  created_by  integer,
+  created_at  timestamp default current_timestamp
 );
 
 -- 顧客

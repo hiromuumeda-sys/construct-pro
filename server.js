@@ -5,7 +5,43 @@ const PDFDocument = require('pdfkit');
 const nodemailer = require('nodemailer');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 const { q, one } = require('./db');
+
+// 追加テーブル（請書ファイル・招待）を冪等に用意する。
+// schema.sql の再実行を待たずに動くよう、初回アクセス時に1度だけ作成する。
+let _auxReady = null;
+function ensureAux() {
+  if (!_auxReady) {
+    _auxReady = (async () => {
+      await q(`CREATE TABLE IF NOT EXISTS order_documents (
+        order_id    integer primary key,
+        filename    text,
+        data_url    text,
+        uploaded_at timestamp default current_timestamp
+      )`);
+      await q(`CREATE TABLE IF NOT EXISTS invitations (
+        id          serial primary key,
+        email       text not null,
+        name        text,
+        role        text not null default 'staff',
+        token       text not null unique,
+        expires_at  timestamp not null,
+        accepted_at timestamp,
+        created_by  integer,
+        created_at  timestamp default current_timestamp
+      )`);
+    })().catch(e => { _auxReady = null; throw e; });
+  }
+  return _auxReady;
+}
+
+// 招待で選べる権限。フロントの表示ラベルと対応。
+const INVITE_ROLES = { admin: '管理者', accounting: '経理部', staff: '一般社員' };
+function baseUrl(req) {
+  const proto = req.headers['x-forwarded-proto'] || (req.secure ? 'https' : 'http');
+  return `${proto}://${req.headers.host}`;
+}
 
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-key-change-in-production';
 
@@ -278,7 +314,65 @@ app.delete('/api/categories/:id', h(async (req, res) => {
 const ORDER_COLS = 'project_id, category, vendor, estimate, planned, decided, status, details, site, period_start, period_end, handover, payment, "paymentStatus", "paymentDate", "paymentNotes"';
 
 app.get('/api/orders', h(async (req, res) => {
-  res.json(await q('SELECT * FROM orders ORDER BY id'));
+  await ensureAux();
+  const [orders, docs] = await Promise.all([
+    q('SELECT * FROM orders ORDER BY id'),
+    q('SELECT order_id, filename FROM order_documents'),
+  ]);
+  const docMap = new Map(docs.map(d => [d.order_id, d.filename]));
+  res.json(orders.map(o => ({
+    ...o,
+    ack_has_file: docMap.has(o.id),
+    ack_filename: docMap.get(o.id) || null,
+  })));
+}));
+
+// 請書PDF アップロード（チェック時に保存）→ ack_done=true
+app.post('/api/orders/:id/ack-file', h(async (req, res) => {
+  await ensureAux();
+  const { filename, dataUrl } = req.body;
+  if (!dataUrl || !/^data:application\/pdf/.test(dataUrl)) {
+    return res.status(400).json({ error: 'PDFファイルを指定してください' });
+  }
+  const order = await one('SELECT * FROM orders WHERE id=$1', [req.params.id]);
+  if (!order) return res.status(404).json({ error: 'order not found' });
+  await q(
+    `INSERT INTO order_documents (order_id, filename, data_url, uploaded_at)
+     VALUES ($1,$2,$3, current_timestamp)
+     ON CONFLICT (order_id) DO UPDATE SET filename=$2, data_url=$3, uploaded_at=current_timestamp`,
+    [req.params.id, filename || 'ukesho.pdf', dataUrl]
+  );
+  await q('UPDATE orders SET ack_done=true WHERE id=$1', [req.params.id]);
+  await logAudit(getUserId(req), 'UPDATE', 'orders', parseInt(req.params.id), {
+    name: `${order.category || ''}（${order.vendor || ''}）`,
+    changes: [`請書PDFをアップロード（${filename || 'ukesho.pdf'}）／受領済に変更`],
+  });
+  res.json({ success: true });
+}));
+
+// 請書PDF 表示（モーダルの iframe から参照。インライン表示）
+app.get('/api/orders/:id/ack-file', h(async (req, res) => {
+  await ensureAux();
+  const doc = await one('SELECT * FROM order_documents WHERE order_id=$1', [req.params.id]);
+  if (!doc || !doc.data_url) return res.status(404).json({ error: 'file not found' });
+  const b64 = doc.data_url.replace(/^data:application\/pdf;base64,/, '');
+  const buf = Buffer.from(b64, 'base64');
+  res.setHeader('Content-Type', 'application/pdf');
+  res.setHeader('Content-Disposition', `inline; filename="${doc.filename || 'ukesho.pdf'}"`);
+  res.send(buf);
+}));
+
+// 請書PDF 削除 → ack_done=false（未受領に戻す）
+app.delete('/api/orders/:id/ack-file', h(async (req, res) => {
+  await ensureAux();
+  const order = await one('SELECT * FROM orders WHERE id=$1', [req.params.id]);
+  await q('DELETE FROM order_documents WHERE order_id=$1', [req.params.id]);
+  await q('UPDATE orders SET ack_done=false WHERE id=$1', [req.params.id]);
+  await logAudit(getUserId(req), 'UPDATE', 'orders', parseInt(req.params.id), {
+    name: order ? `${order.category || ''}（${order.vendor || ''}）` : `#${req.params.id}`,
+    changes: ['請書PDFを削除／未受領に変更'],
+  });
+  res.json({ success: true });
 }));
 
 app.post('/api/orders', h(async (req, res) => {
@@ -1090,6 +1184,102 @@ app.post('/api/estimate/send', h(async (req, res) => {
     attachments: [{ filename: `estimate-${String(project.id).padStart(5, '0')}.pdf`, content: pdfBuffer, contentType: 'application/pdf' }],
   });
   res.json({ success: true });
+}));
+
+// ============ アカウント発行（招待）API ============
+// 招待状態を算出
+function inviteStatus(inv) {
+  if (inv.accepted_at) return '登録済み';
+  if (new Date(inv.expires_at) < new Date()) return '期限切れ';
+  return '有効';
+}
+
+// 招待一覧（管理画面用）
+app.get('/api/invitations', authMiddleware, h(async (req, res) => {
+  await ensureAux();
+  const rows = await q('SELECT id, email, name, role, expires_at, accepted_at, created_at FROM invitations ORDER BY created_at DESC LIMIT 50');
+  res.json(rows.map(r => ({ ...r, roleLabel: INVITE_ROLES[r.role] || r.role, status: inviteStatus(r) })));
+}));
+
+// 招待を発行（24時間有効）＋ 招待メール送信
+app.post('/api/invitations', authMiddleware, h(async (req, res) => {
+  await ensureAux();
+  const { name, email, role } = req.body;
+  if (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return res.status(400).json({ error: '有効なメールアドレスを入力してください' });
+  if (!INVITE_ROLES[role]) return res.status(400).json({ error: '権限を選択してください' });
+  const existing = await one('SELECT id FROM users WHERE email=$1', [email]);
+  if (existing) return res.status(409).json({ error: 'このメールアドレスは既に登録済みです' });
+
+  const token = crypto.randomBytes(24).toString('hex');
+  const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24時間後
+  const inv = await one(
+    `INSERT INTO invitations (email, name, role, token, expires_at, created_by)
+     VALUES ($1,$2,$3,$4,$5,$6) RETURNING id`,
+    [email, name || '', role, token, expiresAt, getUserId(req)]
+  );
+  const inviteUrl = `${baseUrl(req)}/accept-invite.html?token=${token}`;
+
+  let emailSent = false, emailError = null;
+  try {
+    await makeTransporter().sendMail({
+      from: process.env.MAIL_FROM || 'CONSTRUCT_PRO <noreply@construct-pro.jp>',
+      to: email,
+      subject: '【WIN WIN様デモ】アカウント発行のご案内',
+      text: `${name || ''} 様\n\nWIN WIN様 管理システムのアカウントが発行されました。\n権限: ${INVITE_ROLES[role]}\n\n下記リンクからパスワードを設定してログインしてください。\n${inviteUrl}\n\n※このリンクは発行から24時間有効です。期限を過ぎた場合は管理者へ再発行をご依頼ください。`,
+    });
+    emailSent = true;
+  } catch (e) {
+    emailError = e.message;
+    console.error('invite mail failed:', e.message);
+  }
+  await logAudit(getUserId(req), 'CREATE', 'invitations', inv.id, {
+    name: email, changes: [`アカウント招待を発行（権限: ${INVITE_ROLES[role]}／24時間有効）`],
+  });
+  res.json({ id: inv.id, inviteUrl, expiresAt, emailSent, emailError });
+}));
+
+// 招待を取り消し
+app.delete('/api/invitations/:id', authMiddleware, h(async (req, res) => {
+  await ensureAux();
+  const inv = await one('SELECT * FROM invitations WHERE id=$1', [req.params.id]);
+  await q('DELETE FROM invitations WHERE id=$1', [req.params.id]);
+  await logAudit(getUserId(req), 'DELETE', 'invitations', parseInt(req.params.id), {
+    name: inv ? inv.email : `#${req.params.id}`, changes: ['アカウント招待を取り消し'],
+  });
+  res.json({ success: true });
+}));
+
+// 招待トークン検証（accept-invite ページから／認証不要）
+app.get('/api/invitations/validate', h(async (req, res) => {
+  await ensureAux();
+  const inv = await one('SELECT * FROM invitations WHERE token=$1', [req.query.token]);
+  if (!inv) return res.json({ valid: false, reason: 'not_found' });
+  if (inv.accepted_at) return res.json({ valid: false, reason: 'accepted' });
+  if (new Date(inv.expires_at) < new Date()) return res.json({ valid: false, reason: 'expired' });
+  res.json({ valid: true, email: inv.email, name: inv.name, role: inv.role, roleLabel: INVITE_ROLES[inv.role] || inv.role });
+}));
+
+// 招待を受諾してアカウント作成（パスワード設定／認証不要）
+app.post('/api/invitations/accept', h(async (req, res) => {
+  await ensureAux();
+  const { token, password } = req.body;
+  if (!password || password.length < 8) return res.status(400).json({ error: 'パスワードは8文字以上で設定してください' });
+  const inv = await one('SELECT * FROM invitations WHERE token=$1', [token]);
+  if (!inv) return res.status(404).json({ error: '招待が見つかりません' });
+  if (inv.accepted_at) return res.status(409).json({ error: 'この招待は既に使用されています' });
+  if (new Date(inv.expires_at) < new Date()) return res.status(410).json({ error: '招待リンクの有効期限（24時間）が切れています。管理者へ再発行をご依頼ください' });
+  const dup = await one('SELECT id FROM users WHERE email=$1', [inv.email]);
+  if (dup) return res.status(409).json({ error: 'このメールアドレスは既に登録済みです' });
+
+  const hash = await bcrypt.hash(password, 10);
+  const user = await one(
+    'INSERT INTO users (email, password_hash, name, role) VALUES ($1,$2,$3,$4) RETURNING id,email,name,role',
+    [inv.email, hash, inv.name || '', inv.role]
+  );
+  await q('UPDATE invitations SET accepted_at=current_timestamp WHERE id=$1', [inv.id]);
+  await logAudit(user.id, 'CREATE', 'users', user.id, { name: user.email, changes: [`招待からアカウント登録（権限: ${INVITE_ROLES[inv.role] || inv.role}）`] });
+  const jwtToken = jwt.sign({ id: user.id, email: user.email }, JWT_SECRET, { expiresIn: '7d' });
+  res.json({ token: jwtToken, user });
 }));
 
 // ローカル実行時のみ listen（Vercel ではモジュールとして読み込まれる）

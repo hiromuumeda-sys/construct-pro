@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html class="light" lang="ja">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>アカウント登録 - WIN WIN様デモ</title>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="/styles.css?v=36"/>
+<style>
+body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
+.material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+.custom-shadow { box-shadow: 0 8px 40px rgba(0, 0, 0, 0.08); }
+</style>
+</head>
+<body class="bg-background text-on-surface min-h-screen flex items-center justify-center p-margin-mobile">
+
+<div class="w-full max-w-md">
+<div class="text-center mb-lg">
+<img src="/logo.png" alt="WIN WIN" style="height:48px;width:auto;margin:0 auto;display:block"
+  onerror="this.style.display='none';this.nextElementSibling.style.display='block'"/>
+<h1 class="text-display-lg font-bold text-primary" style="display:none">WIN WIN様</h1>
+<p class="text-label-sm text-on-surface-variant tracking-wider uppercase mt-1">デモ画面</p>
+</div>
+
+<div class="bg-surface-container-lowest rounded-2xl custom-shadow border border-outline-variant p-lg">
+<!-- 読み込み中 -->
+<div id="loading-view" class="text-center py-8 text-on-surface-variant">
+<span class="material-symbols-outlined animate-spin">progress_activity</span>
+<p class="text-body-sm mt-2">招待を確認しています...</p>
+</div>
+
+<!-- 無効な招待 -->
+<div id="invalid-view" class="hidden text-center py-6">
+<span class="material-symbols-outlined text-error" style="font-size:48px">link_off</span>
+<h2 class="text-headline-sm text-primary mt-2 mb-1">招待が無効です</h2>
+<p id="invalid-msg" class="text-body-sm text-on-surface-variant mb-lg"></p>
+<a href="/login.html" class="inline-flex items-center gap-2 px-4 py-2 bg-secondary text-on-secondary font-label-md rounded-lg hover:opacity-90 transition-all"><span class="material-symbols-outlined">login</span>ログイン画面へ</a>
+</div>
+
+<!-- パスワード設定 -->
+<div id="setup-view" class="hidden">
+<h2 class="text-headline-sm text-primary mb-1">アカウント登録</h2>
+<p class="text-body-sm text-on-surface-variant mb-lg">ログイン用のパスワードを設定してください。</p>
+
+<div class="bg-surface-container-low border border-outline-variant rounded-lg p-md mb-md space-y-1">
+<div class="flex justify-between text-body-sm"><span class="text-on-surface-variant">メール</span><span id="acc-email" class="font-bold text-on-surface"></span></div>
+<div class="flex justify-between text-body-sm"><span class="text-on-surface-variant">氏名</span><span id="acc-name" class="font-bold text-on-surface"></span></div>
+<div class="flex justify-between text-body-sm"><span class="text-on-surface-variant">権限</span><span id="acc-role" class="font-bold text-secondary"></span></div>
+</div>
+
+<form id="setup-form" class="space-y-md" onsubmit="return submitAccept(event)">
+<div>
+<label class="block text-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">パスワード（8文字以上）</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant">lock</span>
+<input id="acc-pw" type="password" class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-body-md pl-12 pr-4 py-3 focus:ring-2 focus:ring-secondary/20 focus:border-transparent" placeholder="パスワード" minlength="8" required/>
+</div>
+</div>
+<div>
+<label class="block text-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">パスワード（確認）</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant">lock</span>
+<input id="acc-pw2" type="password" class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-body-md pl-12 pr-4 py-3 focus:ring-2 focus:ring-secondary/20 focus:border-transparent" placeholder="パスワード（確認）" minlength="8" required/>
+</div>
+</div>
+<div id="acc-error" class="text-on-error bg-error-container border border-error rounded-lg px-md py-2 text-body-sm hidden"></div>
+<button type="submit" class="w-full px-4 py-1.5 bg-secondary text-on-secondary font-label-md rounded-lg shadow-lg hover:scale-[1.01] active:scale-95 transition-all flex items-center justify-center gap-2">
+<span class="material-symbols-outlined">how_to_reg</span>
+登録してログイン
+</button>
+</form>
+</div>
+</div>
+
+<p class="text-label-sm text-on-surface-variant text-center mt-lg">© 2024 株式会社WIN WIN デモ環境</p>
+</div>
+
+<script>
+const token = new URLSearchParams(window.location.search).get('token');
+
+function show(id) {
+  ['loading-view', 'invalid-view', 'setup-view'].forEach(v => {
+    document.getElementById(v).classList.toggle('hidden', v !== id);
+  });
+}
+
+const REASON_MSG = {
+  not_found: '招待リンクが見つかりません。URLをご確認ください。',
+  expired:   '招待リンクの有効期限（24時間）が切れています。管理者へ再発行をご依頼ください。',
+  accepted:  'この招待は既に使用されています。ログイン画面からサインインしてください。',
+  missing:   '招待トークンがありません。管理者から届いたリンクを開いてください。',
+};
+
+async function init() {
+  if (!token) { document.getElementById('invalid-msg').textContent = REASON_MSG.missing; show('invalid-view'); return; }
+  try {
+    const res = await fetch(`/api/invitations/validate?token=${encodeURIComponent(token)}`);
+    const data = await res.json();
+    if (!data.valid) {
+      document.getElementById('invalid-msg').textContent = REASON_MSG[data.reason] || '招待が無効です。';
+      show('invalid-view');
+      return;
+    }
+    document.getElementById('acc-email').textContent = data.email;
+    document.getElementById('acc-name').textContent = data.name || '-';
+    document.getElementById('acc-role').textContent = data.roleLabel || data.role;
+    show('setup-view');
+  } catch (e) {
+    document.getElementById('invalid-msg').textContent = '確認中にエラーが発生しました。時間をおいて再度お試しください。';
+    show('invalid-view');
+  }
+}
+
+async function submitAccept(e) {
+  e.preventDefault();
+  const pw = document.getElementById('acc-pw').value;
+  const pw2 = document.getElementById('acc-pw2').value;
+  const err = document.getElementById('acc-error');
+  err.classList.add('hidden');
+  if (pw.length < 8) { err.textContent = 'パスワードは8文字以上で設定してください'; err.classList.remove('hidden'); return false; }
+  if (pw !== pw2) { err.textContent = 'パスワードが一致しません'; err.classList.remove('hidden'); return false; }
+  try {
+    const res = await fetch('/api/invitations/accept', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token, password: pw }),
+    });
+    const data = await res.json();
+    if (!res.ok) { err.textContent = data.error || '登録に失敗しました'; err.classList.remove('hidden'); return false; }
+    localStorage.setItem('auth_token', data.token);
+    localStorage.setItem('user', JSON.stringify(data.user));
+    window.location.href = '/projects.html';
+  } catch (e) {
+    err.textContent = 'エラーが発生しました：' + e.message;
+    err.classList.remove('hidden');
+  }
+  return false;
+}
+
+init();
+</script>
+</body>
+</html>

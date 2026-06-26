@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html class="light" lang="ja">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>アカウント発行 - WIN WIN様デモ</title>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="/styles.css?v=36"/>
+<script src="/sidebar.js?v=36"></script>
+<script src="/auth.js?v=36"></script>
+<script src="/header.js?v=36"></script>
+<script src="/notify.js?v=36"></script>
+<style>
+body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
+.material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+.custom-shadow { box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04); }
+.tabular-numbers { font-variant-numeric: tabular-nums; }
+</style>
+</head>
+<body class="bg-background text-on-surface">
+<aside class="fixed left-0 top-0 h-screen w-48 z-50 bg-surface-container-lowest border-r border-outline-variant"></aside>
+<main class="ml-48 min-h-screen">
+<header class="sticky top-0 z-40 flex justify-between items-center h-16 px-margin-desktop bg-surface/80 backdrop-blur-md shadow-sm">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary">person_add</span>
+<h2 class="text-headline-sm font-bold text-primary">アカウント発行</h2>
+</div>
+<div class="flex items-center gap-6"></div>
+</header>
+
+<div class="p-margin-desktop max-w-container-max mx-auto">
+<p class="text-body-sm text-on-surface-variant mb-lg">権限を選んでメールアドレスに招待を送信します。招待リンクは<strong class="text-on-surface">発行から24時間のみ有効</strong>です。</p>
+
+<div class="grid grid-cols-1 lg:grid-cols-5 gap-lg">
+<!-- 発行フォーム -->
+<section class="lg:col-span-2 bg-surface-container-lowest border border-outline-variant rounded-lg custom-shadow overflow-hidden self-start">
+<div class="px-lg py-md border-b border-outline-variant bg-surface-container-low">
+<h3 class="text-label-md font-label-md text-primary flex items-center gap-1"><span class="material-symbols-outlined text-[18px]">mail</span>新規アカウントを招待</h3>
+</div>
+<div class="p-lg space-y-4">
+<div>
+<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-1.5">氏名</label>
+<input id="inv-name" type="text" placeholder="例）山田 太郎" class="w-full px-3 py-2 border border-outline-variant rounded-lg focus:ring-2 focus:ring-secondary/30 focus:border-secondary"/>
+</div>
+<div>
+<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-1.5">メールアドレス <span class="text-error">*</span></label>
+<input id="inv-email" type="email" placeholder="user@example.com" class="w-full px-3 py-2 border border-outline-variant rounded-lg focus:ring-2 focus:ring-secondary/30 focus:border-secondary"/>
+</div>
+<div>
+<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-1.5">権限 <span class="text-error">*</span></label>
+<div class="space-y-2" id="inv-role-group">
+<label class="flex items-start gap-3 p-3 border border-outline-variant rounded-lg cursor-pointer hover:border-secondary has-[:checked]:border-secondary has-[:checked]:bg-secondary/5">
+<input type="radio" name="inv-role" value="admin" class="mt-0.5 accent-secondary"/>
+<span><span class="block text-label-md font-bold text-on-surface">管理者</span><span class="block text-body-sm text-on-surface-variant">全機能・アカウント発行が可能</span></span>
+</label>
+<label class="flex items-start gap-3 p-3 border border-outline-variant rounded-lg cursor-pointer hover:border-secondary has-[:checked]:border-secondary has-[:checked]:bg-secondary/5">
+<input type="radio" name="inv-role" value="accounting" class="mt-0.5 accent-secondary"/>
+<span><span class="block text-label-md font-bold text-on-surface">経理部</span><span class="block text-body-sm text-on-surface-variant">請求・支払・入金の管理</span></span>
+</label>
+<label class="flex items-start gap-3 p-3 border border-outline-variant rounded-lg cursor-pointer hover:border-secondary has-[:checked]:border-secondary has-[:checked]:bg-secondary/5">
+<input type="radio" name="inv-role" value="staff" class="mt-0.5 accent-secondary" checked/>
+<span><span class="block text-label-md font-bold text-on-surface">一般社員</span><span class="block text-body-sm text-on-surface-variant">案件・工事計画の閲覧／操作</span></span>
+</label>
+</div>
+</div>
+<button id="inv-submit" onclick="sendInvite()" class="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-primary text-on-primary rounded-lg font-bold hover:opacity-90 transition-all disabled:opacity-50">
+<span class="material-symbols-outlined text-[18px]">send</span>招待メールを送信
+</button>
+
+<!-- 発行結果 -->
+<div id="inv-result" class="hidden border-t border-outline-variant pt-4 space-y-2">
+<p class="text-label-md font-bold text-tertiary flex items-center gap-1"><span class="material-symbols-outlined text-[18px]">check_circle</span><span id="inv-result-msg">招待を発行しました</span></p>
+<p class="text-body-sm text-on-surface-variant">招待リンク（24時間有効）：</p>
+<div class="flex items-center gap-2">
+<input id="inv-link" type="text" readonly class="flex-1 px-3 py-2 border border-outline-variant rounded-lg bg-surface-container-low text-body-sm tabular-numbers"/>
+<button onclick="copyInviteLink()" class="inline-flex items-center gap-1 px-3 py-2 border border-outline-variant rounded-lg hover:bg-surface-container text-label-md whitespace-nowrap"><span class="material-symbols-outlined text-[16px]">content_copy</span>コピー</button>
+</div>
+<p id="inv-mail-note" class="text-body-sm"></p>
+</div>
+</div>
+</section>
+
+<!-- 発行済み一覧 -->
+<section class="lg:col-span-3 bg-surface-container-lowest border border-outline-variant rounded-lg custom-shadow overflow-hidden self-start">
+<div class="px-lg py-md border-b border-outline-variant bg-surface-container-low flex justify-between items-center">
+<h3 class="text-label-md font-label-md text-primary flex items-center gap-1"><span class="material-symbols-outlined text-[18px]">group</span>発行済みの招待</h3>
+<button onclick="loadInvites()" class="material-symbols-outlined text-on-surface-variant hover:text-primary" title="再読み込み">refresh</button>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left">
+<thead>
+<tr class="bg-surface-container-low">
+<th class="px-3 py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider">メール / 氏名</th>
+<th class="px-3 py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider">権限</th>
+<th class="px-3 py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider text-center">状態</th>
+<th class="px-3 py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider whitespace-nowrap">有効期限</th>
+<th class="px-3 py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider text-center">操作</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant/30" id="inv-table-body">
+<tr><td colspan="5" class="px-3 py-8 text-center text-on-surface-variant">読み込み中...</td></tr>
+</tbody>
+</table>
+</div>
+</section>
+</div>
+</div>
+
+<footer class="border-t border-outline-variant mt-xl py-lg px-margin-desktop text-center text-on-surface-variant">
+<p class="text-label-sm uppercase tracking-wider mb-2">WIN WIN様 デモ画面 v2.4.0</p>
+<p class="text-body-sm">© 2024 株式会社WIN WIN デモ環境</p>
+</footer>
+</main>
+
+<script>
+const ROLE_BADGE = {
+  '管理者':   'bg-primary-container text-on-primary-container',
+  '経理部':   'bg-tertiary-container text-on-tertiary-container',
+  '一般社員': 'bg-surface-container text-on-surface-variant',
+};
+const STATUS_BADGE = {
+  '有効':     'bg-secondary-container text-on-secondary-container',
+  '登録済み': 'bg-tertiary-container text-on-tertiary-container',
+  '期限切れ': 'bg-error-container text-on-error-container',
+};
+
+function fmtDate(s) {
+  if (!s) return '-';
+  const d = new Date(s);
+  if (isNaN(d)) return s;
+  const p = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}/${p(d.getMonth() + 1)}/${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+function esc(s) { return String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
+
+async function sendInvite() {
+  const name = document.getElementById('inv-name').value.trim();
+  const email = document.getElementById('inv-email').value.trim();
+  const role = (document.querySelector('input[name="inv-role"]:checked') || {}).value;
+  if (!email) { alert('メールアドレスを入力してください'); return; }
+  if (!role) { alert('権限を選択してください'); return; }
+  const btn = document.getElementById('inv-submit');
+  btn.disabled = true;
+  try {
+    const res = await fetch('/api/invitations', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, email, role }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || '発行に失敗しました');
+    document.getElementById('inv-result').classList.remove('hidden');
+    document.getElementById('inv-link').value = data.inviteUrl;
+    const note = document.getElementById('inv-mail-note');
+    if (data.emailSent) {
+      note.className = 'text-body-sm text-tertiary';
+      note.innerHTML = '✉️ 招待メールを送信しました。';
+    } else {
+      note.className = 'text-body-sm text-error';
+      note.innerHTML = '⚠️ メール送信は未完了です（SMTP未設定）。上記リンクを直接共有してください。';
+    }
+    document.getElementById('inv-name').value = '';
+    document.getElementById('inv-email').value = '';
+    loadInvites();
+  } catch (e) {
+    alert(e.message);
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+function copyInviteLink() {
+  const el = document.getElementById('inv-link');
+  el.select();
+  navigator.clipboard?.writeText(el.value).then(
+    () => { const n = document.getElementById('inv-mail-note'); n.className = 'text-body-sm text-tertiary'; n.textContent = '🔗 リンクをコピーしました。'; },
+    () => document.execCommand('copy')
+  );
+}
+
+async function loadInvites() {
+  const body = document.getElementById('inv-table-body');
+  try {
+    const res = await fetch('/api/invitations');
+    const list = await res.json();
+    if (!Array.isArray(list) || list.length === 0) {
+      body.innerHTML = '<tr><td colspan="5" class="px-3 py-8 text-center text-on-surface-variant">発行済みの招待はありません</td></tr>';
+      return;
+    }
+    body.innerHTML = list.map(inv => `
+      <tr class="hover:bg-surface-container-low/50">
+        <td class="px-3 py-2"><div class="text-label-md font-bold text-on-surface">${esc(inv.email)}</div><div class="text-body-sm text-on-surface-variant">${esc(inv.name) || '-'}</div></td>
+        <td class="px-3 py-2"><span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold ${ROLE_BADGE[inv.roleLabel] || 'bg-surface-container text-on-surface-variant'}">${esc(inv.roleLabel)}</span></td>
+        <td class="px-3 py-2 text-center"><span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold ${STATUS_BADGE[inv.status] || ''}">${esc(inv.status)}</span></td>
+        <td class="px-3 py-2 text-body-sm text-on-surface-variant tabular-numbers whitespace-nowrap">${fmtDate(inv.expires_at)}</td>
+        <td class="px-3 py-2 text-center"><button onclick="revokeInvite(${inv.id})" class="material-symbols-outlined text-[18px] text-on-surface-variant hover:text-error" title="招待を取り消し">delete</button></td>
+      </tr>`).join('');
+  } catch (e) {
+    body.innerHTML = '<tr><td colspan="5" class="px-3 py-8 text-center text-error">読み込みに失敗しました</td></tr>';
+  }
+}
+
+async function revokeInvite(id) {
+  if (!confirm('この招待を取り消しますか？（リンクは無効になります）')) return;
+  try {
+    const res = await fetch(`/api/invitations/${id}`, { method: 'DELETE' });
+    if (!res.ok) throw new Error('failed');
+    loadInvites();
+  } catch (e) {
+    alert('取り消しに失敗しました');
+  }
+}
+
+document.addEventListener('DOMContentLoaded', loadInvites);
+</script>
+</body>
+</html>
