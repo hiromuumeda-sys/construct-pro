@@ -6,10 +6,10 @@
 <title>受注一覧 - WIN WIN様デモ</title>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
-<link rel="stylesheet" href="/styles.css?v=40"/>
-<script src="/sidebar.js?v=40"></script>
-<script src="/auth.js?v=40"></script>
-<script src="/header.js?v=40"></script>
+<link rel="stylesheet" href="/styles.css?v=41"/>
+<script src="/sidebar.js?v=41"></script>
+<script src="/auth.js?v=41"></script>
+<script src="/header.js?v=41"></script>
 <style>
 body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
@@ -154,11 +154,12 @@ CSV出力
 <th class="w-12 px-lg py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider">No.</th>
 <th class="w-64 px-lg py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider">工事名</th>
 <th class="w-24 px-lg py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider">発注元</th>
-<th class="px-lg py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider">備考</th>
+<th class="w-[42%] px-lg py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider">備考</th>
 <th class="w-28 px-lg py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider">工期</th>
 <th class="w-28 px-lg py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider text-right">契約金額</th>
 <th class="w-20 px-lg py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider">状態</th>
-<th class="w-44 px-lg py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider text-center">操作</th>
+<th class="w-28 px-lg py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider text-center">工事計画</th>
+<th class="w-36 px-lg py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider text-center">操作</th>
 </tr>
 </thead>
 <tbody class="divide-y divide-outline-variant" id="project-table-body">
@@ -421,7 +422,7 @@ function renderTable(projects) {
       <td class="w-12 px-lg py-2 text-label-md font-label-md text-on-surface-variant tabular-numbers align-top">${String(p.id).padStart(5, '0')}</td>
       <td class="w-64 px-lg py-2 text-label-md font-label-md text-primary align-top break-words">${p.name}</td>
       <td class="w-24 px-lg py-2 text-label-md font-label-md text-on-surface-variant align-top break-words">${p.client}</td>
-      <td class="px-lg py-2 text-label-md font-label-md text-on-surface-variant align-top" title="${(p.notes || '').replace(/"/g, '&quot;')}">${p.notes ? (p.notes.length > 15 ? p.notes.slice(0, 15) + '…' : p.notes) : '-'}</td>
+      <td class="w-[42%] px-lg py-2 text-label-md font-label-md text-on-surface-variant align-top break-words whitespace-normal">${p.notes || '-'}</td>
       <td class="w-28 px-lg py-2 text-label-md font-label-md text-on-surface-variant tabular-numbers align-top">${p.startDate || '-'} 〜 ${p.endDate || '-'}</td>
       <td class="w-28 px-lg py-2 text-label-md font-label-md text-primary tabular-numbers text-right align-top">¥${p.amount.toLocaleString()}</td>
       <td class="w-24 px-lg py-2 align-top" onclick="event.stopPropagation()">
@@ -432,7 +433,13 @@ function renderTable(projects) {
           <span class="material-symbols-outlined absolute right-0.5 top-1/2 -translate-y-1/2 text-[16px] pointer-events-none">arrow_drop_down</span>
         </div>
       </td>
-      <td class="w-44 px-lg py-2 text-center align-top">
+      <td class="w-28 px-lg py-2 text-center align-top">
+        <a href="/orders-list.html?projectId=${p.id}" onclick="event.stopPropagation()" class="inline-flex items-center gap-0.5 text-secondary text-[11px] font-bold font-label-md hover:text-secondary/80 whitespace-nowrap underline underline-offset-2 decoration-secondary/60 cursor-pointer" title="この案件の工事計画ページへ移動">
+          <span class="material-symbols-outlined text-[15px]">receipt_long</span>
+          工事計画
+        </a>
+      </td>
+      <td class="w-36 px-lg py-2 text-center align-top">
         <div class="flex gap-1 justify-center flex-wrap">
           <button class="inline-flex items-center gap-0.5 px-1.5 py-1 rounded-lg bg-primary/10 text-primary text-[11px] font-label-md hover:bg-primary/20 transition-colors whitespace-nowrap" onclick="event.stopPropagation(); generateEstimate(${p.id})" title="見積書を発行">
             <span class="material-symbols-outlined text-[15px]">request_quote</span>
@@ -442,10 +449,6 @@ function renderTable(projects) {
             <span class="material-symbols-outlined text-[15px]">description</span>
             請求書
           </button>
-          <a href="/orders-list.html?projectId=${p.id}" onclick="event.stopPropagation()" class="inline-flex items-center gap-0.5 text-secondary text-[11px] font-bold font-label-md hover:text-secondary/80 whitespace-nowrap underline underline-offset-2 decoration-secondary/60 cursor-pointer" title="この案件の工事計画ページへ移動">
-            <span class="material-symbols-outlined text-[15px]">receipt_long</span>
-            工事計画
-          </a>
         </div>
       </td>
     </tr>
@@ -1079,6 +1082,6 @@ async function sendEstimateEmail() {
   </div>
 </div>
 
-<script src="/notify.js?v=40"></script>
+<script src="/notify.js?v=41"></script>
 </body>
 </html>
