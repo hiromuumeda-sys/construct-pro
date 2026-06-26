@@ -6,10 +6,10 @@
 <title>工事計画 - WIN WIN様デモ</title>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
-<link rel="stylesheet" href="/styles.css?v=49"/>
-<script src="/sidebar.js?v=49"></script>
-<script src="/auth.js?v=49"></script>
-<script src="/header.js?v=49"></script>
+<link rel="stylesheet" href="/styles.css?v=50"/>
+<script src="/sidebar.js?v=50"></script>
+<script src="/auth.js?v=50"></script>
+<script src="/header.js?v=50"></script>
 <style>
 body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
@@ -540,7 +540,7 @@ async function handleDocFileSelected(e) {
     if (!file || id == null) return;
     const label = DOC_LABEL[kind] || '書類';
     if (file.type !== 'application/pdf' && !/\.pdf$/i.test(file.name)) { alert('PDFファイルを選択してください'); _docUpload = { id: null, kind: null }; return; }
-    if (file.size > 15 * 1024 * 1024) { alert('ファイルサイズは15MBまでにしてください'); _docUpload = { id: null, kind: null }; return; }
+    if (file.size > 3 * 1024 * 1024) { alert('ファイルサイズは3MBまでにしてください（サーバー制限）。\n大きいPDFは圧縮してからアップロードしてください。'); _docUpload = { id: null, kind: null }; return; }
     const dataUrl = await new Promise((resolve, reject) => {
         const r = new FileReader();
         r.onload = () => resolve(r.result);
@@ -553,7 +553,10 @@ async function handleDocFileSelected(e) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ filename: file.name, dataUrl })
         });
-        if (!res.ok) { const d = await res.json().catch(() => ({})); throw new Error(d.error || `HTTP ${res.status}`); }
+        if (!res.ok) {
+            if (res.status === 413) throw new Error('ファイルが大きすぎます（3MB以下に圧縮してください）');
+            const d = await res.json().catch(() => ({})); throw new Error(d.error || `HTTP ${res.status}`);
+        }
         const mark = (o) => {
             if (!o) return;
             if (kind === 'invoice') { o.invoice_has_file = true; o.invoice_filename = file.name; o.invoice_done = true; }
@@ -1176,6 +1179,6 @@ function filterTable() {
 }
 
 </script>
-<script src="/notify.js?v=49"></script>
+<script src="/notify.js?v=50"></script>
 </body>
 </html>

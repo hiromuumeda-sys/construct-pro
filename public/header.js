@@ -46,18 +46,32 @@ document.addEventListener('DOMContentLoaded', () => {
   // 右側クラスターを統一マークアップに差し替え
   header.lastElementChild.outerHTML = HEADER_RIGHT_HTML;
 
-  // ログイン中ユーザーを表示
-  try {
-    const u = (window.Auth && Auth.getUser) ? Auth.getUser() : null;
-    if (u) {
-      const ROLE_LABEL = { admin: '管理者', accounting: '経理部', staff: '一般社員', user: '一般社員' };
-      const n = document.getElementById('hdr-user-name');
-      const r = document.getElementById('hdr-user-role');
-      if (n) n.textContent = u.name || u.email || 'ユーザー';
-      if (r) r.textContent = ROLE_LABEL[u.role] || u.role || '一般社員';
-    }
-  } catch (_) {}
+  // ログイン中ユーザーを表示（localStorage→不足なら /api/auth/me から補完）
+  hdrRenderUser();
 
   // 差し替え後の新しい通知DOMへ確実に描画（notify.js があれば再読込）
   if (typeof loadNotif === 'function') loadNotif();
 });
+
+const HDR_ROLE_LABEL = { admin: '管理者', accounting: '経理部', staff: '一般社員', user: '一般社員' };
+function hdrSetUser(u) {
+  if (!u) return;
+  const n = document.getElementById('hdr-user-name');
+  const r = document.getElementById('hdr-user-role');
+  if (n) n.textContent = u.name || u.email || 'ユーザー';
+  if (r) r.textContent = HDR_ROLE_LABEL[u.role] || u.role || '一般社員';
+}
+async function hdrRenderUser() {
+  let u = null;
+  try { u = (window.Auth && Auth.getUser) ? Auth.getUser() : null; } catch (_) {}
+  if (u && (u.name || u.email) && u.role) { hdrSetUser(u); return; }
+  // 情報が不足していればサーバーから取得
+  try {
+    const res = await fetch('/api/auth/me');
+    if (res.ok) {
+      const me = await res.json();
+      if (me && me.id) { try { localStorage.setItem('user', JSON.stringify(me)); } catch (_) {} hdrSetUser(me); return; }
+    }
+  } catch (_) {}
+  if (u) hdrSetUser(u); // 取得失敗時はlocalStorageの値で表示
+}
