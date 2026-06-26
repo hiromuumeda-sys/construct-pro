@@ -6,10 +6,10 @@
 <title>売上・入金管理 - WIN WIN様デモ</title>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
-<link rel="stylesheet" href="/styles.css?v=36"/>
-<script src="/sidebar.js?v=36"></script>
-<script src="/auth.js?v=36"></script>
-<script src="/header.js?v=36"></script>
+<link rel="stylesheet" href="/styles.css?v=37"/>
+<script src="/sidebar.js?v=37"></script>
+<script src="/auth.js?v=37"></script>
+<script src="/header.js?v=37"></script>
 <style>
 body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
@@ -264,7 +264,7 @@ body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 </div>
 <div class="grid grid-cols-2 gap-md">
 <div>
-<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">入金日</label>
+<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">入金日 <span class="text-error">*</span></label>
 <input class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent" id="receipt-date" type="date"/>
 </div>
 <div>
@@ -273,7 +273,7 @@ body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 </div>
 </div>
 <div>
-<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">入金額</label>
+<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">入金額 <span class="text-error">*</span></label>
 <input class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent tabular-numbers" id="receipt-amount" type="number"/>
 </div>
 <div>
@@ -523,5 +523,5 @@ async function importCSV(event) {
 loadAll();
 </script>
 
-<script src="/notify.js?v=36"></script>
+<script src="/notify.js?v=37"></script>
 </body></html>

@@ -11,16 +11,21 @@ const { q, one } = require('./db');
 // 追加テーブル（請書ファイル・招待）を冪等に用意する。
 // schema.sql の再実行を待たずに動くよう、初回アクセス時に1度だけ作成する。
 let _auxReady = null;
+// CREATE TABLE IF NOT EXISTS は複数インスタンス同時実行で稀に重複エラー(23505/42P07)になるため握りつぶす。
+async function createIfMissing(sql) {
+  try { await q(sql); }
+  catch (e) { if (!['23505', '42P07'].includes(e.code)) throw e; }
+}
 function ensureAux() {
   if (!_auxReady) {
     _auxReady = (async () => {
-      await q(`CREATE TABLE IF NOT EXISTS order_documents (
+      await createIfMissing(`CREATE TABLE IF NOT EXISTS order_documents (
         order_id    integer primary key,
         filename    text,
         data_url    text,
         uploaded_at timestamp default current_timestamp
       )`);
-      await q(`CREATE TABLE IF NOT EXISTS invitations (
+      await createIfMissing(`CREATE TABLE IF NOT EXISTS invitations (
         id          serial primary key,
         email       text not null,
         name        text,
@@ -1194,9 +1199,10 @@ function inviteStatus(inv) {
   return '有効';
 }
 
-// 招待一覧（管理画面用）
+// 招待一覧（管理画面用）。24時間を過ぎた未受諾の招待は「招待中」から消す（自動削除）。
 app.get('/api/invitations', authMiddleware, h(async (req, res) => {
   await ensureAux();
+  await q('DELETE FROM invitations WHERE accepted_at IS NULL AND expires_at < now()');
   const rows = await q('SELECT id, email, name, role, expires_at, accepted_at, created_at FROM invitations ORDER BY created_at DESC LIMIT 50');
   res.json(rows.map(r => ({ ...r, roleLabel: INVITE_ROLES[r.role] || r.role, status: inviteStatus(r) })));
 }));

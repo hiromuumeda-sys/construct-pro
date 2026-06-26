@@ -6,11 +6,11 @@
 <title>アカウント発行 - WIN WIN様デモ</title>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
-<link rel="stylesheet" href="/styles.css?v=36"/>
-<script src="/sidebar.js?v=36"></script>
-<script src="/auth.js?v=36"></script>
-<script src="/header.js?v=36"></script>
-<script src="/notify.js?v=36"></script>
+<link rel="stylesheet" href="/styles.css?v=37"/>
+<script src="/sidebar.js?v=37"></script>
+<script src="/auth.js?v=37"></script>
+<script src="/header.js?v=37"></script>
+<script src="/notify.js?v=37"></script>
 <style>
 body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
@@ -30,8 +30,6 @@ body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 </header>
 
 <div class="p-margin-desktop max-w-container-max mx-auto">
-<p class="text-body-sm text-on-surface-variant mb-lg">権限を選んでメールアドレスに招待を送信します。招待リンクは<strong class="text-on-surface">発行から24時間のみ有効</strong>です。</p>
-
 <div class="grid grid-cols-1 lg:grid-cols-5 gap-lg">
 <!-- 発行フォーム -->
 <section class="lg:col-span-2 bg-surface-container-lowest border border-outline-variant rounded-lg custom-shadow overflow-hidden self-start">
@@ -181,11 +179,12 @@ function copyInviteLink() {
 
 async function loadInvites() {
   const body = document.getElementById('inv-table-body');
+  const emptyRow = '<tr><td colspan="5" class="px-3 py-8 text-center text-on-surface-variant">発行済みの招待はありません</td></tr>';
   try {
     const res = await fetch('/api/invitations');
-    const list = await res.json();
+    const list = res.ok ? await res.json() : [];
     if (!Array.isArray(list) || list.length === 0) {
-      body.innerHTML = '<tr><td colspan="5" class="px-3 py-8 text-center text-on-surface-variant">発行済みの招待はありません</td></tr>';
+      body.innerHTML = emptyRow;
       return;
     }
     body.innerHTML = list.map(inv => `
@@ -197,7 +196,8 @@ async function loadInvites() {
         <td class="px-3 py-2 text-center"><button onclick="revokeInvite(${inv.id})" class="material-symbols-outlined text-[18px] text-on-surface-variant hover:text-error" title="招待を取り消し">delete</button></td>
       </tr>`).join('');
   } catch (e) {
-    body.innerHTML = '<tr><td colspan="5" class="px-3 py-8 text-center text-error">読み込みに失敗しました</td></tr>';
+    console.error('loadInvites failed:', e);
+    body.innerHTML = emptyRow;
   }
 }
 

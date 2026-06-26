@@ -6,10 +6,10 @@
 <title>受注一覧 - WIN WIN様デモ</title>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
-<link rel="stylesheet" href="/styles.css?v=36"/>
-<script src="/sidebar.js?v=36"></script>
-<script src="/auth.js?v=36"></script>
-<script src="/header.js?v=36"></script>
+<link rel="stylesheet" href="/styles.css?v=37"/>
+<script src="/sidebar.js?v=37"></script>
+<script src="/auth.js?v=37"></script>
+<script src="/header.js?v=37"></script>
 <style>
 body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
@@ -203,11 +203,11 @@ CSV出力
 <input id="edit-id" type="hidden"/>
 <div class="grid grid-cols-2 gap-md">
 <div class="col-span-2">
-<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">工事名</label>
+<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">工事名 <span class="text-error">*</span></label>
 <input class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent" id="edit-name" type="text"/>
 </div>
 <div class="col-span-2">
-<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">顧客（発注元）</label>
+<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">顧客（発注元） <span class="text-error">*</span></label>
 <select class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent" id="edit-customer-select" onchange="onEditCustomerSelected()">
 <option value="">顧客マスタから選択...</option>
 </select>
@@ -263,11 +263,11 @@ CSV出力
 <div class="p-lg space-y-md overflow-y-auto flex-1">
 <div class="grid grid-cols-2 gap-md">
 <div class="col-span-2">
-<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">工事名</label>
+<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">工事名 <span class="text-error">*</span></label>
 <input class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent" id="reg-name" placeholder="正式な工事名称を入力してください" type="text"/>
 </div>
 <div class="col-span-2">
-<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">顧客（発注元）</label>
+<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">顧客（発注元） <span class="text-error">*</span></label>
 <select class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent" id="reg-customer-select" onchange="onRegisterCustomerSelected()">
 <option value="">顧客マスタから選択...</option>
 </select>
@@ -440,7 +440,7 @@ function renderTable(projects) {
             <span class="material-symbols-outlined text-[15px]">description</span>
             請求書
           </button>
-          <button class="inline-flex items-center gap-0.5 px-2 py-1 rounded-lg bg-secondary text-on-secondary text-[11px] font-label-md hover:bg-secondary/90 transition-colors whitespace-nowrap underline underline-offset-2 decoration-on-secondary/40" onclick="event.stopPropagation(); location.href='/orders-list.html?projectId=${p.id}'" title="この案件の工事計画ページへ移動">
+          <button class="inline-flex items-center gap-0.5 px-2 py-1 rounded-lg bg-surface-container-lowest border border-secondary text-secondary text-[11px] font-bold font-label-md hover:bg-secondary/10 transition-colors whitespace-nowrap underline underline-offset-2 decoration-secondary/50" onclick="event.stopPropagation(); location.href='/orders-list.html?projectId=${p.id}'" title="この案件の工事計画ページへ移動">
             <span class="material-symbols-outlined text-[15px]">receipt_long</span>
             工事計画
             <span class="material-symbols-outlined text-[15px]">arrow_forward</span>
@@ -1078,6 +1078,6 @@ async function sendEstimateEmail() {
   </div>
 </div>
 
-<script src="/notify.js?v=36"></script>
+<script src="/notify.js?v=37"></script>
 </body>
 </html>
