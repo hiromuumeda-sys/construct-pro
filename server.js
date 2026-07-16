@@ -288,7 +288,7 @@ app.delete('/api/projects/:id', h(async (req, res) => {
 
 // ============ Vendors API ============
 app.get('/api/vendors', h(async (req, res) => {
-  res.json(await q('SELECT * FROM vendors ORDER BY id'));
+  res.json(await q('SELECT * FROM vendors ORDER BY id::int DESC'));
 }));
 
 app.post('/api/vendors', h(async (req, res) => {
@@ -552,7 +552,7 @@ app.delete('/api/payment-records/:id', h(async (req, res) => {
 
 // ============ Customers API ============
 app.get('/api/customers', h(async (req, res) => {
-  res.json(await q('SELECT * FROM customers ORDER BY id'));
+  res.json(await q('SELECT * FROM customers ORDER BY id DESC'));
 }));
 
 app.post('/api/customers', h(async (req, res) => {
@@ -1051,10 +1051,10 @@ app.get('/api/cache', h(async (req, res) => {
   await ensureAux();
   const [projects, vendors, categories, orders, customers, receipts, invoices, files] = await Promise.all([
     q('SELECT * FROM projects ORDER BY id'),
-    q('SELECT * FROM vendors ORDER BY id'),
+    q('SELECT * FROM vendors ORDER BY id::int DESC'),
     q('SELECT * FROM categories ORDER BY "order"'),
     q('SELECT * FROM orders ORDER BY id'),
-    q('SELECT * FROM customers ORDER BY id'),
+    q('SELECT * FROM customers ORDER BY id DESC'),
     q('SELECT * FROM receipts ORDER BY received_date DESC'),
     q('SELECT * FROM invoices ORDER BY id DESC'),
     q('SELECT order_id, kind, filename FROM order_files'),
