@@ -587,23 +587,25 @@ app.put(
   h(async (req, res) => {
     const b = req.body;
     const before = await one('SELECT * FROM orders WHERE id=$1', [req.params.id]);
+    // 呼び出し元によって送られてくる項目が一部だけの場合があるため、未送信の項目は既存値を維持する
+    // (例: 工事詳細編集モーダルは支払状況/支払期日/支払備考を送らないため、これが無いと保存のたびに消えてしまう)
     await q(`UPDATE orders SET project_id=$1, category=$2, vendor=$3, estimate=$4, planned=$5, decided=$6, status=$7, details=$8, site=$9, period_start=$10, period_end=$11, handover=$12, payment=$13, "paymentStatus"=$14, "paymentDate"=$15, "paymentNotes"=$16 WHERE id=$17`, [
-      b.project_id,
-      b.category,
-      b.vendor,
-      b.estimate,
-      b.planned,
-      b.decided,
-      b.status,
-      b.details,
-      b.site,
-      b.period_start,
-      b.period_end,
-      b.handover,
-      b.payment,
-      b.paymentStatus,
-      b.paymentDate,
-      b.paymentNotes,
+      b.project_id ?? before?.project_id,
+      b.category ?? before?.category,
+      b.vendor ?? before?.vendor,
+      b.estimate ?? before?.estimate,
+      b.planned ?? before?.planned,
+      b.decided ?? before?.decided,
+      b.status ?? before?.status,
+      b.details ?? before?.details,
+      b.site ?? before?.site,
+      b.period_start ?? before?.period_start,
+      b.period_end ?? before?.period_end,
+      b.handover ?? before?.handover,
+      b.payment ?? before?.payment,
+      b.paymentStatus ?? before?.paymentStatus,
+      b.paymentDate ?? before?.paymentDate,
+      b.paymentNotes ?? before?.paymentNotes,
       req.params.id,
     ]);
     await logAuditReq(req, 'UPDATE', 'orders', parseInt(req.params.id), { name: `${before?.category || b.category || ''}（${before?.vendor || b.vendor || ''}）`, changes: diffChanges('orders', before, b) });

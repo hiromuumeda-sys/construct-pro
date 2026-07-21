@@ -355,6 +355,10 @@ CSV出力
 <label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">工事内容</label>
 <textarea class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent transition-all" id="edit-details" rows="3"></textarea>
 </div>
+<div class="col-span-2">
+<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">備考（イレギュラー対応・指定業者・備品購入等）</label>
+<textarea class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent transition-all" id="edit-payment-notes" rows="2" placeholder="例：翌々月8日払い（指定業者）、ネット購入のため通常フロー対象外 等"></textarea>
+</div>
 </div>
 </div>
 <div class="px-lg py-md border-t border-outline-variant flex justify-between items-center bg-surface-container-low shrink-0">
@@ -1005,6 +1009,7 @@ async function saveOrder() {
     handover: document.getElementById('edit-handover').value || '',
     payment: document.getElementById('edit-payment').value || '',
     details: document.getElementById('edit-details').value || '',
+    paymentNotes: document.getElementById('edit-payment-notes').value || '',
   };
 
   if (id) {
@@ -1039,13 +1044,6 @@ async function deleteOrder(e, id) {
   }
 }
 
-function editOrder(id) {
-  const order = orders.find(o => o.id === id);
-  if (order) {
-    openOrderModal(order.id, order.category, order.vendor, order.estimate, order.planned, order.status);
-  }
-}
-
 function openOrderDetailModal(id) {
   editingId = id;
   const order = window.appCache.orders.find(o => o.id === id);
@@ -1065,6 +1063,7 @@ function openOrderDetailModal(id) {
     document.getElementById('edit-handover').value = order.handover || '';
     document.getElementById('edit-payment').value = order.payment || '';
     document.getElementById('edit-details').value = order.details || '';
+    document.getElementById('edit-payment-notes').value = order.paymentNotes || '';
   }
 
   const modal = document.getElementById('edit-modal');
