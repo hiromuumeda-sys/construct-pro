@@ -10,6 +10,7 @@
 <script src="/sidebar.js?v=58"></script>
 <script src="/auth.js?v=58"></script>
 <script src="/header.js?v=58"></script>
+<script src="/status-utils.js?v=58"></script>
 <style>
 body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
@@ -353,7 +354,7 @@ function payStatusClass(status) {
     '一部入金': 'bg-tertiary-fixed text-on-tertiary-fixed-variant',
     '未入金': 'bg-error/10 text-error'
   };
-  return map[status] || 'bg-surface-container text-on-surface';
+  return statusClass(map, status, 'bg-surface-container text-on-surface');
 }
 function payStatusBadge(status) {
   return `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold ${payStatusClass(status)}">${status}</span>`;

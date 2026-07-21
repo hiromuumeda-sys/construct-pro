@@ -10,6 +10,7 @@
 <script src="/sidebar.js?v=58"></script>
 <script src="/auth.js?v=58"></script>
 <script src="/header.js?v=58"></script>
+<script src="/status-utils.js?v=58"></script>
 <style>
 body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
@@ -350,7 +351,7 @@ function getStatusColor(status) {
     '部分払い': 'bg-tertiary-fixed text-on-tertiary-fixed-variant',
     '支払済み': 'bg-secondary-container text-on-secondary-container'
   };
-  return colors[status] || 'bg-surface-container text-on-surface';
+  return statusClass(colors, status, 'bg-surface-container text-on-surface');
 }
 
 // 一覧から支払ステータスを変更（orders.paymentStatusを更新＋履歴記録）

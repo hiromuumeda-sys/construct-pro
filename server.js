@@ -149,6 +149,21 @@ const getUserId = (req) => {
   } catch { return null; }
 };
 
+// logAudit(getUserId(req), ...) の反復を1呼び出しに集約するショートハンド
+const logAuditReq = (req, ...args) => logAudit(getUserId(req), ...args);
+
+// 「削除前レコード取得→削除→監査ログ→成功応答」という各リソース共通のDELETEハンドラを生成する。
+// idParse: パスパラメータをレコードID型に変換（数値IDはparseInt、vendorsのようなtext IDはそのまま）
+// buildDetails(before): 削除前レコードから監査ログのdetails({name, changes})を組み立てる
+function deleteWithAudit(table, { idParse = (id) => parseInt(id, 10), buildDetails }) {
+  return h(async (req, res) => {
+    const before = await one(`SELECT * FROM ${table} WHERE id=$1`, [req.params.id]);
+    await q(`DELETE FROM ${table} WHERE id=$1`, [req.params.id]);
+    await logAuditReq(req, 'DELETE', table, idParse(req.params.id), buildDetails(before));
+    res.json({ success: true });
+  });
+}
+
 // 各テーブルの「列名 → 日本語ラベル」。差分表示に使う。
 const FIELD_LABELS = {
   projects:   { name:'案件名', client:'顧客', clientCompany:'顧客会社', clientPhone:'電話', clientEmail:'メール', clientAddress:'住所', amount:'金額', startDate:'工期開始', endDate:'工期終了', status:'ステータス', notes:'備考' },
@@ -261,8 +276,7 @@ app.post('/api/projects', h(async (req, res) => {
     [name, client, clientCompany, clientPhone, clientEmail, clientAddress, amount, startDate, endDate, status, notes]
   );
   await q('UPDATE projects SET project_no=$1 WHERE id=$2', [`WW7-${String(row.id).padStart(4, '0')}`, row.id]);
-  const userId = getUserId(req);
-  await logAudit(userId, 'CREATE', 'projects', row.id, { name, changes: [`新規登録（顧客: ${client || '-'} / ステータス: ${status || '-'}）`] });
+  await logAuditReq(req, 'CREATE', 'projects', row.id, { name, changes: [`新規登録（顧客: ${client || '-'} / ステータス: ${status || '-'}）`] });
   res.json({ id: row.id, ...req.body });
 }));
 
@@ -273,17 +287,12 @@ app.put('/api/projects/:id', h(async (req, res) => {
     `UPDATE projects SET name=$1, client=$2, "clientCompany"=$3, "clientPhone"=$4, "clientEmail"=$5, "clientAddress"=$6, amount=$7, "startDate"=$8, "endDate"=$9, status=$10, notes=$11, paid=$12 WHERE id=$13`,
     [name, client, clientCompany, clientPhone, clientEmail, clientAddress, amount, startDate, endDate, status, notes, paid ? 1 : 0, req.params.id]
   );
-  const userId = getUserId(req);
-  await logAudit(userId, 'UPDATE', 'projects', parseInt(req.params.id), { name: before?.name || name, changes: diffChanges('projects', before, req.body) });
+  await logAuditReq(req, 'UPDATE', 'projects', parseInt(req.params.id), { name: before?.name || name, changes: diffChanges('projects', before, req.body) });
   res.json({ id: req.params.id, ...req.body });
 }));
 
-app.delete('/api/projects/:id', h(async (req, res) => {
-  const before = await one('SELECT * FROM projects WHERE id=$1', [req.params.id]);
-  await q('DELETE FROM projects WHERE id=$1', [req.params.id]);
-  const userId = getUserId(req);
-  await logAudit(userId, 'DELETE', 'projects', parseInt(req.params.id), { name: before?.name, changes: [`削除（案件: ${before?.name || '-'}）`] });
-  res.json({ success: true });
+app.delete('/api/projects/:id', deleteWithAudit('projects', {
+  buildDetails: (before) => ({ name: before?.name, changes: [`削除（案件: ${before?.name || '-'}）`] }),
 }));
 
 // ============ Vendors API ============
@@ -297,8 +306,7 @@ app.post('/api/vendors', h(async (req, res) => {
   const newId = String(Number(row.max) + 1).padStart(3, '0');
   await q('INSERT INTO vendors (id, company, dept, contact, email, phone, address, categories, bank_name, bank_branch, bank_type, bank_number, bank_holder) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)',
     [newId, company, dept, contact, email, phone, address, categories || '', bank_name || '', bank_branch || '', bank_type || '', bank_number || '', bank_holder || '']);
-  const userId = getUserId(req);
-  await logAudit(userId, 'CREATE', 'vendors', newId, { name: company, changes: [`新規登録（発注先: ${company || '-'}）`] });
+  await logAuditReq(req, 'CREATE', 'vendors', newId, { name: company, changes: [`新規登録（発注先: ${company || '-'}）`] });
   res.json({ id: newId, ...req.body });
 }));
 
@@ -308,17 +316,13 @@ app.put('/api/vendors/:id', h(async (req, res) => {
   await q('UPDATE vendors SET company=$1, dept=$2, contact=$3, email=$4, phone=$5, address=$6, categories=$7, bank_name=$8, bank_branch=$9, bank_type=$10, bank_number=$11, bank_holder=$12 WHERE id=$13',
     [company, dept, contact, email, phone, address, categories ?? before?.categories ?? '',
      bank_name ?? before?.bank_name ?? '', bank_branch ?? before?.bank_branch ?? '', bank_type ?? before?.bank_type ?? '', bank_number ?? before?.bank_number ?? '', bank_holder ?? before?.bank_holder ?? '', req.params.id]);
-  const userId = getUserId(req);
-  await logAudit(userId, 'UPDATE', 'vendors', req.params.id, { name: before?.company || company, changes: diffChanges('vendors', before, req.body) });
+  await logAuditReq(req, 'UPDATE', 'vendors', req.params.id, { name: before?.company || company, changes: diffChanges('vendors', before, req.body) });
   res.json({ id: req.params.id, ...req.body });
 }));
 
-app.delete('/api/vendors/:id', h(async (req, res) => {
-  const before = await one('SELECT * FROM vendors WHERE id=$1', [req.params.id]);
-  await q('DELETE FROM vendors WHERE id=$1', [req.params.id]);
-  const userId = getUserId(req);
-  await logAudit(userId, 'DELETE', 'vendors', req.params.id, { name: before?.company, changes: [`削除（発注先: ${before?.company || '-'}）`] });
-  res.json({ success: true });
+app.delete('/api/vendors/:id', deleteWithAudit('vendors', {
+  idParse: (id) => id, // vendors.id は text型（'001'等）のためそのまま
+  buildDetails: (before) => ({ name: before?.company, changes: [`削除（発注先: ${before?.company || '-'}）`] }),
 }));
 
 // ============ Categories API ============
@@ -331,8 +335,7 @@ app.post('/api/categories', h(async (req, res) => {
   const row = await one('SELECT COALESCE(MAX(code::int),0) AS max FROM categories');
   const code = String(Number(row.max) + 1).padStart(5, '0');
   const ins = await one('INSERT INTO categories (code, name, "order", note) VALUES ($1,$2,$3,$4) RETURNING id', [code, name, order, note]);
-  const userId = getUserId(req);
-  await logAudit(userId, 'CREATE', 'categories', ins.id, { name, changes: [`新規登録（工事区分: ${name || '-'}）`] });
+  await logAuditReq(req, 'CREATE', 'categories', ins.id, { name, changes: [`新規登録（工事区分: ${name || '-'}）`] });
   res.json({ id: ins.id, code, name, order, note });
 }));
 
@@ -340,17 +343,12 @@ app.put('/api/categories/:id', h(async (req, res) => {
   const { code, name, order, note } = req.body;
   const before = await one('SELECT * FROM categories WHERE id=$1', [req.params.id]);
   await q('UPDATE categories SET code=$1, name=$2, "order"=$3, note=$4 WHERE id=$5', [code, name, order, note, req.params.id]);
-  const userId = getUserId(req);
-  await logAudit(userId, 'UPDATE', 'categories', parseInt(req.params.id), { name: before?.name || name, changes: diffChanges('categories', before, req.body) });
+  await logAuditReq(req, 'UPDATE', 'categories', parseInt(req.params.id), { name: before?.name || name, changes: diffChanges('categories', before, req.body) });
   res.json({ id: req.params.id, ...req.body });
 }));
 
-app.delete('/api/categories/:id', h(async (req, res) => {
-  const before = await one('SELECT * FROM categories WHERE id=$1', [req.params.id]);
-  await q('DELETE FROM categories WHERE id=$1', [req.params.id]);
-  const userId = getUserId(req);
-  await logAudit(userId, 'DELETE', 'categories', parseInt(req.params.id), { name: before?.name, changes: [`削除（工事区分: ${before?.name || '-'}）`] });
-  res.json({ success: true });
+app.delete('/api/categories/:id', deleteWithAudit('categories', {
+  buildDetails: (before) => ({ name: before?.name, changes: [`削除（工事区分: ${before?.name || '-'}）`] }),
 }));
 
 // ============ Orders API ============
@@ -438,8 +436,7 @@ app.post('/api/orders', h(async (req, res) => {
   );
   // 残金の初期値＝費用（決定金額）
   await q('UPDATE orders SET remaining = $1 WHERE id = $2', [(b.remaining != null ? b.remaining : (b.decided || 0)), ins.id]);
-  const userId = getUserId(req);
-  await logAudit(userId, 'CREATE', 'orders', ins.id, { name: `${b.category || ''}（${b.vendor || ''}）`, changes: [`新規登録（工事区分: ${b.category || '-'} / 発注先: ${b.vendor || '-'}）`] });
+  await logAuditReq(req, 'CREATE', 'orders', ins.id, { name: `${b.category || ''}（${b.vendor || ''}）`, changes: [`新規登録（工事区分: ${b.category || '-'} / 発注先: ${b.vendor || '-'}）`] });
   res.json({ id: ins.id, ...b });
 }));
 
@@ -450,17 +447,12 @@ app.put('/api/orders/:id', h(async (req, res) => {
     `UPDATE orders SET project_id=$1, category=$2, vendor=$3, estimate=$4, planned=$5, decided=$6, status=$7, details=$8, site=$9, period_start=$10, period_end=$11, handover=$12, payment=$13, "paymentStatus"=$14, "paymentDate"=$15, "paymentNotes"=$16 WHERE id=$17`,
     [b.project_id, b.category, b.vendor, b.estimate, b.planned, b.decided, b.status, b.details, b.site, b.period_start, b.period_end, b.handover, b.payment, b.paymentStatus, b.paymentDate, b.paymentNotes, req.params.id]
   );
-  const userId = getUserId(req);
-  await logAudit(userId, 'UPDATE', 'orders', parseInt(req.params.id), { name: `${before?.category || b.category || ''}（${before?.vendor || b.vendor || ''}）`, changes: diffChanges('orders', before, b) });
+  await logAuditReq(req, 'UPDATE', 'orders', parseInt(req.params.id), { name: `${before?.category || b.category || ''}（${before?.vendor || b.vendor || ''}）`, changes: diffChanges('orders', before, b) });
   res.json({ id: req.params.id, ...b });
 }));
 
-app.delete('/api/orders/:id', h(async (req, res) => {
-  const before = await one('SELECT * FROM orders WHERE id=$1', [req.params.id]);
-  await q('DELETE FROM orders WHERE id=$1', [req.params.id]);
-  const userId = getUserId(req);
-  await logAudit(userId, 'DELETE', 'orders', parseInt(req.params.id), { name: `${before?.category || ''}（${before?.vendor || ''}）`, changes: [`削除（${before?.category || '-'} / ${before?.vendor || '-'}）`] });
-  res.json({ success: true });
+app.delete('/api/orders/:id', deleteWithAudit('orders', {
+  buildDetails: (before) => ({ name: `${before?.category || ''}（${before?.vendor || ''}）`, changes: [`削除（${before?.category || '-'} / ${before?.vendor || '-'}）`] }),
 }));
 
 // 請書／請求書の未済トグル（DB保存＋履歴記録）
@@ -471,8 +463,7 @@ app.put('/api/orders/:id/doc-status', h(async (req, res) => {
   const before = await one('SELECT * FROM orders WHERE id=$1', [req.params.id]);
   if (!before) return res.status(404).json({ error: 'order not found' });
   await q(`UPDATE orders SET ${col}=$1 WHERE id=$2`, [!!value, req.params.id]);
-  const userId = getUserId(req);
-  await logAudit(userId, 'UPDATE', 'orders', parseInt(req.params.id), {
+  await logAuditReq(req, 'UPDATE', 'orders', parseInt(req.params.id), {
     name: `${before.category || ''}（${before.vendor || ''}）`,
     changes: [`${label}を ${value ? '未 → 済' : '済 → 未'} に変更`],
   });
@@ -559,8 +550,7 @@ app.post('/api/customers', h(async (req, res) => {
   const { company, department, contact, email, phone, address, notes } = req.body;
   const ins = await one('INSERT INTO customers (company, department, contact, email, phone, address, notes) VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING id',
     [company, department, contact, email, phone, address, notes]);
-  const userId = getUserId(req);
-  await logAudit(userId, 'CREATE', 'customers', ins.id, { name: company, changes: [`新規登録（顧客: ${company || '-'}）`] });
+  await logAuditReq(req, 'CREATE', 'customers', ins.id, { name: company, changes: [`新規登録（顧客: ${company || '-'}）`] });
   res.json({ id: ins.id, ...req.body });
 }));
 
@@ -569,17 +559,12 @@ app.put('/api/customers/:id', h(async (req, res) => {
   const before = await one('SELECT * FROM customers WHERE id=$1', [req.params.id]);
   await q('UPDATE customers SET company=$1, department=$2, contact=$3, email=$4, phone=$5, address=$6, notes=$7 WHERE id=$8',
     [company, department, contact, email, phone, address, notes, req.params.id]);
-  const userId = getUserId(req);
-  await logAudit(userId, 'UPDATE', 'customers', parseInt(req.params.id), { name: before?.company || company, changes: diffChanges('customers', before, req.body) });
+  await logAuditReq(req, 'UPDATE', 'customers', parseInt(req.params.id), { name: before?.company || company, changes: diffChanges('customers', before, req.body) });
   res.json({ id: req.params.id, ...req.body });
 }));
 
-app.delete('/api/customers/:id', h(async (req, res) => {
-  const before = await one('SELECT * FROM customers WHERE id=$1', [req.params.id]);
-  await q('DELETE FROM customers WHERE id=$1', [req.params.id]);
-  const userId = getUserId(req);
-  await logAudit(userId, 'DELETE', 'customers', parseInt(req.params.id), { name: before?.company, changes: [`削除（顧客: ${before?.company || '-'}）`] });
-  res.json({ success: true });
+app.delete('/api/customers/:id', deleteWithAudit('customers', {
+  buildDetails: (before) => ({ name: before?.company, changes: [`削除（顧客: ${before?.company || '-'}）`] }),
 }));
 
 // ============ Receipts API (入金・売上 F5) ============
@@ -592,8 +577,7 @@ app.post('/api/receipts', h(async (req, res) => {
   const month = toYM(req.body.month, received_date);
   const ins = await one('INSERT INTO receipts (project_id, received_date, amount, month, memo) VALUES ($1,$2,$3,$4,$5) RETURNING id',
     [project_id, received_date, amount, month, memo]);
-  const userId = getUserId(req);
-  await logAudit(userId, 'CREATE', 'receipts', ins.id, { name: month, changes: [`新規登録（${month || '-'} / ${fmtVal(amount)}円）`] });
+  await logAuditReq(req, 'CREATE', 'receipts', ins.id, { name: month, changes: [`新規登録（${month || '-'} / ${fmtVal(amount)}円）`] });
   res.json({ id: ins.id, ...req.body });
 }));
 
@@ -603,17 +587,12 @@ app.put('/api/receipts/:id', h(async (req, res) => {
   const before = await one('SELECT * FROM receipts WHERE id=$1', [req.params.id]);
   await q('UPDATE receipts SET project_id=$1, received_date=$2, amount=$3, month=$4, memo=$5 WHERE id=$6',
     [project_id, received_date, amount, month, memo, req.params.id]);
-  const userId = getUserId(req);
-  await logAudit(userId, 'UPDATE', 'receipts', parseInt(req.params.id), { name: before?.month || month, changes: diffChanges('receipts', before, req.body) });
+  await logAuditReq(req, 'UPDATE', 'receipts', parseInt(req.params.id), { name: before?.month || month, changes: diffChanges('receipts', before, req.body) });
   res.json({ id: req.params.id, ...req.body });
 }));
 
-app.delete('/api/receipts/:id', h(async (req, res) => {
-  const before = await one('SELECT * FROM receipts WHERE id=$1', [req.params.id]);
-  await q('DELETE FROM receipts WHERE id=$1', [req.params.id]);
-  const userId = getUserId(req);
-  await logAudit(userId, 'DELETE', 'receipts', parseInt(req.params.id), { name: before?.month, changes: [`削除（${before?.month || '-'} / ${fmtVal(before?.amount)}円）`] });
-  res.json({ success: true });
+app.delete('/api/receipts/:id', deleteWithAudit('receipts', {
+  buildDetails: (before) => ({ name: before?.month, changes: [`削除（${before?.month || '-'} / ${fmtVal(before?.amount)}円）`] }),
 }));
 
 // 入金取込フォーマット（テンプレート）ダウンロード F5-3
@@ -703,8 +682,7 @@ app.put('/api/projects/:id/receipt-status', h(async (req, res) => {
   if (!before) return res.status(404).json({ error: 'project not found' });
   const prev = before.receipt_status || '(自動)';
   await q('UPDATE projects SET receipt_status=$1 WHERE id=$2', [value, req.params.id]);
-  const userId = getUserId(req);
-  await logAudit(userId, 'UPDATE', 'receipts', parseInt(req.params.id), {
+  await logAuditReq(req, 'UPDATE', 'receipts', parseInt(req.params.id), {
     name: before.name,
     changes: [`入金ステータスを ${prev} → ${value} に変更`],
   });
@@ -734,15 +712,13 @@ app.post('/api/invoices', h(async (req, res) => {
      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING id`,
     [projectId, invoiceNo, 'T8130001068355', invoiceDate, dueDate, subtotal, tax, total, '〇〇銀行 京都支店 (普)0777777', '発行済']
   );
-  const userId = getUserId(req);
-  await logAudit(userId, 'CREATE', 'invoices', ins.id, { invoice_no: invoiceNo, project_id: projectId, total });
+  await logAuditReq(req, 'CREATE', 'invoices', ins.id, { invoice_no: invoiceNo, project_id: projectId, total });
   res.json({ id: ins.id, invoice_no: invoiceNo, project_id: projectId, subtotal, tax, total, invoice_date: invoiceDate, due_date: dueDate });
 }));
 
 app.delete('/api/invoices/:id', h(async (req, res) => {
   await q('DELETE FROM invoices WHERE id=$1', [req.params.id]);
-  const userId = getUserId(req);
-  await logAudit(userId, 'DELETE', 'invoices', parseInt(req.params.id), {});
+  await logAuditReq(req, 'DELETE', 'invoices', parseInt(req.params.id), {});
   res.json({ success: true });
 }));
 

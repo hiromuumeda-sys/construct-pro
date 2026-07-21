@@ -10,6 +10,7 @@
 <script src="/sidebar.js?v=58"></script>
 <script src="/auth.js?v=58"></script>
 <script src="/header.js?v=58"></script>
+<script src="/status-utils.js?v=58"></script>
 <style>
 body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
@@ -482,7 +483,7 @@ function getStatusColor(status) {
         '発注完了': 'bg-secondary-container text-on-secondary-container',
         '支払済み': 'bg-secondary text-on-secondary'
     };
-    return colors[status] || 'bg-surface-container text-on-surface';
+    return statusClass(colors, status, 'bg-surface-container text-on-surface');
 }
 
 // 未/済バッジ（済=緑、未=グレー）
