@@ -6,11 +6,11 @@
 <title>受注一覧 - WIN WIN様デモ</title>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
-<link rel="stylesheet" href="/styles.css?v=59"/>
-<script src="/sidebar.js?v=59"></script>
-<script src="/auth.js?v=59"></script>
-<script src="/header.js?v=59"></script>
-<script src="/status-utils.js?v=59"></script>
+<link rel="stylesheet" href="/styles.css?v=60"/>
+<script src="/sidebar.js?v=60"></script>
+<script src="/auth.js?v=60"></script>
+<script src="/header.js?v=60"></script>
+<script src="/status-utils.js?v=60"></script>
 <style>
 body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
@@ -148,17 +148,17 @@ CSV出力
 
 <!-- Data Table -->
 <div class="bg-surface-container-lowest rounded-lg custom-shadow border border-outline-variant overflow-hidden">
-<div>
+<div class="overflow-x-auto">
 <table class="w-full text-left border-collapse table-fixed">
 <thead class="bg-surface">
 <tr>
 <th class="w-12 px-lg py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider">No.</th>
 <th class="w-64 px-lg py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider">工事名</th>
 <th class="w-24 px-lg py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider">発注元</th>
-<th class="w-[42%] px-lg py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider">備考</th>
+<th class="w-[28%] px-lg py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider">備考</th>
 <th class="w-28 px-lg py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider">工期</th>
 <th class="w-20 px-lg py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider">引渡月</th>
-<th class="w-40 px-lg py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider">工程情報</th>
+<th class="w-32 px-lg py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider">工程情報</th>
 <th class="w-28 px-lg py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider text-right">契約金額</th>
 <th class="w-28 px-lg py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider">状態</th>
 <th class="w-28 px-lg py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider text-center">工事計画</th>
@@ -445,10 +445,10 @@ function renderTable(projects) {
       <td class="w-12 px-lg py-2 text-label-md font-label-md text-on-surface-variant tabular-numbers align-top">${String(p.id).padStart(5, '0')}</td>
       <td class="w-64 px-lg py-2 text-label-md font-label-md text-primary align-top break-words">${p.name}</td>
       <td class="w-24 px-lg py-2 text-label-md font-label-md text-on-surface-variant align-top break-words">${p.client}</td>
-      <td class="w-[42%] px-lg py-2 text-label-md font-label-md text-on-surface-variant align-top break-words whitespace-normal">${p.notes || '-'}</td>
+      <td class="w-[28%] px-lg py-2 text-label-md font-label-md text-on-surface-variant align-top break-words whitespace-normal">${p.notes || '-'}</td>
       <td class="w-28 px-lg py-2 text-label-md font-label-md text-on-surface-variant tabular-numbers align-top">${p.startDate || '-'} 〜 ${p.endDate || '-'}</td>
       <td class="w-20 px-lg py-2 text-label-md font-label-md text-on-surface-variant tabular-numbers align-top">${p.deliveryMonth || '-'}</td>
-      <td class="w-40 px-lg py-2 text-label-md font-label-md text-on-surface-variant align-top break-words whitespace-normal" title="${(p.processInfo || '').replace(/"/g, '&quot;')}">${p.processInfo || '-'}</td>
+      <td class="w-32 px-lg py-2 text-label-md font-label-md text-on-surface-variant align-top truncate" title="${(p.processInfo || '').replace(/"/g, '&quot;')}">${p.processInfo || '-'}</td>
       <td class="w-28 px-lg py-2 text-label-md font-label-md text-primary tabular-numbers text-right align-top">¥${p.amount.toLocaleString()}</td>
       <td class="w-28 px-lg py-2 align-top" onclick="event.stopPropagation()">
         <div class="relative inline-block">
@@ -1151,6 +1151,6 @@ async function sendEstimateEmail() {
   </div>
 </div>
 
-<script src="/notify.js?v=59"></script>
+<script src="/notify.js?v=60"></script>
 </body>
 </html>
