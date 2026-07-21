@@ -459,20 +459,30 @@ function exportOrdersCSV() {
 function renderTable() {
   const tbody = document.getElementById('orders-table-body');
   tbody.innerHTML = orders
-    .map(
-      order => `
-        <tr class="hover:bg-surface-container-low transition-colors group">
-            <td class="px-3 py-1.5 text-label-md font-label-md text-on-surface cursor-pointer group-hover:text-primary transition-colors" onclick="openOrderDetailModal(${order.id})">${order.category || '-'}</td>
+    .map(order => {
+      const locked = order.status === '支払済み'; // 入金済み：グレー表示・編集不可
+      const invoiceSent = order.invoice_has_file && !locked; // 請求書送付済み(未入金)：黄色で目立たせる
+      const rowCls = locked
+        ? 'bg-surface-container-low/60 text-on-surface-variant/70 transition-colors group'
+        : invoiceSent
+          ? 'bg-yellow-50 hover:bg-yellow-100 transition-colors group'
+          : 'hover:bg-surface-container-low transition-colors group';
+      const statusCell = locked
+        ? `<span class="inline-flex items-center text-[11px] font-medium rounded-full pl-5 pr-5 py-1 ${getStatusColor(order.status)} opacity-70" title="入金済みのため編集できません">${order.status}</span>`
+        : `<div class="relative inline-block" onclick="event.stopPropagation()">
+                  <select onchange="updateOrderStatus(${order.id}, this.value)" class="appearance-none text-[11px] font-medium rounded-full pl-5 pr-5 py-1 text-center border border-transparent ring-1 ring-inset ring-black/5 cursor-pointer hover:opacity-90 focus:ring-2 focus:ring-secondary/40 shadow-sm transition-all ${getStatusColor(order.status)}">${['未処理', '見積待ち', '決定済み', '発注完了', '支払済み'].map(s => `<option value="${s}" ${s === order.status ? 'selected' : ''}>${s}</option>`).join('')}</select>
+                  <span class="material-symbols-outlined absolute right-0.5 top-1/2 -translate-y-1/2 text-[16px] pointer-events-none">expand_more</span>
+                </div>`;
+      return `
+        <tr class="${rowCls}">
+            <td class="px-3 py-1.5 text-label-md font-label-md ${locked ? '' : 'text-on-surface group-hover:text-primary'} cursor-pointer transition-colors" onclick="openOrderDetailModal(${order.id})">${order.category || '-'}</td>
             <td class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant cursor-pointer" onclick="openOrderDetailModal(${order.id})">${order.vendor || '-'}</td>
             <td class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant cursor-pointer" onclick="openOrderDetailModal(${order.id})" title="${(order.details || '').replace(/"/g, '&quot;')}">${order.details ? (order.details.length > 20 ? order.details.slice(0, 20) + '…' : order.details) : '-'}</td>
             <td class="px-3 py-1.5 text-label-md font-label-md text-right tabular-numbers cursor-pointer" onclick="openOrderDetailModal(${order.id})">${order.estimate ? order.estimate.toLocaleString() : '-'}</td>
             <td class="px-3 py-1.5 text-label-md font-label-md text-right tabular-numbers cursor-pointer" onclick="openOrderDetailModal(${order.id})">${order.planned ? order.planned.toLocaleString() : '-'}</td>
             <td class="px-3 py-1.5 text-label-md font-label-md text-right tabular-numbers cursor-pointer" onclick="openOrderDetailModal(${order.id})">${order.decided ? order.decided.toLocaleString() : '-'}</td>
             <td class="px-3 py-1.5 text-label-md font-label-md text-center whitespace-nowrap cursor-pointer" onclick="openOrderDetailModal(${order.id})">
-                <div class="relative inline-block" onclick="event.stopPropagation()">
-                  <select onchange="updateOrderStatus(${order.id}, this.value)" class="appearance-none text-[11px] font-medium rounded-full pl-5 pr-5 py-1 text-center border border-transparent ring-1 ring-inset ring-black/5 cursor-pointer hover:opacity-90 focus:ring-2 focus:ring-secondary/40 shadow-sm transition-all ${getStatusColor(order.status)}">${['未処理', '見積待ち', '決定済み', '発注完了', '支払済み'].map(s => `<option value="${s}" ${s === order.status ? 'selected' : ''}>${s}</option>`).join('')}</select>
-                  <span class="material-symbols-outlined absolute right-0.5 top-1/2 -translate-y-1/2 text-[16px] pointer-events-none">expand_more</span>
-                </div>
+                ${statusCell}
             </td>
             <td class="px-3 py-1.5 text-center whitespace-nowrap">${
               order.invoice_has_file
@@ -485,14 +495,14 @@ function renderTable() {
                 : `<button onclick="event.stopPropagation(); requestDocUpload(${order.id},'ack')" class="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-surface-container text-on-surface-variant text-[11px] hover:bg-surface-container-high transition-colors" title="請書PDFをアップロード"><span class="material-symbols-outlined text-[16px]">upload_file</span></button>`
             }</td>
             <td class="px-3 py-1.5 text-center">
-              <button class="inline-flex items-center gap-1 px-2 py-1.5 rounded-lg bg-primary/10 text-primary text-[12px] font-normal hover:bg-primary/20 transition-colors whitespace-nowrap" onclick="event.stopPropagation(); showPoPreview(${order.id})" title="発注書プレビュー">
+              <button class="inline-flex items-center gap-1 px-2 py-1.5 rounded-lg bg-primary/10 text-primary text-[12px] font-normal hover:bg-primary/20 transition-colors whitespace-nowrap" onclick="event.stopPropagation(); showPoPreview(${order.id})" title="注文書プレビュー">
                 <span class="material-symbols-outlined text-[16px]">receipt_long</span>
-                発注書
+                注文書
               </button>
             </td>
         </tr>
-    `
-    )
+    `;
+    })
     .join('');
 }
 
@@ -814,7 +824,7 @@ function showPoModal(order, project) {
           <div class="px-lg py-md border-b border-outline-variant flex justify-between items-center">
             <h3 class="text-sm font-bold text-on-surface flex items-center gap-2">
               <span class="material-symbols-outlined text-primary">receipt_long</span>
-              発注書プレビュー
+              注文書プレビュー
             </h3>
             <div class="flex items-center gap-1">
               <button class="text-outline hover:text-on-surface p-1 transition-colors" onclick="downloadPo()" title="ダウンロード">
@@ -889,7 +899,7 @@ function openPoEmailForm() {
         <div class="px-lg py-md border-b border-outline-variant flex justify-between items-center">
           <h3 class="text-sm font-bold text-on-surface flex items-center gap-2">
             <span class="material-symbols-outlined text-primary text-[18px]">mail</span>
-            発注書メール送信
+            注文書メール送信
           </h3>
           <button class="text-outline hover:text-on-surface p-1 transition-colors" onclick="closePoEmailForm()">
             <span class="material-symbols-outlined">close</span>
@@ -902,7 +912,7 @@ function openPoEmailForm() {
           </div>
           <div>
             <label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">件名</label>
-            <input id="po-email-subject" type="text" class="w-full bg-surface-container-low border border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent transition-all" value="【発注書送付】${project ? project.name : order.category || '工事'}"/>
+            <input id="po-email-subject" type="text" class="w-full bg-surface-container-low border border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent transition-all" value="【注文書送付】${project ? project.name : order.category || '工事'}"/>
           </div>
           <div>
             <label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">本文</label>
@@ -911,7 +921,7 @@ function openPoEmailForm() {
 いつもお世話になっております。
 株式会社WIN WINでございます。
 
-このたびは「${project ? project.name : order.category || '本工事'}」につきまして、発注書を添付のとおりお送りいたします。
+このたびは「${project ? project.name : order.category || '本工事'}」につきまして、注文書を添付のとおりお送りいたします。
 ご査収のうえ、注文請書のご返送を賜りますようお願い申し上げます。
 
 ご不明な点がございましたら、お気軽にお問い合わせください。
