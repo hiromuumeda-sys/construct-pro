@@ -6,11 +6,11 @@
 <title>受注一覧 - WIN WIN様デモ</title>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
-<link rel="stylesheet" href="/styles.css?v=64"/>
-<script src="/sidebar.js?v=64"></script>
-<script src="/auth.js?v=64"></script>
-<script src="/header.js?v=64"></script>
-<script src="/status-utils.js?v=64"></script>
+<link rel="stylesheet" href="/styles.css?v=65"/>
+<script src="/sidebar.js?v=65"></script>
+<script src="/auth.js?v=65"></script>
+<script src="/header.js?v=65"></script>
+<script src="/status-utils.js?v=65"></script>
 <style>
 body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
@@ -900,20 +900,30 @@ async function persistInvoice() {
   }
 }
 
-async function downloadInvoice() {
+function toggleInvoiceDownloadMenu() {
+  document.getElementById('invoice-download-menu').classList.toggle('hidden');
+}
+document.addEventListener('click', () => {
+  const menu = document.getElementById('invoice-download-menu');
+  if (menu) menu.classList.add('hidden');
+});
+
+const INVOICE_VARIANT_SUFFIX = { sealed: '', unsealed: '-unsealed', copy: '-copy' };
+async function downloadInvoice(variant = 'sealed') {
   if (!currentInvoiceProjectId) return;
+  document.getElementById('invoice-download-menu').classList.add('hidden');
   try {
     const res = await fetch(`/api/invoice/project/${currentInvoiceProjectId}/pdf`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ items: invoiceItems }),
+      body: JSON.stringify({ items: invoiceItems, variant }),
     });
     if (!res.ok) throw new Error('Failed');
     const blob = await res.blob();
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `invoice-${currentInvoiceProjectId}.pdf`;
+    a.download = `invoice-${currentInvoiceProjectId}${INVOICE_VARIANT_SUFFIX[variant] || ''}.pdf`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -1095,9 +1105,17 @@ async function sendEstimateEmail() {
           請求書プレビュー
         </h3>
         <div class="flex items-center gap-1">
-          <button onclick="downloadInvoice()" class="text-outline hover:text-on-surface p-1 transition-colors" title="ダウンロード">
-            <span class="material-symbols-outlined">download</span>
-          </button>
+          <div class="relative">
+            <button onclick="event.stopPropagation(); toggleInvoiceDownloadMenu()" class="text-outline hover:text-on-surface p-1 transition-colors flex items-center" title="ダウンロード">
+              <span class="material-symbols-outlined">download</span>
+              <span class="material-symbols-outlined text-[16px]">arrow_drop_down</span>
+            </button>
+            <div id="invoice-download-menu" class="hidden absolute right-0 mt-1 w-52 bg-white border border-outline-variant rounded-lg shadow-lg z-10 overflow-hidden" onclick="event.stopPropagation()">
+              <button class="w-full text-left px-4 py-2 text-label-md hover:bg-surface-container-low transition-colors" onclick="downloadInvoice('sealed')">電子印あり原本（メール用）</button>
+              <button class="w-full text-left px-4 py-2 text-label-md hover:bg-surface-container-low transition-colors" onclick="downloadInvoice('unsealed')">電子印なし原本（郵送用）</button>
+              <button class="w-full text-left px-4 py-2 text-label-md hover:bg-surface-container-low transition-colors" onclick="downloadInvoice('copy')">控え（自社保管用）</button>
+            </div>
+          </div>
           <button class="text-outline hover:text-on-surface p-1 transition-colors" onclick="closeInvoicePreview()">
             <span class="material-symbols-outlined">close</span>
           </button>
@@ -1312,6 +1330,6 @@ async function sendEstimateEmail() {
   </div>
 </div>
 
-<script src="/notify.js?v=64"></script>
+<script src="/notify.js?v=65"></script>
 </body>
 </html>

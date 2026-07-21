@@ -1804,7 +1804,21 @@ function buildPurchaseOrderPDF(order, project, vendor) {
 }
 
 // ============ PDF: 請求書／見積書（添付テンプレートの明細表形式） ============
-function buildDocumentPDF(kind, project, orders, customItems) {
+// ダミーの電子印（角印）。実物の印影画像が用意でき次第、画像描画に差し替え可能
+function drawDummySeal(doc, cx, cy) {
+  const size = 46;
+  const x = cx - size / 2,
+    y = cy - size / 2;
+  doc.lineWidth(1.8).strokeColor('#c0392b').rect(x, y, size, size).stroke();
+  doc.lineWidth(0.6).rect(x + 4, y + 4, size - 8, size - 8).stroke();
+  doc
+    .fillColor('#c0392b')
+    .fontSize(15)
+    .text('印', x, y + size / 2 - 9, { width: size, align: 'center' });
+  doc.fillColor('#000');
+}
+
+function buildDocumentPDF(kind, project, orders, customItems, variant = 'sealed') {
   const isInvoice = kind === 'invoice';
   const amt = isInvoice ? o => Number(o.decided) || 0 : o => Number(o.estimate) || Number(o.planned) || Number(o.decided) || 0;
   const items =
@@ -1836,7 +1850,7 @@ function buildDocumentPDF(kind, project, orders, customItems) {
     const subtotal = items.reduce((s, it) => s + it.amount, 0);
     const tax = Math.floor(subtotal * 0.1);
     const total = subtotal + tax;
-    const title = isInvoice ? '請　求　書' : '見　積　書';
+    const title = (isInvoice ? '請　求　書' : '見　積　書') + (isInvoice && variant === 'copy' ? '（控）' : '');
     const no = (isInvoice ? 'WW-' : 'EST-') + String(project.id).padStart(3, '0');
     const pageW = doc.page.width;
 
@@ -1872,6 +1886,7 @@ function buildDocumentPDF(kind, project, orders, customItems) {
       ry += 13;
     }
     doc.fontSize(11).text(COMPANY.name, R - 250, ry, { width: 250, align: 'right' });
+    if (isInvoice && variant === 'sealed') drawDummySeal(doc, R - 20, ry + 5);
     ry += 15;
     if (isInvoice) {
       doc
@@ -1995,8 +2010,8 @@ function buildDocumentPDF(kind, project, orders, customItems) {
     doc.end();
   });
 }
-function buildInvoicePDF(project, orders, customItems) {
-  return buildDocumentPDF('invoice', project, orders, customItems);
+function buildInvoicePDF(project, orders, customItems, variant) {
+  return buildDocumentPDF('invoice', project, orders, customItems, variant);
 }
 function buildEstimatePDF(project, orders) {
   return buildDocumentPDF('estimate', project, orders);
@@ -2051,6 +2066,10 @@ app.post(
   })
 );
 
+// 請求書の3種PDF：sealed=電子印あり原本（メール送信用）／unsealed=電子印なし原本（郵送用）／copy=控え
+const INVOICE_VARIANTS = ['sealed', 'unsealed', 'copy'];
+const normalizeVariant = v => (INVOICE_VARIANTS.includes(v) ? v : 'sealed');
+
 // 請求書 PDF
 app.get(
   '/api/invoice/project/:projectId',
@@ -2058,7 +2077,8 @@ app.get(
     const project = await one('SELECT * FROM projects WHERE id=$1', [req.params.projectId]);
     if (!project) return res.status(404).json({ error: 'プロジェクトが見つかりません' });
     const orders = await q('SELECT * FROM orders WHERE project_id=$1', [req.params.projectId]);
-    const pdfBuffer = await buildInvoicePDF(project, orders);
+    const variant = normalizeVariant(req.query.variant);
+    const pdfBuffer = await buildInvoicePDF(project, orders, null, variant);
     const disposition = req.query.inline === '1' ? 'inline' : 'attachment';
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `${disposition}; filename="invoice-${project.id}.pdf"`);
@@ -2073,7 +2093,8 @@ app.post(
     const project = await one('SELECT * FROM projects WHERE id=$1', [req.params.projectId]);
     if (!project) return res.status(404).json({ error: 'プロジェクトが見つかりません' });
     const orders = await q('SELECT * FROM orders WHERE project_id=$1', [req.params.projectId]);
-    const pdfBuffer = await buildInvoicePDF(project, orders, req.body.items);
+    const variant = normalizeVariant(req.body.variant);
+    const pdfBuffer = await buildInvoicePDF(project, orders, req.body.items, variant);
     const disposition = req.query.inline === '1' ? 'inline' : 'attachment';
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `${disposition}; filename="invoice-${project.id}.pdf"`);
@@ -2081,7 +2102,7 @@ app.post(
   })
 );
 
-// 請求書 メール送信
+// 請求書 メール送信（常に電子印あり原本を添付。送信成功で請求ステータスを「発送済み」に）
 app.post(
   '/api/invoice/send',
   h(async (req, res) => {
@@ -2090,7 +2111,7 @@ app.post(
     const project = await one('SELECT * FROM projects WHERE id=$1', [projectId]);
     if (!project) return res.status(404).json({ error: 'プロジェクトが見つかりません' });
     const orders = await q('SELECT * FROM orders WHERE project_id=$1', [projectId]);
-    const pdfBuffer = await buildInvoicePDF(project, orders, items);
+    const pdfBuffer = await buildInvoicePDF(project, orders, items, 'sealed');
     await makeTransporter().sendMail({
       from: process.env.MAIL_FROM || 'CONSTRUCT_PRO <noreply@construct-pro.jp>',
       to,
@@ -2098,6 +2119,7 @@ app.post(
       text: body || '',
       attachments: [{ filename: `invoice-${String(project.id).padStart(5, '0')}.pdf`, content: pdfBuffer, contentType: 'application/pdf' }],
     });
+    await q("UPDATE invoices SET status='発送済み' WHERE project_id=$1", [projectId]);
     res.json({ success: true });
   })
 );
