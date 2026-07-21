@@ -507,30 +507,6 @@ function getStatusColor(status) {
   return statusClass(colors, status, 'bg-surface-container text-on-surface');
 }
 
-// 未/済バッジ（済=緑、未=グレー）
-function doneBadge(done) {
-  const cls = done ? 'bg-secondary-container text-on-secondary-container' : 'bg-surface-dim text-on-surface-variant';
-  return `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] ${cls} hover:opacity-80">${done ? '済' : '未'}</span>`;
-}
-
-// 請書（注文請書）の受領状況：DB列(ack_done)優先、未設定なら発注完了/支払済みを済とみなす
-function isAckDone(order) {
-  if (order.ack_done === true || order.ack_done === false) return order.ack_done;
-  return ['発注完了', '支払済み'].includes(order.status);
-}
-// 請求書の発行状況：DB列(invoice_done)優先、未設定なら該当案件に請求書が登録済みか
-function isInvoiceDone(order) {
-  if (order.invoice_done === true || order.invoice_done === false) return order.invoice_done;
-  const invoices = window.appCache.invoices || [];
-  return invoices.some(inv => inv.project_id == order.project_id);
-}
-function ackBadge(order) {
-  return doneBadge(isAckDone(order));
-}
-function invoiceBadge(order) {
-  return doneBadge(isInvoiceDone(order));
-}
-
 // 未/済を変更（DB保存＋履歴記録）
 async function setDocStatus(kind, id, value) {
   const apply = o => {
@@ -661,22 +637,6 @@ async function deleteDocFile() {
   }
 }
 
-function toggleAck(id) {
-  const order = orders.find(o => o.id === id) || window.appCache.orders.find(o => o.id === id);
-  if (!order) return;
-  const cur = isAckDone(order);
-  if (confirm(`請書のステータスを「${cur ? '済' : '未'}」→「${cur ? '未' : '済'}」に変更しますか？`)) {
-    setDocStatus('ack', id, !cur);
-  }
-}
-function toggleInvoice(id) {
-  const order = orders.find(o => o.id === id) || window.appCache.orders.find(o => o.id === id);
-  if (!order) return;
-  const cur = isInvoiceDone(order);
-  if (confirm(`請求書のステータスを「${cur ? '済' : '未'}」→「${cur ? '未' : '済'}」に変更しますか？`)) {
-    setDocStatus('invoice', id, !cur);
-  }
-}
 
 // 一覧から直接ステータス変更（PUTで保存→履歴記録）
 async function updateOrderStatus(id, status) {
