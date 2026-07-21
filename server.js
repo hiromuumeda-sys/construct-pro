@@ -1440,6 +1440,7 @@ app.get('/api/test', (req, res) => res.json({ status: 'ok', message: 'Server is 
 // 自社情報（テンプレートに準拠）
 const COMPANY = {
   name: '株式会社WIN WIN',
+  legalName: '株式会社ウィン',
   rep: '磯田 裕晃',
   zip: '〒604-0924',
   addrOrder: '京都市中京区河原町通二条下る一之船入町537-20 FIS御池ビル505号',
@@ -1448,6 +1449,8 @@ const COMPANY = {
   regNo: 'T8130001068355',
   bank: '〇〇銀行 京都支店',
   account: '(普)0777777',
+  accountHolder: 'カ）ウィン',
+  feeNote: '振込手数料は振込人様にてご負担ください。',
 };
 const fmtDateJa = d => `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日`;
 const toWareki = d => ({ y: d.getFullYear() - 2018, m: d.getMonth() + 1, d: d.getDate() }); // 令和
@@ -1569,9 +1572,20 @@ function buildPurchaseOrderPDF(order, project, vendor) {
 }
 
 // ============ PDF: 請求書／見積書（添付テンプレートの明細表形式） ============
-function buildDocumentPDF(kind, project, orders) {
+function buildDocumentPDF(kind, project, orders, customItems) {
   const isInvoice = kind === 'invoice';
   const amt = isInvoice ? o => Number(o.decided) || 0 : o => Number(o.estimate) || Number(o.planned) || Number(o.decided) || 0;
+  const items =
+    Array.isArray(customItems) && customItems.length
+      ? customItems.map(it => {
+          const qty = Number(it.qty) || 0;
+          const price = Number(it.price) || 0;
+          return { name: it.name || '', qty, unit: it.unit || '', price, amount: qty * price, note: it.note || '' };
+        })
+      : orders.map(o => {
+          const a = amt(o);
+          return { name: o.category || '一式', qty: 1, unit: '式', price: a, amount: a, note: '' };
+        });
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument({ margin: 40, size: 'A4', bufferPages: true });
     const chunks = [];
@@ -1587,7 +1601,7 @@ function buildDocumentPDF(kind, project, orders) {
       W = R - L;
     const now = new Date();
     const due = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
-    const subtotal = orders.reduce((s, o) => s + amt(o), 0);
+    const subtotal = items.reduce((s, it) => s + it.amount, 0);
     const tax = Math.floor(subtotal * 0.1);
     const total = subtotal + tax;
     const title = isInvoice ? '請　求　書' : '見　積　書';
@@ -1627,6 +1641,13 @@ function buildDocumentPDF(kind, project, orders) {
     }
     doc.fontSize(11).text(COMPANY.name, R - 250, ry, { width: 250, align: 'right' });
     ry += 15;
+    if (isInvoice) {
+      doc
+        .fontSize(8)
+        .fillColor(gray)
+        .text(`（${COMPANY.legalName}）`, R - 250, ry, { width: 250, align: 'right' });
+      ry += 11;
+    }
     doc.fontSize(8).fillColor(gray);
     [COMPANY.zip, COMPANY.addrInv, COMPANY.tel].forEach(t => {
       doc.text(t, R - 250, ry, { width: 250, align: 'right' });
@@ -1656,8 +1677,14 @@ function buildDocumentPDF(kind, project, orders) {
     doc.text((isInvoice ? 'お支払期限：' : '有効期限：') + fmtDateJa(due), L + boxW + 24, y + 26);
     y += boxH + 8;
     if (isInvoice) {
-      doc.fontSize(8).text(`[振込先]　${COMPANY.bank}　／　口座番号　${COMPANY.account}`, L, y);
-      y += 16;
+      doc.fontSize(8).text(`[振込先]　${COMPANY.bank}　／　口座番号　${COMPANY.account}　／　口座名義　${COMPANY.accountHolder}`, L, y);
+      y += 12;
+      doc
+        .fontSize(7)
+        .fillColor(gray)
+        .text(`※${COMPANY.feeNote}`, L, y);
+      doc.fillColor('#000');
+      y += 14;
     } else y += 4;
 
     // 明細テーブル
@@ -1694,7 +1721,6 @@ function buildDocumentPDF(kind, project, orders) {
       cols.reduce((a, c) => ((a[c.k] = c.label), a), {}),
       { headerBg: true }
     );
-    const items = orders.length ? orders.slice() : [];
     const minRows = 6;
     const rowsN = Math.max(items.length, minRows);
     for (let i = 0; i < rowsN; i++) {
@@ -1702,10 +1728,9 @@ function buildDocumentPDF(kind, project, orders) {
         doc.addPage();
         y = 50;
       }
-      const o = items[i];
-      if (o) {
-        const a = amt(o);
-        drawRow({ name: o.category || '一式', qty: 1, unit: '式', price: '¥' + a.toLocaleString(), amount: '¥' + a.toLocaleString(), note: '' });
+      const it = items[i];
+      if (it) {
+        drawRow({ name: it.name, qty: it.qty, unit: it.unit, price: '¥' + it.price.toLocaleString(), amount: '¥' + it.amount.toLocaleString(), note: it.note });
       } else {
         drawRow({});
       }
@@ -1738,8 +1763,8 @@ function buildDocumentPDF(kind, project, orders) {
     doc.end();
   });
 }
-function buildInvoicePDF(project, orders) {
-  return buildDocumentPDF('invoice', project, orders);
+function buildInvoicePDF(project, orders, customItems) {
+  return buildDocumentPDF('invoice', project, orders, customItems);
 }
 function buildEstimatePDF(project, orders) {
   return buildDocumentPDF('estimate', project, orders);
@@ -1807,16 +1832,31 @@ app.get(
   })
 );
 
+// 請求書 PDF（プレビューで手入力編集した内訳を反映）
+app.post(
+  '/api/invoice/project/:projectId/pdf',
+  h(async (req, res) => {
+    const project = await one('SELECT * FROM projects WHERE id=$1', [req.params.projectId]);
+    if (!project) return res.status(404).json({ error: 'プロジェクトが見つかりません' });
+    const orders = await q('SELECT * FROM orders WHERE project_id=$1', [req.params.projectId]);
+    const pdfBuffer = await buildInvoicePDF(project, orders, req.body.items);
+    const disposition = req.query.inline === '1' ? 'inline' : 'attachment';
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `${disposition}; filename="invoice-${project.id}.pdf"`);
+    res.send(pdfBuffer);
+  })
+);
+
 // 請求書 メール送信
 app.post(
   '/api/invoice/send',
   h(async (req, res) => {
-    const { projectId, to, subject, body } = req.body;
+    const { projectId, to, subject, body, items } = req.body;
     if (!projectId || !to || !subject) return res.status(400).json({ error: '必須パラメータが不足しています' });
     const project = await one('SELECT * FROM projects WHERE id=$1', [projectId]);
     if (!project) return res.status(404).json({ error: 'プロジェクトが見つかりません' });
     const orders = await q('SELECT * FROM orders WHERE project_id=$1', [projectId]);
-    const pdfBuffer = await buildInvoicePDF(project, orders);
+    const pdfBuffer = await buildInvoicePDF(project, orders, items);
     await makeTransporter().sendMail({
       from: process.env.MAIL_FROM || 'CONSTRUCT_PRO <noreply@construct-pro.jp>',
       to,

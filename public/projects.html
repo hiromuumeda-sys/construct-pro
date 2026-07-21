@@ -6,11 +6,11 @@
 <title>受注一覧 - WIN WIN様デモ</title>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
-<link rel="stylesheet" href="/styles.css?v=60"/>
-<script src="/sidebar.js?v=60"></script>
-<script src="/auth.js?v=60"></script>
-<script src="/header.js?v=60"></script>
-<script src="/status-utils.js?v=60"></script>
+<link rel="stylesheet" href="/styles.css?v=61"/>
+<script src="/sidebar.js?v=61"></script>
+<script src="/auth.js?v=61"></script>
+<script src="/header.js?v=61"></script>
+<script src="/status-utils.js?v=61"></script>
 <style>
 body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
@@ -664,6 +664,7 @@ document.getElementById('period-end-filter').addEventListener('change', applyPro
 })();
 
 let currentInvoiceProjectId = null;
+let invoiceItems = []; // 請求書プレビュー上でのみ編集可能な内訳（マスタのordersには反映しない）
 
 function generateInvoice(projectId) {
   if (!projectId) {
@@ -689,24 +690,8 @@ function generateInvoice(projectId) {
   document.getElementById('inv-date').textContent = now.toLocaleDateString('ja-JP');
   document.getElementById('inv-due').textContent = due.toLocaleDateString('ja-JP');
 
-  const subtotal = orders.reduce((s, o) => s + (o.decided || 0), 0);
-  const tax = Math.floor(subtotal * 0.1);
-  const grand = subtotal + tax;
-
-  document.getElementById('inv-total').textContent = grand.toLocaleString();
-  document.getElementById('inv-subtotal').textContent = '¥' + subtotal.toLocaleString();
-  document.getElementById('inv-tax').textContent = '¥' + tax.toLocaleString();
-  document.getElementById('inv-grand').textContent = '¥' + grand.toLocaleString();
-
-  const tbody = document.getElementById('inv-order-rows');
-  tbody.innerHTML = orders.length
-    ? orders
-        .map(o => {
-          const a = o.decided || 0;
-          return `<tr><td class="border border-outline-variant p-1.5">${o.category || '一式'}</td><td class="border border-outline-variant p-1.5 text-right">1</td><td class="border border-outline-variant p-1.5 text-center">式</td><td class="border border-outline-variant p-1.5 text-right tabular-numbers">¥${a.toLocaleString()}</td><td class="border border-outline-variant p-1.5 text-right tabular-numbers">¥${a.toLocaleString()}</td><td class="border border-outline-variant p-1.5"></td></tr>`;
-        })
-        .join('')
-    : '<tr><td colspan="6" class="border border-outline-variant p-4 text-center text-on-surface-variant">注文データがありません</td></tr>';
+  invoiceItems = orders.length ? orders.map(o => ({ name: o.category || '一式', qty: 1, unit: '式', price: o.decided || 0, note: '' })) : [];
+  renderInvoiceItems();
 
   // Pre-fill email fields
   document.getElementById('invoice-email-to').value = project.clientEmail || '';
@@ -716,6 +701,59 @@ function generateInvoice(projectId) {
 
   document.getElementById('invoice-modal').style.display = 'block';
   document.body.style.overflow = 'hidden';
+}
+
+// 内訳（品名・数量・単位・単価・摘要）を請求書プレビュー上で編集可能に描画
+function renderInvoiceItems() {
+  const tbody = document.getElementById('inv-order-rows');
+  tbody.innerHTML = invoiceItems.length
+    ? invoiceItems
+        .map(
+          (it, i) => `
+    <tr>
+      <td class="border border-outline-variant p-1"><input type="text" value="${(it.name || '').replace(/"/g, '&quot;')}" class="w-full text-xs border-0 bg-transparent focus:ring-1 focus:ring-primary/40 rounded px-1 py-0.5" oninput="updateInvoiceItem(${i},'name',this.value)"/></td>
+      <td class="border border-outline-variant p-1"><input type="number" value="${it.qty}" class="w-full text-xs text-right border-0 bg-transparent focus:ring-1 focus:ring-primary/40 rounded px-1 py-0.5" oninput="updateInvoiceItem(${i},'qty',this.value)"/></td>
+      <td class="border border-outline-variant p-1"><input type="text" value="${(it.unit || '').replace(/"/g, '&quot;')}" class="w-full text-xs text-center border-0 bg-transparent focus:ring-1 focus:ring-primary/40 rounded px-1 py-0.5" oninput="updateInvoiceItem(${i},'unit',this.value)"/></td>
+      <td class="border border-outline-variant p-1"><input type="number" value="${it.price}" class="w-full text-xs text-right border-0 bg-transparent focus:ring-1 focus:ring-primary/40 rounded px-1 py-0.5" oninput="updateInvoiceItem(${i},'price',this.value)"/></td>
+      <td class="border border-outline-variant p-1.5 text-right tabular-numbers" id="inv-item-amount-${i}">¥${((it.qty || 0) * (it.price || 0)).toLocaleString()}</td>
+      <td class="border border-outline-variant p-1"><input type="text" value="${(it.note || '').replace(/"/g, '&quot;')}" class="w-full text-xs border-0 bg-transparent focus:ring-1 focus:ring-primary/40 rounded px-1 py-0.5" oninput="updateInvoiceItem(${i},'note',this.value)"/></td>
+      <td class="border border-outline-variant p-1 text-center"><button onclick="removeInvoiceItem(${i})" class="text-error hover:opacity-70 transition-opacity" title="行を削除"><span class="material-symbols-outlined text-[15px]">close</span></button></td>
+    </tr>`
+        )
+        .join('')
+    : '<tr><td colspan="7" class="border border-outline-variant p-4 text-center text-on-surface-variant">明細がありません</td></tr>';
+  recalcInvoiceTotals();
+}
+
+function updateInvoiceItem(i, field, value) {
+  if (field === 'qty' || field === 'price') {
+    invoiceItems[i][field] = parseFloat(value) || 0;
+    const amt = (invoiceItems[i].qty || 0) * (invoiceItems[i].price || 0);
+    document.getElementById(`inv-item-amount-${i}`).textContent = '¥' + amt.toLocaleString();
+  } else {
+    invoiceItems[i][field] = value;
+  }
+  recalcInvoiceTotals();
+}
+
+function addInvoiceItem() {
+  invoiceItems.push({ name: '', qty: 1, unit: '式', price: 0, note: '' });
+  renderInvoiceItems();
+}
+
+function removeInvoiceItem(i) {
+  invoiceItems.splice(i, 1);
+  renderInvoiceItems();
+}
+
+function recalcInvoiceTotals() {
+  const subtotal = invoiceItems.reduce((s, it) => s + (it.qty || 0) * (it.price || 0), 0);
+  const tax = Math.floor(subtotal * 0.1);
+  const grand = subtotal + tax;
+  document.getElementById('inv-total').textContent = grand.toLocaleString();
+  document.getElementById('inv-subtotal').textContent = '¥' + subtotal.toLocaleString();
+  document.getElementById('inv-tax').textContent = '¥' + tax.toLocaleString();
+  document.getElementById('inv-grand').textContent = '¥' + grand.toLocaleString();
 }
 
 function closeInvoicePreview() {
@@ -752,7 +790,11 @@ async function persistInvoice() {
 async function downloadInvoice() {
   if (!currentInvoiceProjectId) return;
   try {
-    const res = await fetch(`/api/invoice/project/${currentInvoiceProjectId}`);
+    const res = await fetch(`/api/invoice/project/${currentInvoiceProjectId}/pdf`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ items: invoiceItems }),
+    });
     if (!res.ok) throw new Error('Failed');
     const blob = await res.blob();
     const url = URL.createObjectURL(blob);
@@ -789,7 +831,7 @@ async function sendInvoiceEmail() {
     const res = await fetch('/api/invoice/send', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ projectId: currentInvoiceProjectId, to, subject, body }),
+      body: JSON.stringify({ projectId: currentInvoiceProjectId, to, subject, body, items: invoiceItems }),
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || '送信失敗');
@@ -963,6 +1005,7 @@ async function sendEstimateEmail() {
               <p class="text-[10px] font-medium text-on-surface" id="inv-number">請求№　WW-000</p>
               <p>適格請求書発行事業者登録番号　T8130001068355</p>
               <p class="font-bold text-sm text-on-surface mt-1">株式会社WIN WIN</p>
+              <p>（株式会社ウィン）</p>
               <p>〒604-0924</p>
               <p>京都市中京区一之船入町537-20 FIS御池ビル505号</p>
               <p>TEL : 075-777-1236</p>
@@ -978,8 +1021,9 @@ async function sendEstimateEmail() {
               <div>お支払期限：<span id="inv-due">---</span></div>
             </div>
           </div>
-          <p class="text-[11px] mb-2">[振込先]　〇〇銀行 京都支店　／　口座番号　(普)0777777</p>
-          <table class="w-full text-xs mb-4" style="border-collapse:collapse">
+          <p class="text-[11px] mb-0.5">[振込先]　〇〇銀行 京都支店　／　口座番号　(普)0777777　／　口座名義　カ）ウィン</p>
+          <p class="text-[10px] text-on-surface-variant mb-2">※振込手数料は振込人様にてご負担ください。</p>
+          <table class="w-full text-xs mb-1" style="border-collapse:collapse">
             <thead>
               <tr class="text-white" style="background:#7030A0">
                 <th class="border border-[#7030A0] p-1.5 text-left">品　名</th>
@@ -988,10 +1032,14 @@ async function sendEstimateEmail() {
                 <th class="border border-[#7030A0] p-1.5 w-24 text-right">単価</th>
                 <th class="border border-[#7030A0] p-1.5 w-24 text-right">金額</th>
                 <th class="border border-[#7030A0] p-1.5 w-20">摘要</th>
+                <th class="border border-[#7030A0] p-1.5 w-8"></th>
               </tr>
             </thead>
             <tbody id="inv-order-rows"></tbody>
           </table>
+          <button onclick="addInvoiceItem()" class="mb-4 inline-flex items-center gap-1 text-[11px] text-primary hover:opacity-70 transition-opacity">
+            <span class="material-symbols-outlined text-[15px]">add</span>行を追加
+          </button>
           <div class="flex justify-end">
             <table class="text-xs" style="border-collapse:collapse">
               <tr><td class="border border-outline-variant px-3 py-1 w-24">小　計</td><td class="border border-outline-variant px-3 py-1 w-28 text-right tabular-numbers" id="inv-subtotal">¥0</td></tr>
@@ -1151,6 +1199,6 @@ async function sendEstimateEmail() {
   </div>
 </div>
 
-<script src="/notify.js?v=60"></script>
+<script src="/notify.js?v=61"></script>
 </body>
 </html>
