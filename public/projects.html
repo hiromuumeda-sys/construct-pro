@@ -157,6 +157,8 @@ CSV出力
 <th class="w-24 px-lg py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider">発注元</th>
 <th class="w-[42%] px-lg py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider">備考</th>
 <th class="w-28 px-lg py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider">工期</th>
+<th class="w-20 px-lg py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider">引渡月</th>
+<th class="w-40 px-lg py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider">工程情報</th>
 <th class="w-28 px-lg py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider text-right">契約金額</th>
 <th class="w-28 px-lg py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider">状態</th>
 <th class="w-28 px-lg py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider text-center">工事計画</th>
@@ -237,6 +239,14 @@ CSV出力
 <label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">工期終了</label>
 <input class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent" id="edit-period-end" type="date"/>
 </div>
+<div>
+<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">引渡月</label>
+<input class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent" id="edit-delivery-month" type="month"/>
+</div>
+<div class="col-span-2">
+<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">工程情報</label>
+<textarea class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent" id="edit-process-info" placeholder="工程の進捗・マイルストーン等" rows="2"></textarea>
+</div>
 <div class="col-span-2">
 <label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">備考</label>
 <textarea class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent" id="edit-notes" rows="3"></textarea>
@@ -296,6 +306,14 @@ CSV出力
 <div>
 <label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">工期終了</label>
 <input class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent" id="reg-period-end" type="date"/>
+</div>
+<div>
+<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">引渡月</label>
+<input class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent" id="reg-delivery-month" type="month"/>
+</div>
+<div class="col-span-2">
+<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">工程情報</label>
+<textarea class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent" id="reg-process-info" placeholder="工程の進捗・マイルストーン等" rows="2"></textarea>
 </div>
 <div class="col-span-2">
 <label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">備考</label>
@@ -429,6 +447,8 @@ function renderTable(projects) {
       <td class="w-24 px-lg py-2 text-label-md font-label-md text-on-surface-variant align-top break-words">${p.client}</td>
       <td class="w-[42%] px-lg py-2 text-label-md font-label-md text-on-surface-variant align-top break-words whitespace-normal">${p.notes || '-'}</td>
       <td class="w-28 px-lg py-2 text-label-md font-label-md text-on-surface-variant tabular-numbers align-top">${p.startDate || '-'} 〜 ${p.endDate || '-'}</td>
+      <td class="w-20 px-lg py-2 text-label-md font-label-md text-on-surface-variant tabular-numbers align-top">${p.deliveryMonth || '-'}</td>
+      <td class="w-40 px-lg py-2 text-label-md font-label-md text-on-surface-variant align-top break-words whitespace-normal" title="${(p.processInfo || '').replace(/"/g, '&quot;')}">${p.processInfo || '-'}</td>
       <td class="w-28 px-lg py-2 text-label-md font-label-md text-primary tabular-numbers text-right align-top">¥${p.amount.toLocaleString()}</td>
       <td class="w-28 px-lg py-2 align-top" onclick="event.stopPropagation()">
         <div class="relative inline-block">
@@ -481,7 +501,7 @@ async function updateProjectStatus(id, status) {
     await fetch(`/api/projects/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: p.name, client: p.client, clientCompany: p.clientCompany, clientPhone: p.clientPhone, clientEmail: p.clientEmail, clientAddress: p.clientAddress, amount: p.amount, startDate: p.startDate, endDate: p.endDate, status, notes: p.notes }),
+      body: JSON.stringify({ name: p.name, client: p.client, clientCompany: p.clientCompany, clientPhone: p.clientPhone, clientEmail: p.clientEmail, clientAddress: p.clientAddress, amount: p.amount, startDate: p.startDate, endDate: p.endDate, status, notes: p.notes, deliveryMonth: p.deliveryMonth, processInfo: p.processInfo }),
     });
     p.status = status;
     applyProjectFilters();
@@ -503,6 +523,8 @@ function openEditModal(id) {
     document.getElementById('edit-status').value = p.status;
     document.getElementById('edit-period-start').value = p.startDate || '';
     document.getElementById('edit-period-end').value = p.endDate || '';
+    document.getElementById('edit-delivery-month').value = p.deliveryMonth || '';
+    document.getElementById('edit-process-info').value = p.processInfo || '';
     document.getElementById('edit-notes').value = p.notes || '';
 
     setTimeout(() => {
@@ -527,6 +549,8 @@ function openRegisterModal() {
   document.getElementById('reg-status').value = '未対応';
   document.getElementById('reg-period-start').value = '';
   document.getElementById('reg-period-end').value = '';
+  document.getElementById('reg-delivery-month').value = '';
+  document.getElementById('reg-process-info').value = '';
   document.getElementById('reg-notes').value = '';
   openModal('register-modal');
 }
@@ -551,6 +575,8 @@ async function saveRegister() {
   const status = document.getElementById('reg-status').value;
   const startDate = document.getElementById('reg-period-start').value;
   const endDate = document.getElementById('reg-period-end').value;
+  const deliveryMonth = document.getElementById('reg-delivery-month').value;
+  const processInfo = document.getElementById('reg-process-info').value;
   const notes = document.getElementById('reg-notes').value;
 
   if (!name || !client) return alert('必須項目を入力してください');
@@ -559,7 +585,7 @@ async function saveRegister() {
     const res = await fetch('/api/projects', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, client, clientCompany: client, amount, status, startDate, endDate, notes }),
+      body: JSON.stringify({ name, client, clientCompany: client, amount, status, startDate, endDate, deliveryMonth, processInfo, notes }),
     });
     await initializeGlobalCache();
     loadProjects();
@@ -578,13 +604,15 @@ async function saveEdit() {
   const status = document.getElementById('edit-status').value;
   const startDate = document.getElementById('edit-period-start').value;
   const endDate = document.getElementById('edit-period-end').value;
+  const deliveryMonth = document.getElementById('edit-delivery-month').value;
+  const processInfo = document.getElementById('edit-process-info').value;
   const notes = document.getElementById('edit-notes').value;
 
   try {
     await fetch(`/api/projects/${editingId}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, client, clientCompany: client, amount, status, startDate, endDate, notes }),
+      body: JSON.stringify({ name, client, clientCompany: client, amount, status, startDate, endDate, deliveryMonth, processInfo, notes }),
     });
     await initializeGlobalCache();
     loadProjects();

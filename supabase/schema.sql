@@ -54,7 +54,9 @@ create table projects (
   status        text,
   notes         text,
   project_no    text,
-  receipt_status text
+  receipt_status text,
+  delivery_month text,
+  process_info   text
 );
 
 -- 協力業者（発注先）

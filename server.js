@@ -317,11 +317,11 @@ app.get(
 app.post(
   '/api/projects',
   h(async (req, res) => {
-    const { name, client, clientCompany, clientPhone, clientEmail, clientAddress, amount, startDate, endDate, status, notes } = req.body;
+    const { name, client, clientCompany, clientPhone, clientEmail, clientAddress, amount, startDate, endDate, status, notes, deliveryMonth, processInfo } = req.body;
     const row = await one(
-      `INSERT INTO projects (name, client, "clientCompany", "clientPhone", "clientEmail", "clientAddress", amount, "startDate", "endDate", status, notes, project_no)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11, '') RETURNING id`,
-      [name, client, clientCompany, clientPhone, clientEmail, clientAddress, amount, startDate, endDate, status, notes]
+      `INSERT INTO projects (name, client, "clientCompany", "clientPhone", "clientEmail", "clientAddress", amount, "startDate", "endDate", status, notes, delivery_month, process_info, project_no)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13, '') RETURNING id`,
+      [name, client, clientCompany, clientPhone, clientEmail, clientAddress, amount, startDate, endDate, status, notes, deliveryMonth || null, processInfo || null]
     );
     await q('UPDATE projects SET project_no=$1 WHERE id=$2', [`WW7-${String(row.id).padStart(4, '0')}`, row.id]);
     await logAuditReq(req, 'CREATE', 'projects', row.id, { name, changes: [`新規登録（顧客: ${client || '-'} / ステータス: ${status || '-'}）`] });
@@ -332,22 +332,27 @@ app.post(
 app.put(
   '/api/projects/:id',
   h(async (req, res) => {
-    const { name, client, clientCompany, clientPhone, clientEmail, clientAddress, amount, startDate, endDate, status, notes } = req.body;
+    const { name, client, clientCompany, clientPhone, clientEmail, clientAddress, amount, startDate, endDate, status, notes, deliveryMonth, processInfo } = req.body;
     const before = await one('SELECT * FROM projects WHERE id=$1', [req.params.id]);
-    await q(`UPDATE projects SET name=$1, client=$2, "clientCompany"=$3, "clientPhone"=$4, "clientEmail"=$5, "clientAddress"=$6, amount=$7, "startDate"=$8, "endDate"=$9, status=$10, notes=$11 WHERE id=$12`, [
-      name,
-      client,
-      clientCompany,
-      clientPhone,
-      clientEmail,
-      clientAddress,
-      amount,
-      startDate,
-      endDate,
-      status,
-      notes,
-      req.params.id,
-    ]);
+    await q(
+      `UPDATE projects SET name=$1, client=$2, "clientCompany"=$3, "clientPhone"=$4, "clientEmail"=$5, "clientAddress"=$6, amount=$7, "startDate"=$8, "endDate"=$9, status=$10, notes=$11, delivery_month=$12, process_info=$13 WHERE id=$14`,
+      [
+        name,
+        client,
+        clientCompany,
+        clientPhone,
+        clientEmail,
+        clientAddress,
+        amount,
+        startDate,
+        endDate,
+        status,
+        notes,
+        deliveryMonth ?? before?.delivery_month,
+        processInfo ?? before?.process_info,
+        req.params.id,
+      ]
+    );
     await logAuditReq(req, 'UPDATE', 'projects', parseInt(req.params.id), { name: before?.name || name, changes: diffChanges('projects', before, req.body) });
     res.json({ id: req.params.id, ...req.body });
   })
