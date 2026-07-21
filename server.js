@@ -22,12 +22,6 @@ async function createIfMissing(sql) {
 function ensureAux() {
   if (!_auxReady) {
     _auxReady = (async () => {
-      await createIfMissing(`CREATE TABLE IF NOT EXISTS order_documents (
-        order_id    integer primary key,
-        filename    text,
-        data_url    text,
-        uploaded_at timestamp default current_timestamp
-      )`);
       await createIfMissing(`CREATE TABLE IF NOT EXISTS invitations (
         id          serial primary key,
         email       text not null,
@@ -51,10 +45,6 @@ function ensureAux() {
         uploaded_at timestamp default current_timestamp,
         primary key (order_id, kind)
       )`);
-      // 旧 order_documents（請書）から移行
-      await q(`INSERT INTO order_files (order_id, kind, filename, data_url, uploaded_at)
-               SELECT order_id, 'ack', filename, data_url, uploaded_at FROM order_documents
-               ON CONFLICT (order_id, kind) DO NOTHING`).catch(() => {});
       // 支払登録明細（消し込み履歴）
       await createIfMissing(`CREATE TABLE IF NOT EXISTS payment_records (
         id         serial primary key,
@@ -342,9 +332,9 @@ app.post(
 app.put(
   '/api/projects/:id',
   h(async (req, res) => {
-    const { name, client, clientCompany, clientPhone, clientEmail, clientAddress, amount, startDate, endDate, status, notes, paid } = req.body;
+    const { name, client, clientCompany, clientPhone, clientEmail, clientAddress, amount, startDate, endDate, status, notes } = req.body;
     const before = await one('SELECT * FROM projects WHERE id=$1', [req.params.id]);
-    await q(`UPDATE projects SET name=$1, client=$2, "clientCompany"=$3, "clientPhone"=$4, "clientEmail"=$5, "clientAddress"=$6, amount=$7, "startDate"=$8, "endDate"=$9, status=$10, notes=$11, paid=$12 WHERE id=$13`, [
+    await q(`UPDATE projects SET name=$1, client=$2, "clientCompany"=$3, "clientPhone"=$4, "clientEmail"=$5, "clientAddress"=$6, amount=$7, "startDate"=$8, "endDate"=$9, status=$10, notes=$11 WHERE id=$12`, [
       name,
       client,
       clientCompany,
@@ -356,7 +346,6 @@ app.put(
       endDate,
       status,
       notes,
-      paid ? 1 : 0,
       req.params.id,
     ]);
     await logAuditReq(req, 'UPDATE', 'projects', parseInt(req.params.id), { name: before?.name || name, changes: diffChanges('projects', before, req.body) });

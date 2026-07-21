@@ -7,7 +7,6 @@
 drop table if exists payment_records cascade;
 drop table if exists invitations cascade;
 drop table if exists order_files cascade;
-drop table if exists order_documents cascade;
 drop table if exists audit_logs cascade;
 drop table if exists users cascade;
 drop table if exists invoices cascade;
@@ -54,7 +53,6 @@ create table projects (
   "endDate"       text,
   status        text,
   notes         text,
-  paid          integer default 0,
   project_no    text,
   receipt_status text
 );
@@ -88,7 +86,7 @@ create table categories (
 -- 注文（工事計画明細）
 create table orders (
   id            serial primary key,
-  project_id    integer,
+  project_id    integer not null references projects(id) on delete cascade,
   category      text,
   vendor        text,
   estimate      bigint,
@@ -109,17 +107,9 @@ create table orders (
   remaining       bigint
 );
 
--- 請書（注文請書）PDF。orders 1件につき1ファイル。
-create table order_documents (
-  order_id    integer primary key,
-  filename    text,
-  data_url    text,
-  uploaded_at timestamp default current_timestamp
-);
-
 -- 添付書類（請書/請求書のPDF）。orders × kind ごとに1件。
 create table order_files (
-  order_id    integer,
+  order_id    integer references orders(id) on delete cascade,
   kind        text,
   filename    text,
   data_url    text,
@@ -130,7 +120,7 @@ create table order_files (
 -- 支払登録明細（消し込み履歴）
 create table payment_records (
   id         serial primary key,
-  order_id   integer,
+  order_id   integer references orders(id) on delete cascade,
   paid_date  text,
   amount     bigint,
   note       text,
@@ -165,7 +155,7 @@ create table customers (
 -- 入金
 create table receipts (
   id            serial primary key,
-  project_id    integer,
+  project_id    integer references projects(id) on delete cascade,
   received_date text,
   amount        bigint,
   month         text,
@@ -175,7 +165,7 @@ create table receipts (
 -- 請求書
 create table invoices (
   id              serial primary key,
-  project_id      integer,
+  project_id      integer references projects(id) on delete cascade,
   invoice_no      text,
   registration_no text,
   invoice_date    text,
@@ -186,6 +176,13 @@ create table invoices (
   bank_info       text,
   status          text default '発行済'
 );
+
+-- 外部キー相当カラムのインデックス（Postgresは外部キーに自動でインデックスを張らないため明示）
+create index idx_orders_project_id on orders(project_id);
+create index idx_receipts_project_id on receipts(project_id);
+create index idx_invoices_project_id on invoices(project_id);
+create index idx_payment_records_order_id on payment_records(order_id);
+create index idx_audit_logs_table_created on audit_logs(table_name, created_at desc);
 
 -- ============ 初期データ ============
 
