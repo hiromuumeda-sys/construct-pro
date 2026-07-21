@@ -6,11 +6,11 @@
 <title>受注一覧 - WIN WIN様デモ</title>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
-<link rel="stylesheet" href="/styles.css?v=62"/>
-<script src="/sidebar.js?v=62"></script>
-<script src="/auth.js?v=62"></script>
-<script src="/header.js?v=62"></script>
-<script src="/status-utils.js?v=62"></script>
+<link rel="stylesheet" href="/styles.css?v=64"/>
+<script src="/sidebar.js?v=64"></script>
+<script src="/auth.js?v=64"></script>
+<script src="/header.js?v=64"></script>
+<script src="/status-utils.js?v=64"></script>
 <style>
 body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
@@ -162,7 +162,7 @@ CSV出力
 <th class="w-28 px-lg py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider text-right">契約金額</th>
 <th class="w-28 px-lg py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider">状態</th>
 <th class="w-28 px-lg py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider text-center">工事計画</th>
-<th class="w-36 px-lg py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider text-center">操作</th>
+<th class="w-44 px-lg py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider text-center">操作</th>
 </tr>
 </thead>
 <tbody class="divide-y divide-outline-variant" id="project-table-body">
@@ -196,6 +196,26 @@ CSV出力
 <p class="text-body-sm">© 2024 株式会社WIN WIN デモ環境</p>
 </footer>
 </main>
+
+<!-- 契約書PDF アップロード用（非表示） -->
+<input type="file" id="contract-file-input" accept="application/pdf,.pdf" style="display:none"/>
+
+<!-- 契約書PDF 表示モーダル -->
+<div class="fixed inset-0 z-[110] bg-primary/20 backdrop-blur-md" id="contract-modal" style="display:none" onclick="closeContractModal()">
+<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-3xl h-[80vh] bg-surface-container-lowest rounded-lg custom-shadow border border-outline-variant overflow-hidden flex flex-col" onclick="event.stopPropagation()">
+<div class="px-lg py-md flex justify-between items-center border-b border-outline-variant bg-surface-container-low">
+<h3 class="text-label-md font-label-md text-primary flex items-center gap-1"><span class="material-symbols-outlined text-[18px]">picture_as_pdf</span>契約書<span id="contract-modal-name" class="text-on-surface-variant font-normal"></span></h3>
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary" onclick="closeContractModal()">close</button>
+</div>
+<div class="flex-1 bg-surface-container">
+<iframe id="contract-frame" class="w-full h-full border-0" title="PDF"></iframe>
+</div>
+<div class="px-lg py-md border-t border-outline-variant flex justify-between items-center bg-surface-container-low">
+<button class="inline-flex items-center gap-1 px-3 py-1.5 text-label-md font-normal text-error border border-error/40 rounded-lg hover:bg-error/10 transition-all" onclick="deleteContractFile()"><span class="material-symbols-outlined text-[16px]">delete</span>削除</button>
+<button class="px-4 py-1.5 text-label-md font-normal text-on-surface border border-outline-variant rounded-lg hover:bg-surface-container transition-all" onclick="closeContractModal()">閉じる</button>
+</div>
+</div>
+</div>
 
 <!-- Edit Modal -->
 <div class="fixed inset-0 z-[100] bg-primary/20 backdrop-blur-md" id="edit-modal" style="display:none" onclick="closeModal('edit-modal')">
@@ -464,7 +484,7 @@ function renderTable(projects) {
           工事計画
         </a>
       </td>
-      <td class="w-36 px-lg py-2 text-center align-top">
+      <td class="w-44 px-lg py-2 text-center align-top">
         <div class="flex gap-1 justify-center flex-wrap">
           <button class="inline-flex items-center gap-0.5 px-1.5 py-1 rounded-lg bg-primary/10 text-primary text-[11px] font-label-md hover:bg-primary/20 transition-colors whitespace-nowrap" onclick="event.stopPropagation(); generateEstimate(${p.id})" title="見積書を発行">
             <span class="material-symbols-outlined text-[15px]">request_quote</span>
@@ -474,6 +494,11 @@ function renderTable(projects) {
             <span class="material-symbols-outlined text-[15px]">description</span>
             請求書
           </button>
+          ${
+            p.contract_has_file
+              ? `<button class="inline-flex items-center gap-0.5 px-1.5 py-1 rounded-lg bg-secondary-container text-on-secondary-container text-[11px] font-bold hover:opacity-80 transition-opacity whitespace-nowrap" onclick="event.stopPropagation(); openContractModal(${p.id})" title="契約書PDFを表示"><span class="material-symbols-outlined text-[15px]">picture_as_pdf</span>契約書</button>`
+              : `<button class="inline-flex items-center gap-0.5 px-1.5 py-1 rounded-lg bg-surface-container text-on-surface-variant text-[11px] hover:bg-surface-container-high transition-colors whitespace-nowrap" onclick="event.stopPropagation(); requestContractUpload(${p.id})" title="契約書PDFをアップロード"><span class="material-symbols-outlined text-[15px]">upload_file</span>契約書</button>`
+          }
         </div>
       </td>
     </tr>
@@ -491,6 +516,94 @@ function getStatusClass(status) {
     失注: 'bg-error-container text-on-error-container',
   };
   return statusClass(map, status);
+}
+
+// ===== 契約書PDF アップロード/表示/削除（order_filesと同じ方式：DB直接保存） =====
+let _contractUpload = null;
+function requestContractUpload(id) {
+  _contractUpload = id;
+  const input = document.getElementById('contract-file-input');
+  input.value = '';
+  input.click();
+}
+document.addEventListener('DOMContentLoaded', () => {
+  const input = document.getElementById('contract-file-input');
+  if (input) input.addEventListener('change', handleContractFileSelected);
+});
+async function handleContractFileSelected(e) {
+  const file = e.target.files && e.target.files[0];
+  const id = _contractUpload;
+  if (!file || id == null) return;
+  if (file.type !== 'application/pdf' && !/\.pdf$/i.test(file.name)) {
+    alert('PDFファイルを選択してください');
+    _contractUpload = null;
+    return;
+  }
+  if (file.size > 3 * 1024 * 1024) {
+    alert('ファイルサイズは3MBまでにしてください（サーバー制限）。\n大きいPDFは圧縮してからアップロードしてください。');
+    _contractUpload = null;
+    return;
+  }
+  const dataUrl = await new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(r.result);
+    r.onerror = reject;
+    r.readAsDataURL(file);
+  });
+  try {
+    const res = await fetch(`/api/projects/${id}/file/contract`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ filename: file.name, dataUrl }),
+    });
+    if (!res.ok) {
+      if (res.status === 413) throw new Error('ファイルが大きすぎます（3MB以下に圧縮してください）');
+      const d = await res.json().catch(() => ({}));
+      throw new Error(d.error || `HTTP ${res.status}`);
+    }
+    const p = window.appCache.projects.find(x => x.id === id);
+    if (p) {
+      p.contract_has_file = true;
+      p.contract_filename = file.name;
+    }
+    applyProjectFilters();
+  } catch (err) {
+    alert('契約書のアップロードに失敗しました：' + err.message);
+  } finally {
+    _contractUpload = null;
+  }
+}
+
+let _contractModalId = null;
+function openContractModal(id) {
+  _contractModalId = id;
+  const p = window.appCache.projects.find(x => x.id === id);
+  document.getElementById('contract-modal-name').textContent = p ? `（${p.name}）` : '';
+  document.getElementById('contract-frame').src = `/api/projects/${id}/file/contract#toolbar=1&view=FitH`;
+  document.getElementById('contract-modal').style.display = 'block';
+}
+function closeContractModal() {
+  document.getElementById('contract-modal').style.display = 'none';
+  document.getElementById('contract-frame').src = 'about:blank';
+  _contractModalId = null;
+}
+async function deleteContractFile() {
+  const id = _contractModalId;
+  if (id == null) return;
+  if (!confirm('契約書PDFを削除します。よろしいですか？')) return;
+  try {
+    const res = await fetch(`/api/projects/${id}/file/contract`, { method: 'DELETE' });
+    if (!res.ok) throw new Error('failed');
+    const p = window.appCache.projects.find(x => x.id === id);
+    if (p) {
+      p.contract_has_file = false;
+      p.contract_filename = null;
+    }
+    closeContractModal();
+    applyProjectFilters();
+  } catch (e) {
+    alert('削除に失敗しました');
+  }
 }
 
 // 一覧から直接ステータス変更（PUTで保存→履歴記録、現在の絞り込みを維持して再描画）
@@ -1199,6 +1312,6 @@ async function sendEstimateEmail() {
   </div>
 </div>
 
-<script src="/notify.js?v=62"></script>
+<script src="/notify.js?v=64"></script>
 </body>
 </html>

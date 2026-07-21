@@ -121,6 +121,16 @@ create table order_files (
   primary key (order_id, kind)
 );
 
+-- 添付書類（契約書等のPDF）。projects × kind ごとに1件。order_filesと同じ方式（DB直接保存）
+create table project_files (
+  project_id  integer references projects(id) on delete cascade,
+  kind        text,
+  filename    text,
+  data_url    text,
+  uploaded_at timestamp default current_timestamp,
+  primary key (project_id, kind)
+);
+
 -- 支払登録明細（消し込み履歴）
 create table payment_records (
   id         serial primary key,

@@ -45,6 +45,15 @@ function ensureAux() {
         uploaded_at timestamp default current_timestamp,
         primary key (order_id, kind)
       )`);
+      // 添付書類（契約書等のPDF）。projects × kind ごとに1件。
+      await createIfMissing(`CREATE TABLE IF NOT EXISTS project_files (
+        project_id  integer,
+        kind        text,
+        filename    text,
+        data_url    text,
+        uploaded_at timestamp default current_timestamp,
+        primary key (project_id, kind)
+      )`);
       // 支払登録明細（消し込み履歴）
       await createIfMissing(`CREATE TABLE IF NOT EXISTS payment_records (
         id         serial primary key,
@@ -310,7 +319,17 @@ app.get(
 app.get(
   '/api/projects',
   h(async (req, res) => {
-    res.json(await q('SELECT * FROM projects ORDER BY id'));
+    await ensureAux();
+    const [projects, files] = await Promise.all([q('SELECT * FROM projects ORDER BY id'), q('SELECT project_id, kind, filename FROM project_files')]);
+    const key = (id, kind) => `${id}:${kind}`;
+    const fmap = new Map(files.map(f => [key(f.project_id, f.kind), f.filename]));
+    res.json(
+      projects.map(p => ({
+        ...p,
+        contract_has_file: fmap.has(key(p.id, 'contract')),
+        contract_filename: fmap.get(key(p.id, 'contract')) || null,
+      }))
+    );
   })
 );
 
@@ -570,6 +589,62 @@ app.delete(
     await logAudit(getUserId(req), 'UPDATE', 'orders', parseInt(req.params.id), {
       name: order ? `${order.category || ''}（${order.vendor || ''}）` : `#${req.params.id}`,
       changes: [`${FILE_KIND_LABEL[kind]}PDFを削除／未に変更`],
+    });
+    res.json({ success: true });
+  })
+);
+
+// 契約書 PDF アップロード（受注一覧・案件単位）。order_filesと同じ方式（DB直接保存）
+app.post(
+  '/api/projects/:id/file/:kind',
+  h(async (req, res) => {
+    await ensureAux();
+    const kind = 'contract';
+    const { filename, dataUrl } = req.body;
+    if (!dataUrl || !/^data:application\/pdf/.test(dataUrl)) {
+      return res.status(400).json({ error: 'PDFファイルを指定してください' });
+    }
+    const project = await one('SELECT * FROM projects WHERE id=$1', [req.params.id]);
+    if (!project) return res.status(404).json({ error: 'project not found' });
+    await q(
+      `INSERT INTO project_files (project_id, kind, filename, data_url, uploaded_at)
+     VALUES ($1,$2,$3,$4, current_timestamp)
+     ON CONFLICT (project_id, kind) DO UPDATE SET filename=$3, data_url=$4, uploaded_at=current_timestamp`,
+      [req.params.id, kind, filename || 'contract.pdf', dataUrl]
+    );
+    await logAuditReq(req, 'UPDATE', 'projects', parseInt(req.params.id), {
+      name: project.name,
+      changes: [`契約書PDFをアップロード（${filename || 'contract.pdf'}）`],
+    });
+    res.json({ success: true });
+  })
+);
+
+// 契約書 PDF 表示（iframe からインライン参照）
+app.get(
+  '/api/projects/:id/file/:kind',
+  h(async (req, res) => {
+    await ensureAux();
+    const doc = await one('SELECT * FROM project_files WHERE project_id=$1 AND kind=$2', [req.params.id, 'contract']);
+    if (!doc || !doc.data_url) return res.status(404).json({ error: 'file not found' });
+    const b64 = doc.data_url.replace(/^data:application\/pdf;base64,/, '');
+    const buf = Buffer.from(b64, 'base64');
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `inline; filename="${doc.filename || 'contract.pdf'}"`);
+    res.send(buf);
+  })
+);
+
+// 契約書 PDF 削除
+app.delete(
+  '/api/projects/:id/file/:kind',
+  h(async (req, res) => {
+    await ensureAux();
+    const project = await one('SELECT * FROM projects WHERE id=$1', [req.params.id]);
+    await q('DELETE FROM project_files WHERE project_id=$1 AND kind=$2', [req.params.id, 'contract']);
+    await logAuditReq(req, 'UPDATE', 'projects', parseInt(req.params.id), {
+      name: project ? project.name : `#${req.params.id}`,
+      changes: ['契約書PDFを削除'],
     });
     res.json({ success: true });
   })
@@ -1556,7 +1631,7 @@ app.get(
   '/api/cache',
   h(async (req, res) => {
     await ensureAux();
-    const [projects, vendors, categories, orders, customers, receipts, invoices, files] = await Promise.all([
+    const [projects, vendors, categories, orders, customers, receipts, invoices, files, projectFiles] = await Promise.all([
       q('SELECT * FROM projects ORDER BY id'),
       q('SELECT * FROM vendors ORDER BY id::int DESC'),
       q('SELECT * FROM categories ORDER BY "order"'),
@@ -1565,6 +1640,7 @@ app.get(
       q('SELECT * FROM receipts ORDER BY received_date DESC'),
       q('SELECT * FROM invoices ORDER BY id DESC'),
       q('SELECT order_id, kind, filename FROM order_files'),
+      q('SELECT project_id, kind, filename FROM project_files'),
     ]);
     // 請書/請求書PDFの添付状況をマージ（/api/orders と同じ）
     const fkey = (id, kind) => `${id}:${kind}`;
@@ -1576,7 +1652,14 @@ app.get(
       invoice_has_file: fmap.has(fkey(o.id, 'invoice')),
       invoice_filename: fmap.get(fkey(o.id, 'invoice')) || null,
     }));
-    res.json({ projects, vendors, categories, orders: ordersWithFiles, customers, receipts, invoices });
+    // 契約書PDFの添付状況をマージ（/api/projects と同じ）
+    const pfmap = new Map(projectFiles.map(f => [fkey(f.project_id, f.kind), f.filename]));
+    const projectsWithFiles = projects.map(p => ({
+      ...p,
+      contract_has_file: pfmap.has(fkey(p.id, 'contract')),
+      contract_filename: pfmap.get(fkey(p.id, 'contract')) || null,
+    }));
+    res.json({ projects: projectsWithFiles, vendors, categories, orders: ordersWithFiles, customers, receipts, invoices });
   })
 );
 
