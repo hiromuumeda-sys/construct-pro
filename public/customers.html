@@ -6,10 +6,10 @@
 <title>顧客マスタ - WIN WIN様デモ</title>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
-<link rel="stylesheet" href="/styles.css?v=58"/>
-<script src="/sidebar.js?v=58"></script>
-<script src="/auth.js?v=58"></script>
-<script src="/header.js?v=58"></script>
+<link rel="stylesheet" href="/styles.css?v=59"/>
+<script src="/sidebar.js?v=59"></script>
+<script src="/auth.js?v=59"></script>
+<script src="/header.js?v=59"></script>
 <style>
 body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
@@ -245,12 +245,12 @@ body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 <script>
 function openModal(id) {
   const el = document.getElementById(id);
-  if(el) el.style.display = 'block';
+  if (el) el.style.display = 'block';
 }
 
 function closeModal(id) {
   const el = document.getElementById(id);
-  if(el) el.style.display = 'none';
+  if (el) el.style.display = 'none';
 }
 
 function toggleModal(id, show) {
@@ -271,7 +271,9 @@ function loadCustomers() {
 
 function renderTable(customers) {
   const tbody = document.getElementById('customer-table-body');
-  tbody.innerHTML = customers.map(c => `
+  tbody.innerHTML = customers
+    .map(
+      c => `
     <tr class="hover:bg-surface-container-low transition-colors cursor-pointer group" onclick="openEditModal(${c.id})">
       <td class="px-lg py-5 text-label-md font-label-md text-on-surface-variant tabular-nums">${String(c.id).padStart(4, '0')}</td>
       <td class="px-lg py-5 text-label-md font-label-md text-primary">${c.company}</td>
@@ -281,13 +283,15 @@ function renderTable(customers) {
       <td class="px-lg py-5 text-label-md font-label-md tabular-nums text-on-surface-variant">${c.phone || '-'}</td>
       <td class="px-lg py-5 text-label-md font-label-md text-on-surface-variant">${c.address || '-'}</td>
     </tr>
-  `).join('');
+  `
+    )
+    .join('');
 }
 
 function openEditModal(id) {
   editingId = id;
   const c = window.appCache.customers.find(x => x.id === id);
-  if(c) {
+  if (c) {
     document.getElementById('modal-customer-id').value = c.id;
     document.getElementById('modal-company-name').value = c.company;
     document.getElementById('modal-department-name').value = c.department || '';
@@ -326,7 +330,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('btn-cancel-edit').addEventListener('click', () => toggleModal('edit-modal', false));
 
   document.getElementById('btn-save-edit').addEventListener('click', async () => {
-    if(!editingId) return;
+    if (!editingId) return;
     const company = document.getElementById('modal-company-name').value;
     const department = document.getElementById('modal-department-name').value;
     const contact = document.getElementById('modal-contact-name').value;
@@ -339,27 +343,27 @@ document.addEventListener('DOMContentLoaded', async () => {
       await fetch(`/api/customers/${editingId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ company, department, contact, email, phone, address, notes })
+        body: JSON.stringify({ company, department, contact, email, phone, address, notes }),
       });
       const customerRes = await fetch('/api/customers');
       window.appCache.customers = await customerRes.json();
       loadCustomers();
       toggleModal('edit-modal', false);
-    } catch(e) {
+    } catch (e) {
       alert('更新に失敗しました');
     }
   });
 
   document.getElementById('btn-delete-customer').addEventListener('click', async () => {
-    if(!editingId) return;
-    if(confirm('この顧客を削除してもよろしいですか？')) {
+    if (!editingId) return;
+    if (confirm('この顧客を削除してもよろしいですか？')) {
       try {
         await fetch(`/api/customers/${editingId}`, { method: 'DELETE' });
         const customerRes = await fetch('/api/customers');
         window.appCache.customers = await customerRes.json();
         loadCustomers();
         toggleModal('edit-modal', false);
-      } catch(e) {
+      } catch (e) {
         alert('削除に失敗しました');
       }
     }
@@ -374,33 +378,30 @@ document.addEventListener('DOMContentLoaded', async () => {
     const address = document.querySelector('[name="address"]').value;
     const notes = document.querySelector('[name="notes"]').value;
 
-    if(!company || !contact || !email) return alert('必須項目を入力してください');
+    if (!company || !contact || !email) return alert('必須項目を入力してください');
 
     try {
       await fetch('/api/customers', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ company, department, contact, email, phone, address, notes })
+        body: JSON.stringify({ company, department, contact, email, phone, address, notes }),
       });
       const customerRes = await fetch('/api/customers');
       window.appCache.customers = await customerRes.json();
       loadCustomers();
       toggleModal('new-registration-modal', false);
-    } catch(e) {
+    } catch (e) {
       alert('登録に失敗しました');
     }
   });
 
-  document.getElementById('search-keyword').addEventListener('input', (e) => {
+  document.getElementById('search-keyword').addEventListener('input', e => {
     const keyword = e.target.value.toLowerCase();
-    const filtered = window.appCache.customers.filter(c =>
-      c.company.toLowerCase().includes(keyword) ||
-      c.contact.toLowerCase().includes(keyword)
-    );
+    const filtered = window.appCache.customers.filter(c => c.company.toLowerCase().includes(keyword) || c.contact.toLowerCase().includes(keyword));
     renderTable(filtered);
   });
 });
 </script>
-<script src="/notify.js?v=58"></script>
+<script src="/notify.js?v=59"></script>
 </body>
 </html>

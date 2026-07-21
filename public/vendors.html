@@ -6,10 +6,10 @@
 <title>発注先マスタ - WIN WIN様デモ</title>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
-<link rel="stylesheet" href="/styles.css?v=58"/>
-<script src="/sidebar.js?v=58"></script>
-<script src="/auth.js?v=58"></script>
-<script src="/header.js?v=58"></script>
+<link rel="stylesheet" href="/styles.css?v=59"/>
+<script src="/sidebar.js?v=59"></script>
+<script src="/auth.js?v=59"></script>
+<script src="/header.js?v=59"></script>
 <style>
 body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
@@ -274,12 +274,12 @@ body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 <script>
 function openModal(id) {
   const el = document.getElementById(id);
-  if(el) el.style.display = 'block';
+  if (el) el.style.display = 'block';
 }
 
 function closeModal(id) {
   const el = document.getElementById(id);
-  if(el) el.style.display = 'none';
+  if (el) el.style.display = 'none';
 }
 
 function toggleModal(id, show) {
@@ -299,7 +299,10 @@ let vendorList = [];
 const tagState = { reg: [], edit: [] };
 
 function csvToTags(csv) {
-  return (csv || '').split(',').map(s => s.trim()).filter(Boolean);
+  return (csv || '')
+    .split(',')
+    .map(s => s.trim())
+    .filter(Boolean);
 }
 
 function populateCatSelects() {
@@ -307,8 +310,7 @@ function populateCatSelects() {
   ['reg', 'edit'].forEach(prefix => {
     const sel = document.getElementById(`${prefix}-cat-select`);
     if (!sel) return;
-    sel.innerHTML = '<option value="">表示する工事区分を指定...</option>' +
-      cats.map(n => `<option value="${n}">${n}</option>`).join('');
+    sel.innerHTML = '<option value="">表示する工事区分を指定...</option>' + cats.map(n => `<option value="${n}">${n}</option>`).join('');
   });
 }
 
@@ -329,20 +331,23 @@ function removeTag(prefix, name) {
 function renderTagsInModal(prefix) {
   const wrap = document.getElementById(`${prefix}-tags`);
   if (!wrap) return;
-  wrap.innerHTML = tagState[prefix].map(n => `
+  wrap.innerHTML =
+    tagState[prefix]
+      .map(
+        n => `
     <span class="inline-flex items-center gap-1 bg-secondary/10 text-secondary border border-secondary/30 rounded-full px-3 py-1 text-label-md">
       #${n}
       <button type="button" onclick="removeTag('${prefix}', '${n.replace(/'/g, "\\'")}')" class="material-symbols-outlined text-[16px] hover:text-error">close</button>
-    </span>`).join('') || '<span class="text-label-md text-on-surface-variant/50">タグ未設定</span>';
+    </span>`
+      )
+      .join('') || '<span class="text-label-md text-on-surface-variant/50">タグ未設定</span>';
 }
 
 // 一覧テーブル用のタグ表示
 function renderTagChips(csv) {
   const tags = csvToTags(csv);
   if (!tags.length) return '<span class="text-label-md text-on-surface-variant/40">-</span>';
-  return '<div class="flex flex-wrap gap-1">' + tags.map(n =>
-    `<span class="inline-block bg-secondary/10 text-secondary rounded-full px-2 py-0.5 text-[11px] whitespace-nowrap">#${n}</span>`
-  ).join('') + '</div>';
+  return '<div class="flex flex-wrap gap-1">' + tags.map(n => `<span class="inline-block bg-secondary/10 text-secondary rounded-full px-2 py-0.5 text-[11px] whitespace-nowrap">#${n}</span>`).join('') + '</div>';
 }
 
 function loadVendors() {
@@ -352,7 +357,9 @@ function loadVendors() {
 function renderTable(vendors) {
   vendorList = vendors;
   const tbody = document.getElementById('vendor-table-body');
-  tbody.innerHTML = vendors.map(v => `
+  tbody.innerHTML = vendors
+    .map(
+      v => `
     <tr class="hover:bg-surface-container-low transition-colors cursor-pointer group" onclick="openEditModal('${v.id}')">
       <td class="px-lg py-5 text-label-md font-label-md text-on-surface-variant tabular-nums">${String(v.id).padStart(4, '0')}</td>
       <td class="px-lg py-5 text-label-md font-label-md text-primary">${v.company}</td>
@@ -363,13 +370,15 @@ function renderTable(vendors) {
       <td class="px-lg py-5 text-label-md font-label-md text-on-surface-variant">${v.address || '-'}</td>
       <td class="px-lg py-5">${renderTagChips(v.categories)}</td>
     </tr>
-  `).join('');
+  `
+    )
+    .join('');
 }
 
 function openEditModal(id) {
   editingId = id;
   const v = vendorList.find(x => x.id === id);
-  if(v) {
+  if (v) {
     document.getElementById('modal-vendor-id').value = v.id;
     document.getElementById('modal-company-name').value = v.company;
     document.getElementById('modal-dept-name').value = v.dept || '';
@@ -404,7 +413,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.querySelector('[name="email"]').value = '';
     document.querySelector('[name="phone"]').value = '';
     document.querySelector('[name="address"]').value = '';
-    ['bank_name','bank_branch','bank_type','bank_number','bank_holder'].forEach(n => { const el = document.querySelector(`[name="${n}"]`); if (el) el.value = ''; });
+    ['bank_name', 'bank_branch', 'bank_type', 'bank_number', 'bank_holder'].forEach(n => {
+      const el = document.querySelector(`[name="${n}"]`);
+      if (el) el.value = '';
+    });
     tagState.reg = [];
     renderTagsInModal('reg');
     openModal('new-registration-modal');
@@ -417,7 +429,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('btn-cancel-edit').addEventListener('click', () => closeModal('edit-modal'));
 
   document.getElementById('btn-save-edit').addEventListener('click', async () => {
-    if(!editingId) return;
+    if (!editingId) return;
     const company = document.getElementById('modal-company-name').value;
     const dept = document.getElementById('modal-dept-name').value;
     const contact = document.getElementById('modal-contact-name').value;
@@ -435,27 +447,27 @@ document.addEventListener('DOMContentLoaded', async () => {
       await fetch(`/api/vendors/${editingId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ company, dept, contact, email, phone, address, categories, bank_name, bank_branch, bank_type, bank_number, bank_holder })
+        body: JSON.stringify({ company, dept, contact, email, phone, address, categories, bank_name, bank_branch, bank_type, bank_number, bank_holder }),
       });
       const vendorRes = await fetch('/api/vendors');
       window.appCache.vendors = await vendorRes.json();
       loadVendors();
       toggleModal('edit-modal', false);
-    } catch(e) {
+    } catch (e) {
       alert('更新に失敗しました');
     }
   });
 
   document.getElementById('btn-delete-vendor').addEventListener('click', async () => {
-    if(!editingId) return;
-    if(confirm('この発注先を削除してもよろしいですか？')) {
+    if (!editingId) return;
+    if (confirm('この発注先を削除してもよろしいですか？')) {
       try {
         await fetch(`/api/vendors/${editingId}`, { method: 'DELETE' });
         const vendorRes = await fetch('/api/vendors');
         window.appCache.vendors = await vendorRes.json();
         loadVendors();
         toggleModal('edit-modal', false);
-      } catch(e) {
+      } catch (e) {
         alert('削除に失敗しました');
       }
     }
@@ -475,13 +487,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     const bank_number = document.querySelector('[name="bank_number"]').value;
     const bank_holder = document.querySelector('[name="bank_holder"]').value;
 
-    if(!company || !contact) return alert('必須項目を入力してください');
+    if (!company || !contact) return alert('必須項目を入力してください');
 
     try {
       await fetch('/api/vendors', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ company, dept, contact, email, phone, address, categories, bank_name, bank_branch, bank_type, bank_number, bank_holder })
+        body: JSON.stringify({ company, dept, contact, email, phone, address, categories, bank_name, bank_branch, bank_type, bank_number, bank_holder }),
       });
       document.querySelector('[name="company"]').value = '';
       document.querySelector('[name="dept"]').value = '';
@@ -493,21 +505,18 @@ document.addEventListener('DOMContentLoaded', async () => {
       window.appCache.vendors = await vendorRes.json();
       loadVendors();
       toggleModal('new-registration-modal', false);
-    } catch(e) {
+    } catch (e) {
       alert('登録に失敗しました');
     }
   });
 
-  document.getElementById('search-keyword').addEventListener('input', (e) => {
+  document.getElementById('search-keyword').addEventListener('input', e => {
     const keyword = e.target.value.toLowerCase();
-    const filtered = window.appCache.vendors.filter(v =>
-      v.company.toLowerCase().includes(keyword) ||
-      v.contact.toLowerCase().includes(keyword)
-    );
+    const filtered = window.appCache.vendors.filter(v => v.company.toLowerCase().includes(keyword) || v.contact.toLowerCase().includes(keyword));
     renderTable(filtered);
   });
 });
 </script>
 
-<script src="/notify.js?v=58"></script>
+<script src="/notify.js?v=59"></script>
 </body></html>

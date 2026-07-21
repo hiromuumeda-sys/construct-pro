@@ -6,10 +6,10 @@
 <title>レポーティング - WIN WIN様デモ</title>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
-<link rel="stylesheet" href="/styles.css?v=58"/>
-<script src="/sidebar.js?v=58"></script>
-<script src="/auth.js?v=58"></script>
-<script src="/header.js?v=58"></script>
+<link rel="stylesheet" href="/styles.css?v=59"/>
+<script src="/sidebar.js?v=59"></script>
+<script src="/auth.js?v=59"></script>
+<script src="/header.js?v=59"></script>
 <style>
 body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
@@ -325,7 +325,7 @@ async function initializeCache() {
   try {
     const res = await fetch('/api/cache');
     window.appCache = await res.json();
-  } catch(e) {
+  } catch (e) {
     console.error('Failed to load cache:', e);
   }
 }
@@ -349,13 +349,17 @@ function setAggregateType(type) {
   const ACT = ['bg-secondary', 'text-on-secondary', 'shadow-lg'];
   const INA = ['bg-transparent', 'text-on-surface-variant', 'hover:bg-surface-container'];
   if (type === 'period') {
-    btnPeriod.classList.remove(...INA); btnPeriod.classList.add(...ACT);
-    btnProject.classList.remove(...ACT); btnProject.classList.add(...INA);
+    btnPeriod.classList.remove(...INA);
+    btnPeriod.classList.add(...ACT);
+    btnProject.classList.remove(...ACT);
+    btnProject.classList.add(...INA);
     document.getElementById('period-filters').classList.remove('hidden');
     document.getElementById('project-filters').classList.add('hidden');
   } else {
-    btnProject.classList.remove(...INA); btnProject.classList.add(...ACT);
-    btnPeriod.classList.remove(...ACT); btnPeriod.classList.add(...INA);
+    btnProject.classList.remove(...INA);
+    btnProject.classList.add(...ACT);
+    btnPeriod.classList.remove(...ACT);
+    btnPeriod.classList.add(...INA);
     document.getElementById('period-filters').classList.add('hidden');
     document.getElementById('project-filters').classList.remove('hidden');
   }
@@ -408,11 +412,15 @@ function setReportType(type) {
   const ACT = ['bg-secondary', 'text-on-secondary', 'shadow-lg'];
   const INA = ['bg-transparent', 'text-on-surface-variant', 'hover:bg-surface-container'];
   if (type === 'customer') {
-    btnCustomer.classList.remove(...INA); btnCustomer.classList.add(...ACT);
-    btnVendor.classList.remove(...ACT); btnVendor.classList.add(...INA);
+    btnCustomer.classList.remove(...INA);
+    btnCustomer.classList.add(...ACT);
+    btnVendor.classList.remove(...ACT);
+    btnVendor.classList.add(...INA);
   } else {
-    btnVendor.classList.remove(...INA); btnVendor.classList.add(...ACT);
-    btnCustomer.classList.remove(...ACT); btnCustomer.classList.add(...INA);
+    btnVendor.classList.remove(...INA);
+    btnVendor.classList.add(...ACT);
+    btnCustomer.classList.remove(...ACT);
+    btnCustomer.classList.add(...INA);
   }
 
   populateCompanySelect();
@@ -468,8 +476,7 @@ function populateProjectModeFilters() {
     primaryLabel.textContent = '会社を選択';
     secondaryLabel.textContent = '案件を選択';
     primary.innerHTML = '<option value="">全社</option>';
-    [...new Set(window.appCache.projects.map(p => p.clientCompany || p.client).filter(Boolean))].sort()
-      .forEach(c => primary.appendChild(new Option(c, c)));
+    [...new Set(window.appCache.projects.map(p => p.clientCompany || p.client).filter(Boolean))].sort().forEach(c => primary.appendChild(new Option(c, c)));
   } else {
     primaryLabel.textContent = '案件を選択';
     secondaryLabel.textContent = '発注先を選択';
@@ -500,8 +507,7 @@ function populateSecondaryFilter() {
     secondary.innerHTML = '<option value="">全発注先</option>';
     let orders = window.appCache.orders;
     if (primaryVal) orders = orders.filter(o => o.project_id === parseInt(primaryVal));
-    [...new Set(orders.map(o => o.vendor).filter(Boolean))].sort()
-      .forEach(v => secondary.appendChild(new Option(v, v)));
+    [...new Set(orders.map(o => o.vendor).filter(Boolean))].sort().forEach(v => secondary.appendChild(new Option(v, v)));
   }
   secondary.value = [...secondary.options].some(o => o.value === cur) ? cur : '';
 }
@@ -574,8 +580,8 @@ function generateCustomerReport() {
     if (!project) return;
     const company = project.clientCompany || project.client || '未設定';
     if (customerMap[company]) {
-      customerMap[company].revenue += (o.decided || o.planned || 0);
-      customerMap[company].cost += (o.estimate || 0);
+      customerMap[company].revenue += o.decided || o.planned || 0;
+      customerMap[company].cost += o.estimate || 0;
       customerMap[company].orders.push(o);
     }
   });
@@ -584,8 +590,7 @@ function generateCustomerReport() {
     data.profit = data.revenue - data.cost;
   });
 
-  const sorted = Object.entries(customerMap)
-    .sort((a, b) => b[1].revenue - a[1].revenue);
+  const sorted = Object.entries(customerMap).sort((a, b) => b[1].revenue - a[1].revenue);
 
   updateSummary(sorted, customerMap);
   renderDetailTable(orders);
@@ -629,8 +634,8 @@ function generateVendorReport() {
       vendorMap[vendor] = { count: 0, revenue: 0, cost: 0, profit: 0, orders: [] };
     }
     vendorMap[vendor].count++;
-    vendorMap[vendor].revenue += (o.decided || o.planned || 0);
-    vendorMap[vendor].cost += (o.estimate || 0);
+    vendorMap[vendor].revenue += o.decided || o.planned || 0;
+    vendorMap[vendor].cost += o.estimate || 0;
     vendorMap[vendor].orders.push(o);
   });
 
@@ -638,8 +643,7 @@ function generateVendorReport() {
     data.profit = data.revenue - data.cost;
   });
 
-  const sorted = Object.entries(vendorMap)
-    .sort((a, b) => b[1].revenue - a[1].revenue);
+  const sorted = Object.entries(vendorMap).sort((a, b) => b[1].revenue - a[1].revenue);
 
   updateSummary(sorted, vendorMap);
   renderDetailTable(orders);
@@ -649,7 +653,7 @@ function generateVendorReport() {
 function renderDetailTable(orders) {
   const tbody = document.getElementById('detail-table-body');
   const countLabel = document.getElementById('detail-count');
-  const yen = (n) => '¥' + (n || 0).toLocaleString();
+  const yen = n => '¥' + (n || 0).toLocaleString();
 
   if (!orders || orders.length === 0) {
     tbody.innerHTML = '<tr><td colspan="7" class="px-3 py-8 text-center text-on-surface-variant text-label-md">該当するレコードがありません</td></tr>';
@@ -661,12 +665,13 @@ function renderDetailTable(orders) {
   const rows = orders.slice().sort((a, b) => (b.decided || b.planned || 0) - (a.decided || a.planned || 0));
   if (countLabel) countLabel.textContent = `${rows.length}件` + (rows.length > 15 ? '（スクロール）' : '');
 
-  tbody.innerHTML = rows.map(o => {
-    const project = window.appCache.projects.find(p => p.id === o.project_id);
-    const revenue = o.decided || o.planned || 0;
-    const cost = o.estimate || 0;
-    const profit = revenue - cost;
-    return `
+  tbody.innerHTML = rows
+    .map(o => {
+      const project = window.appCache.projects.find(p => p.id === o.project_id);
+      const revenue = o.decided || o.planned || 0;
+      const cost = o.estimate || 0;
+      const profit = revenue - cost;
+      return `
     <tr class="hover:bg-surface-container-low transition-colors">
       <td class="px-3 py-2 text-label-md font-label-md text-on-surface-variant tabular-nums">${project?.project_no || '-'}</td>
       <td class="px-3 py-2 text-label-md font-label-md text-primary">${project?.name || '案件#' + o.project_id}</td>
@@ -676,7 +681,8 @@ function renderDetailTable(orders) {
       <td class="px-3 py-2 text-label-md font-label-md text-right tabular-nums text-on-surface-variant">${yen(cost)}</td>
       <td class="px-3 py-2 text-label-md font-label-md text-right tabular-nums ${profit >= 0 ? 'text-secondary' : 'text-error'}">${yen(profit)}</td>
     </tr>`;
-  }).join('');
+    })
+    .join('');
 }
 
 function updateSummary(sorted, dataMap) {
@@ -710,7 +716,7 @@ async function loadDashboard() {
   try {
     const res = await fetch('/api/dashboard');
     const d = await res.json();
-    const yen = (n) => '¥' + (n || 0).toLocaleString();
+    const yen = n => '¥' + (n || 0).toLocaleString();
     document.getElementById('dash-month-revenue').textContent = yen(d.thisMonthRevenue);
     document.getElementById('dash-month-profit').textContent = yen(d.thisMonthProfit);
     document.getElementById('dash-month-receipts').textContent = yen(d.thisMonthReceipts);
@@ -728,7 +734,9 @@ async function loadDashboard() {
       if (countLabel) countLabel.textContent = '0件';
     } else {
       if (countLabel) countLabel.textContent = `${thisMonth.length}件` + (thisMonth.length > 10 ? '（スクロール）' : '');
-      tbody.innerHTML = thisMonth.map(p => `
+      tbody.innerHTML = thisMonth
+        .map(
+          p => `
       <tr class="hover:bg-surface-container-low transition-colors">
         <td class="px-3 py-2 text-label-md font-label-md text-on-surface-variant tabular-nums">${p.project_no || '-'}</td>
         <td class="px-3 py-2 text-label-md font-label-md text-primary">${p.name}</td>
@@ -736,9 +744,13 @@ async function loadDashboard() {
         <td class="px-3 py-2 text-label-md font-label-md text-right tabular-nums text-on-surface-variant">${yen(p.cost)}</td>
         <td class="px-3 py-2 text-label-md font-label-md text-right tabular-nums ${p.profit >= 0 ? 'text-secondary' : 'text-error'}">${yen(p.profit)}</td>
         <td class="px-3 py-2 text-label-md font-label-md text-right tabular-nums ${p.margin >= 0 ? 'text-on-surface' : 'text-error'}">${p.margin}%</td>
-      </tr>`).join('');
+      </tr>`
+        )
+        .join('');
     }
-  } catch (e) { /* noop */ }
+  } catch (e) {
+    /* noop */
+  }
 }
 
 let growthLoaded = false;
@@ -758,11 +770,14 @@ async function renderGrowthChart() {
   if (!svg) return;
   let data;
   try {
-    const res = await fetch('/api/report/growth' + growthQuery(), { headers: (window.Auth ? Auth.headers() : {}) });
+    const res = await fetch('/api/report/growth' + growthQuery(), { headers: window.Auth ? Auth.headers() : {} });
     data = await res.json();
-  } catch (e) { return; }
+  } catch (e) {
+    return;
+  }
   // 期間入力の初期値をサーバー既定（過去12ヶ月）に同期
-  const fromEl = document.getElementById('growth-from'), toEl = document.getElementById('growth-to');
+  const fromEl = document.getElementById('growth-from'),
+    toEl = document.getElementById('growth-to');
   if (fromEl && !fromEl.value && data.from) fromEl.value = data.from + '-01';
   if (toEl && !toEl.value && data.to) toEl.value = data.to + '-01';
 
@@ -770,44 +785,57 @@ async function renderGrowthChart() {
   const yen = v => '¥' + (Number(v) || 0).toLocaleString();
   document.getElementById('growth-total-revenue').textContent = yen(data.totalRevenue);
   document.getElementById('growth-total-profit').textContent = yen(data.totalProfit);
-  document.getElementById('growth-margin').textContent = data.totalRevenue > 0 ? Math.round(data.totalProfit / data.totalRevenue * 100) + '%' : '-';
+  document.getElementById('growth-margin').textContent = data.totalRevenue > 0 ? Math.round((data.totalProfit / data.totalRevenue) * 100) + '%' : '-';
 
-  const W = 800, H = 320, mL = 60, mR = 20, mT = 20, mB = 44;
-  const pw = W - mL - mR, ph = H - mT - mB;
-  if (!pts.length) { svg.innerHTML = `<text x="${W/2}" y="${H/2}" text-anchor="middle" fill="#888" font-size="13">データがありません</text>`; return; }
+  const W = 800,
+    H = 320,
+    mL = 60,
+    mR = 20,
+    mT = 20,
+    mB = 44;
+  const pw = W - mL - mR,
+    ph = H - mT - mB;
+  if (!pts.length) {
+    svg.innerHTML = `<text x="${W / 2}" y="${H / 2}" text-anchor="middle" fill="#888" font-size="13">データがありません</text>`;
+    return;
+  }
   // 売上と利益の両方を同一スケールで（利益は負もありうる）
   const vals = pts.flatMap(p => [p.revenue, p.profit]);
   const maxV = Math.max(1, ...vals);
   const minV = Math.min(0, ...vals);
-  const span = (maxV - minV) || 1;
+  const span = maxV - minV || 1;
   const yOf = v => mT + ph - ((v - minV) / span) * ph;
   const zeroY = yOf(0);
   const n = pts.length;
   const slot = pw / n;
   const barW = Math.min(40, slot * 0.5);
-  const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;');
+  const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
   let el = '';
   // grid lines (4段)
   for (let g = 0; g <= 4; g++) {
-    const val = minV + span * (4 - g) / 4;
-    const y = mT + ph * g / 4;
-    el += `<line x1="${mL}" y1="${y.toFixed(1)}" x2="${W-mR}" y2="${y.toFixed(1)}" stroke="#e5e7eb" stroke-width="1"/>`;
-    el += `<text x="${mL-6}" y="${(y+3).toFixed(1)}" text-anchor="end" font-size="9" fill="#9ca3af">${Math.round(val/10000).toLocaleString()}万</text>`;
+    const val = minV + (span * (4 - g)) / 4;
+    const y = mT + (ph * g) / 4;
+    el += `<line x1="${mL}" y1="${y.toFixed(1)}" x2="${W - mR}" y2="${y.toFixed(1)}" stroke="#e5e7eb" stroke-width="1"/>`;
+    el += `<text x="${mL - 6}" y="${(y + 3).toFixed(1)}" text-anchor="end" font-size="9" fill="#9ca3af">${Math.round(val / 10000).toLocaleString()}万</text>`;
   }
   // bars (売上)
   pts.forEach((p, i) => {
     const y = yOf(Math.max(0, p.revenue));
     const x = mL + slot * i + (slot - barW) / 2;
     const h = Math.abs(zeroY - y);
-    el += `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${barW.toFixed(1)}" height="${Math.max(0,h).toFixed(1)}" rx="3" fill="#7c6cf6" opacity="0.55"/>`;
-    el += `<text x="${(x+barW/2).toFixed(1)}" y="${(H-mB+16)}" text-anchor="middle" font-size="9" fill="#6b7280">${esc(p.ym.replace('-', '/').slice(2))}</text>`;
+    el += `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${barW.toFixed(1)}" height="${Math.max(0, h).toFixed(1)}" rx="3" fill="#7c6cf6" opacity="0.55"/>`;
+    el += `<text x="${(x + barW / 2).toFixed(1)}" y="${H - mB + 16}" text-anchor="middle" font-size="9" fill="#6b7280">${esc(p.ym.replace('-', '/').slice(2))}</text>`;
   });
   // line (利益)
   const cx = i => mL + slot * i + slot / 2;
   let dpath = '';
-  pts.forEach((p, i) => { dpath += (i ? 'L' : 'M') + cx(i).toFixed(1) + ' ' + yOf(p.profit).toFixed(1) + ' '; });
+  pts.forEach((p, i) => {
+    dpath += (i ? 'L' : 'M') + cx(i).toFixed(1) + ' ' + yOf(p.profit).toFixed(1) + ' ';
+  });
   el += `<path d="${dpath}" fill="none" stroke="#030424" stroke-width="2.5"/>`;
-  pts.forEach((p, i) => { el += `<circle cx="${cx(i).toFixed(1)}" cy="${yOf(p.profit).toFixed(1)}" r="3.5" fill="#030424"/>`; });
+  pts.forEach((p, i) => {
+    el += `<circle cx="${cx(i).toFixed(1)}" cy="${yOf(p.profit).toFixed(1)}" r="3.5" fill="#030424"/>`;
+  });
   svg.innerHTML = el;
   growthLoaded = true;
 }
@@ -822,13 +850,17 @@ function switchDashTab(tab) {
   if (tab === 'overview') {
     overview.classList.remove('hidden');
     analysis.classList.add('hidden');
-    btnO.classList.add(...active); btnO.classList.remove(...inactive);
-    btnA.classList.add(...inactive); btnA.classList.remove(...active);
+    btnO.classList.add(...active);
+    btnO.classList.remove(...inactive);
+    btnA.classList.add(...inactive);
+    btnA.classList.remove(...active);
   } else {
     overview.classList.add('hidden');
     analysis.classList.remove('hidden');
-    btnA.classList.add(...active); btnA.classList.remove(...inactive);
-    btnO.classList.add(...inactive); btnO.classList.remove(...active);
+    btnA.classList.add(...active);
+    btnA.classList.remove(...inactive);
+    btnO.classList.add(...inactive);
+    btnO.classList.remove(...active);
     if (!growthLoaded) renderGrowthChart();
   }
 }
@@ -840,6 +872,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   setReportType('customer');
 });
 </script>
-<script src="/notify.js?v=58"></script>
+<script src="/notify.js?v=59"></script>
 </body>
 </html>

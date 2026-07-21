@@ -6,7 +6,7 @@
 <title>アカウント登録 - WIN WIN様デモ</title>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
-<link rel="stylesheet" href="/styles.css?v=58"/>
+<link rel="stylesheet" href="/styles.css?v=59"/>
 <style>
 body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
@@ -87,13 +87,17 @@ function show(id) {
 
 const REASON_MSG = {
   not_found: '招待リンクが見つかりません。URLをご確認ください。',
-  expired:   '招待リンクの有効期限（24時間）が切れています。管理者へ再発行をご依頼ください。',
-  accepted:  'この招待は既に使用されています。ログイン画面からサインインしてください。',
-  missing:   '招待トークンがありません。管理者から届いたリンクを開いてください。',
+  expired: '招待リンクの有効期限（24時間）が切れています。管理者へ再発行をご依頼ください。',
+  accepted: 'この招待は既に使用されています。ログイン画面からサインインしてください。',
+  missing: '招待トークンがありません。管理者から届いたリンクを開いてください。',
 };
 
 async function init() {
-  if (!token) { document.getElementById('invalid-msg').textContent = REASON_MSG.missing; show('invalid-view'); return; }
+  if (!token) {
+    document.getElementById('invalid-msg').textContent = REASON_MSG.missing;
+    show('invalid-view');
+    return;
+  }
   try {
     const res = await fetch(`/api/invitations/validate?token=${encodeURIComponent(token)}`);
     const data = await res.json();
@@ -118,8 +122,16 @@ async function submitAccept(e) {
   const pw2 = document.getElementById('acc-pw2').value;
   const err = document.getElementById('acc-error');
   err.classList.add('hidden');
-  if (pw.length < 8) { err.textContent = 'パスワードは8文字以上で設定してください'; err.classList.remove('hidden'); return false; }
-  if (pw !== pw2) { err.textContent = 'パスワードが一致しません'; err.classList.remove('hidden'); return false; }
+  if (pw.length < 8) {
+    err.textContent = 'パスワードは8文字以上で設定してください';
+    err.classList.remove('hidden');
+    return false;
+  }
+  if (pw !== pw2) {
+    err.textContent = 'パスワードが一致しません';
+    err.classList.remove('hidden');
+    return false;
+  }
   try {
     const res = await fetch('/api/invitations/accept', {
       method: 'POST',
@@ -127,7 +139,11 @@ async function submitAccept(e) {
       body: JSON.stringify({ token, password: pw }),
     });
     const data = await res.json();
-    if (!res.ok) { err.textContent = data.error || '登録に失敗しました'; err.classList.remove('hidden'); return false; }
+    if (!res.ok) {
+      err.textContent = data.error || '登録に失敗しました';
+      err.classList.remove('hidden');
+      return false;
+    }
     localStorage.setItem('auth_token', data.token);
     localStorage.setItem('user', JSON.stringify(data.user));
     window.location.href = '/projects.html';

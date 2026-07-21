@@ -1,8 +1,14 @@
 // 認証ユーティリティ
 const Auth = {
-  getToken() { return localStorage.getItem('auth_token'); },
-  getUser() { return JSON.parse(localStorage.getItem('user') || 'null'); },
-  isLoggedIn() { return !!this.getToken(); },
+  getToken() {
+    return localStorage.getItem('auth_token');
+  },
+  getUser() {
+    return JSON.parse(localStorage.getItem('user') || 'null');
+  },
+  isLoggedIn() {
+    return !!this.getToken();
+  },
 
   logout() {
     localStorage.removeItem('auth_token');
@@ -14,7 +20,7 @@ const Auth = {
     const token = this.getToken();
     return {
       'Content-Type': 'application/json',
-      ...(token && { 'Authorization': `Bearer ${token}` })
+      ...(token && { Authorization: `Bearer ${token}` }),
     };
   },
 
@@ -22,7 +28,7 @@ const Auth = {
     if (!this.isLoggedIn()) {
       window.location.href = '/login.html';
     }
-  }
+  },
 };
 
 // fetch を自動ラップ：/api/ への全リクエストに認証トークンを付与する。

@@ -6,10 +6,10 @@
 <title>履歴詳細 - WIN WIN様デモ</title>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
-<link rel="stylesheet" href="/styles.css?v=58"/>
-<script src="/sidebar.js?v=58"></script>
-<script src="/auth.js?v=58"></script>
-<script src="/header.js?v=58"></script>
+<link rel="stylesheet" href="/styles.css?v=59"/>
+<script src="/sidebar.js?v=59"></script>
+<script src="/auth.js?v=59"></script>
+<script src="/header.js?v=59"></script>
 <style>
 body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
@@ -135,21 +135,23 @@ function toggleUserMenu() {
   panel.classList.toggle('hidden');
 }
 
-document.addEventListener('click', (e) => {
+document.addEventListener('click', e => {
   const panel = document.getElementById('user-menu-panel');
   const menu = document.getElementById('user-menu');
   if (!menu.contains(e.target)) panel.classList.add('hidden');
 });
 
 function esc(s) {
-  return String(s ?? '').replace(/[&<>"]/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c]));
+  return String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
 }
 
 function setupUserInfo() {
   const user = Auth.getUser();
   if (user) {
-    const nEl = document.getElementById('user-name'); if (nEl) nEl.textContent = user.name || user.email;
-    const rEl = document.getElementById('user-role'); if (rEl) rEl.textContent = user.role || 'user';
+    const nEl = document.getElementById('user-name');
+    if (nEl) nEl.textContent = user.name || user.email;
+    const rEl = document.getElementById('user-role');
+    if (rEl) rEl.textContent = user.role || 'user';
   }
 }
 
@@ -160,9 +162,7 @@ async function loadLogs() {
   const emptyState = document.getElementById('empty-state');
 
   try {
-    const url = tableFilter
-      ? `/api/audit-logs/${tableFilter}`
-      : '/api/audit-logs';
+    const url = tableFilter ? `/api/audit-logs/${tableFilter}` : '/api/audit-logs';
 
     const res = await fetch(url, { headers: Auth.headers() });
     const logs = await res.json();
@@ -182,33 +182,37 @@ async function loadLogs() {
 
     emptyState.classList.add('hidden');
     // 種別は画面名（サイドメニュー）で表示する
-    const TABLE_LABEL = { projects:'受注一覧', orders:'工事計画', vendors:'発注先マスタ', categories:'工事区分マスタ', customers:'顧客マスタ', receipts:'売上・入金管理', invoices:'受注一覧', users:'ログイン', invitations:'アカウント発行' };
-    const ACTION_LABEL = { CREATE:'新規作成', UPDATE:'更新', DELETE:'削除' };
-    tbody.innerHTML = filtered.map(log => {
-      const dt = new Date(log.created_at);
-      const dateStr = dt.toLocaleString('ja-JP');
-      // details は jsonb（pgはオブジェクトで返す）/ 文字列の両対応
-      let details = log.details || {};
-      if (typeof details === 'string') { try { details = JSON.parse(details); } catch(_) { details = {}; } }
-      const target = details.name || details.company || details.category || details.invoice_no || details.email || `#${log.record_id}`;
-      const changes = Array.isArray(details.changes) ? details.changes : [];
-      const changesHtml = changes.length
-        ? changes.map(c => `<div>${esc(c)}</div>`).join('')
-        : '<span class="text-on-surface-variant/50">変更なし</span>';
-      return `<tr class="hover:bg-surface-container-low transition-colors align-top">
+    const TABLE_LABEL = { projects: '受注一覧', orders: '工事計画', vendors: '発注先マスタ', categories: '工事区分マスタ', customers: '顧客マスタ', receipts: '売上・入金管理', invoices: '受注一覧', users: 'ログイン', invitations: 'アカウント発行' };
+    const ACTION_LABEL = { CREATE: '新規作成', UPDATE: '更新', DELETE: '削除' };
+    tbody.innerHTML = filtered
+      .map(log => {
+        const dt = new Date(log.created_at);
+        const dateStr = dt.toLocaleString('ja-JP');
+        // details は jsonb（pgはオブジェクトで返す）/ 文字列の両対応
+        let details = log.details || {};
+        if (typeof details === 'string') {
+          try {
+            details = JSON.parse(details);
+          } catch (_) {
+            details = {};
+          }
+        }
+        const target = details.name || details.company || details.category || details.invoice_no || details.email || `#${log.record_id}`;
+        const changes = Array.isArray(details.changes) ? details.changes : [];
+        const changesHtml = changes.length ? changes.map(c => `<div>${esc(c)}</div>`).join('') : '<span class="text-on-surface-variant/50">変更なし</span>';
+        return `<tr class="hover:bg-surface-container-low transition-colors align-top">
         <td class="px-lg py-2 text-body-sm whitespace-nowrap">${dateStr}</td>
         <td class="px-lg py-2 text-body-sm"><span class="px-2 py-1 rounded text-xs font-bold whitespace-nowrap ${
-          log.action === 'CREATE' ? 'bg-success-container text-on-success-container' :
-          log.action === 'UPDATE' ? 'bg-warning-container text-on-warning-container' :
-          'bg-error-container text-on-error-container'
+          log.action === 'CREATE' ? 'bg-success-container text-on-success-container' : log.action === 'UPDATE' ? 'bg-warning-container text-on-warning-container' : 'bg-error-container text-on-error-container'
         }">${ACTION_LABEL[log.action] || log.action}</span></td>
         <td class="px-lg py-2 text-body-sm whitespace-nowrap">${TABLE_LABEL[log.table_name] || log.table_name || '-'}</td>
         <td class="px-lg py-2 text-body-sm text-on-surface-variant">${esc(target)}</td>
         <td class="px-lg py-2 text-body-sm space-y-0.5">${changesHtml}</td>
         <td class="px-lg py-2 text-body-sm whitespace-nowrap">${log.email || 'システム'}</td>
       </tr>`;
-    }).join('');
-  } catch(e) {
+      })
+      .join('');
+  } catch (e) {
     console.error('Failed to load logs:', e);
     tbody.innerHTML = '<tr><td colspan="6" class="px-lg py-4 text-center text-error">読み込みエラー</td></tr>';
   }
@@ -217,6 +221,6 @@ async function loadLogs() {
 setupUserInfo();
 loadLogs();
 </script>
-<script src="/notify.js?v=58"></script>
+<script src="/notify.js?v=59"></script>
 </body>
 </html>

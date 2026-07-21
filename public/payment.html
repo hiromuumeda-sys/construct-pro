@@ -6,11 +6,11 @@
 <title>支払管理 - WIN WIN様デモ</title>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
-<link rel="stylesheet" href="/styles.css?v=58"/>
-<script src="/sidebar.js?v=58"></script>
-<script src="/auth.js?v=58"></script>
-<script src="/header.js?v=58"></script>
-<script src="/status-utils.js?v=58"></script>
+<link rel="stylesheet" href="/styles.css?v=59"/>
+<script src="/sidebar.js?v=59"></script>
+<script src="/auth.js?v=59"></script>
+<script src="/header.js?v=59"></script>
+<script src="/status-utils.js?v=59"></script>
 <style>
 body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
@@ -278,18 +278,14 @@ async function initializeCache() {
   try {
     const res = await fetch('/api/cache');
     window.appCache = await res.json();
-  } catch(e) {
+  } catch (e) {
     console.error('Failed to load cache:', e);
   }
 }
 
 async function loadPayments() {
   // Always fetch latest data from server, don't rely on cache
-  const [ordersRes, projectsRes, vendorsRes] = await Promise.all([
-    fetch('/api/orders'),
-    fetch('/api/projects'),
-    fetch('/api/vendors')
-  ]);
+  const [ordersRes, projectsRes, vendorsRes] = await Promise.all([fetch('/api/orders'), fetch('/api/projects'), fetch('/api/vendors')]);
   const orders = await ordersRes.json();
   const projects = await projectsRes.json();
   const vendors = await vendorsRes.json();
@@ -303,13 +299,13 @@ async function loadPayments() {
       category: order.category || '-',
       vendor: order.vendor || '-',
       amount: order.decided || order.planned || 0,
-      remaining: (order.remaining != null ? order.remaining : (order.decided || order.planned || 0)),
+      remaining: order.remaining != null ? order.remaining : order.decided || order.planned || 0,
       status: order.paymentStatus || '未払い',
       paymentDate: order.paymentDate || '',
       notes: order.paymentNotes || '',
       bank: vendor ? { name: vendor.bank_name || '', branch: vendor.bank_branch || '', type: vendor.bank_type || '', number: vendor.bank_number || '', holder: vendor.bank_holder || '' } : null,
       // 保存時にPUTで全フィールドを送るために元データを保持
-      _raw: order
+      _raw: order,
     };
   });
 
@@ -318,7 +314,9 @@ async function loadPayments() {
 
 function renderTable() {
   const tbody = document.getElementById('payment-table-body');
-  tbody.innerHTML = payments.map((payment) => `
+  tbody.innerHTML = payments
+    .map(
+      payment => `
     <tr class="${payment.status === '未払い' ? 'bg-yellow-50 hover:bg-yellow-100' : 'hover:bg-surface-container-low'} transition-colors cursor-pointer group" onclick="openModal(${payment.id})">
       <td class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant tabular-numbers">${String(payment.id).padStart(6, '0')}</td>
       <td class="px-3 py-1.5 text-label-md font-label-md text-on-surface group-hover:text-primary transition-colors">${payment.projectName}</td>
@@ -331,25 +329,25 @@ function renderTable() {
       <td class="px-3 py-1.5 text-label-md font-label-md text-center whitespace-nowrap">
         <div class="relative inline-block" onclick="event.stopPropagation()">
           <select onchange="updatePaymentStatus(${payment.id}, this.value)" class="appearance-none text-[11px] font-medium rounded-full pl-5 pr-5 py-1 text-center border border-transparent ring-1 ring-inset ring-black/5 cursor-pointer hover:opacity-90 focus:ring-2 focus:ring-secondary/40 shadow-sm transition-all ${getStatusColor(payment.status)}">
-            ${['未払い','部分払い','支払済み'].map(s => `<option value="${s}" ${s === payment.status ? 'selected' : ''}>${s}</option>`).join('')}
+            ${['未払い', '部分払い', '支払済み'].map(s => `<option value="${s}" ${s === payment.status ? 'selected' : ''}>${s}</option>`).join('')}
           </select>
           <span class="material-symbols-outlined absolute right-0.5 top-1/2 -translate-y-1/2 text-[16px] pointer-events-none">expand_more</span>
         </div>
       </td>
       <td class="px-3 py-1.5 text-center whitespace-nowrap" onclick="event.stopPropagation()">
-        ${payment.status === '部分払い'
-          ? `<button onclick="event.stopPropagation(); openPayRegister(${payment.id})" class="material-symbols-outlined text-secondary hover:bg-secondary/10 rounded-full w-8 h-8" title="支払登録">add_circle</button>`
-          : ''}
+        ${payment.status === '部分払い' ? `<button onclick="event.stopPropagation(); openPayRegister(${payment.id})" class="material-symbols-outlined text-secondary hover:bg-secondary/10 rounded-full w-8 h-8" title="支払登録">add_circle</button>` : ''}
       </td>
     </tr>
-  `).join('');
+  `
+    )
+    .join('');
 }
 
 function getStatusColor(status) {
   const colors = {
-    '未払い': 'bg-error/10 text-error',
-    '部分払い': 'bg-tertiary-fixed text-on-tertiary-fixed-variant',
-    '支払済み': 'bg-secondary-container text-on-secondary-container'
+    未払い: 'bg-error/10 text-error',
+    部分払い: 'bg-tertiary-fixed text-on-tertiary-fixed-variant',
+    支払済み: 'bg-secondary-container text-on-secondary-container',
   };
   return statusClass(colors, status, 'bg-surface-container text-on-surface');
 }
@@ -363,21 +361,28 @@ async function updatePaymentStatus(id, status) {
     // 「支払済み」に変更：残額を支払登録として履歴に残し、残金を0にする
     if (status === '支払済み' && remaining > 0) {
       const res = await fetch('/api/payment-records', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ order_id: id, amount: remaining, note: 'ステータスを支払済に変更' })
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ order_id: id, amount: remaining, note: 'ステータスを支払済に変更' }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'failed');
-      p.status = '支払済み'; p.remaining = 0;
-      if (p._raw) { p._raw.paymentStatus = '支払済み'; p._raw.remaining = 0; }
+      p.status = '支払済み';
+      p.remaining = 0;
+      if (p._raw) {
+        p._raw.paymentStatus = '支払済み';
+        p._raw.remaining = 0;
+      }
       await loadPaymentRecords();
     } else {
       const res = await fetch(`/api/orders/${id}`, {
-        method: 'PUT', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...p._raw, paymentStatus: status })
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...p._raw, paymentStatus: status }),
       });
       if (!res.ok) throw new Error('failed');
-      p.status = status; if (p._raw) p._raw.paymentStatus = status;
+      p.status = status;
+      if (p._raw) p._raw.paymentStatus = status;
     }
     filterTable();
   } catch (e) {
@@ -391,7 +396,10 @@ function openModal(id) {
   const p = payments.find(x => x.id === id);
   if (!p) return;
   pdCurrentId = id;
-  const set = (eid, v) => { const el = document.getElementById(eid); if (el) el.textContent = v; };
+  const set = (eid, v) => {
+    const el = document.getElementById(eid);
+    if (el) el.textContent = v;
+  };
   set('pd-project', p.projectName || '-');
   set('pd-category', p.category || '-');
   set('pd-vendor', p.vendor || '-');
@@ -402,7 +410,7 @@ function openModal(id) {
   const b = p.bank || {};
   set('pd-bank-name', b.name || '-');
   set('pd-bank-branch', b.branch || '-');
-  set('pd-bank-number', (b.type || b.number) ? `${b.type || ''} ${b.number || ''}`.trim() : '-');
+  set('pd-bank-number', b.type || b.number ? `${b.type || ''} ${b.number || ''}`.trim() : '-');
   set('pd-bank-holder', b.holder || '-');
   document.getElementById('edit-modal').style.display = 'block';
   document.body.style.overflow = 'hidden';
@@ -446,20 +454,33 @@ async function submitPayRegister() {
   const amount = Math.max(0, parseInt(document.getElementById('pr-pay-amount').value, 10) || 0);
   const paid_date = document.getElementById('pr-date').value;
   const note = document.getElementById('pr-note').value;
-  if (amount <= 0) { alert('支払額を入力してください'); return; }
+  if (amount <= 0) {
+    alert('支払額を入力してください');
+    return;
+  }
   try {
     const res = await fetch('/api/payment-records', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ order_id: payRegId, amount, paid_date, note })
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ order_id: payRegId, amount, paid_date, note }),
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'failed');
     const p = payments.find(x => x.id === payRegId);
-    if (p) { p.remaining = data.remaining; p.status = data.status; if (p._raw) { p._raw.remaining = data.remaining; p._raw.paymentStatus = data.status; } }
+    if (p) {
+      p.remaining = data.remaining;
+      p.status = data.status;
+      if (p._raw) {
+        p._raw.remaining = data.remaining;
+        p._raw.paymentStatus = data.status;
+      }
+    }
     closePayRegister();
     await loadPaymentRecords();
     filterTable();
-  } catch (e) { alert('支払登録に失敗しました: ' + e.message); }
+  } catch (e) {
+    alert('支払登録に失敗しました: ' + e.message);
+  }
 }
 
 // フィルタ機能
@@ -479,7 +500,9 @@ async function loadPaymentRecords() {
   try {
     const res = await fetch('/api/payment-records');
     paymentRecords = res.ok ? await res.json() : [];
-  } catch (e) { paymentRecords = []; }
+  } catch (e) {
+    paymentRecords = [];
+  }
   renderPaymentRecords();
 }
 function renderPaymentRecords() {
@@ -489,7 +512,9 @@ function renderPaymentRecords() {
     tbody.innerHTML = '<tr><td colspan="6" class="px-3 py-8 text-center text-on-surface-variant text-label-md">支払登録の履歴がありません</td></tr>';
     return;
   }
-  tbody.innerHTML = paymentRecords.map(r => `
+  tbody.innerHTML = paymentRecords
+    .map(
+      r => `
     <tr class="hover:bg-surface-container-low transition-colors">
       <td class="px-3 py-2.5 text-label-md font-label-md text-on-surface-variant tabular-numbers">${r.paid_date || '-'}</td>
       <td class="px-3 py-2.5 text-label-md font-label-md text-on-surface">${r.project_name || '案件#' + r.order_id}</td>
@@ -497,7 +522,9 @@ function renderPaymentRecords() {
       <td class="px-3 py-2.5 text-label-md font-label-md text-right tabular-numbers text-secondary">¥${(r.amount || 0).toLocaleString()}</td>
       <td class="px-3 py-2.5 text-label-md font-label-md text-on-surface-variant">${r.note || '-'}</td>
       <td class="px-3 py-2.5 text-center"><button class="material-symbols-outlined text-error/70 hover:bg-error/10 rounded-full w-8 h-8 text-[20px]" onclick="deletePaymentRecord(${r.id})" title="取消">delete</button></td>
-    </tr>`).join('');
+    </tr>`
+    )
+    .join('');
 }
 async function deletePaymentRecord(id) {
   if (!confirm('この支払登録を取り消しますか？（残金が戻ります）')) return;
@@ -506,7 +533,9 @@ async function deletePaymentRecord(id) {
     if (!res.ok) throw new Error('failed');
     await loadPayments();
     await loadPaymentRecords();
-  } catch (e) { alert('取消に失敗しました'); }
+  } catch (e) {
+    alert('取消に失敗しました');
+  }
 }
 
 // 支払期日が指定バケットに合致するか判定
@@ -535,14 +564,14 @@ function filterTable() {
   const filtered = payments.filter(p => {
     const matchStatus = !status || p.status === status;
     const matchDue = matchDueBucket(p.paymentDate, due);
-    const matchKeyword = !keyword ||
-      p.projectName.toLowerCase().includes(keyword) ||
-      p.vendor.toLowerCase().includes(keyword);
+    const matchKeyword = !keyword || p.projectName.toLowerCase().includes(keyword) || p.vendor.toLowerCase().includes(keyword);
     return matchStatus && matchDue && matchKeyword;
   });
 
   const tbody = document.getElementById('payment-table-body');
-  tbody.innerHTML = filtered.map((payment) => `
+  tbody.innerHTML = filtered
+    .map(
+      payment => `
     <tr class="${payment.status === '未払い' ? 'bg-yellow-50 hover:bg-yellow-100' : 'hover:bg-surface-container-low'} transition-colors cursor-pointer group" onclick="openModal(${payment.id})">
       <td class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant tabular-numbers">${String(payment.id).padStart(6, '0')}</td>
       <td class="px-3 py-1.5 text-label-md font-label-md text-on-surface group-hover:text-primary transition-colors">${payment.projectName}</td>
@@ -555,20 +584,20 @@ function filterTable() {
       <td class="px-3 py-1.5 text-label-md font-label-md text-center whitespace-nowrap">
         <div class="relative inline-block" onclick="event.stopPropagation()">
           <select onchange="updatePaymentStatus(${payment.id}, this.value)" class="appearance-none text-[11px] font-medium rounded-full pl-5 pr-5 py-1 text-center border border-transparent ring-1 ring-inset ring-black/5 cursor-pointer hover:opacity-90 focus:ring-2 focus:ring-secondary/40 shadow-sm transition-all ${getStatusColor(payment.status)}">
-            ${['未払い','部分払い','支払済み'].map(s => `<option value="${s}" ${s === payment.status ? 'selected' : ''}>${s}</option>`).join('')}
+            ${['未払い', '部分払い', '支払済み'].map(s => `<option value="${s}" ${s === payment.status ? 'selected' : ''}>${s}</option>`).join('')}
           </select>
           <span class="material-symbols-outlined absolute right-0.5 top-1/2 -translate-y-1/2 text-[16px] pointer-events-none">expand_more</span>
         </div>
       </td>
       <td class="px-3 py-1.5 text-center whitespace-nowrap" onclick="event.stopPropagation()">
-        ${payment.status === '部分払い'
-          ? `<button onclick="event.stopPropagation(); openPayRegister(${payment.id})" class="material-symbols-outlined text-secondary hover:bg-secondary/10 rounded-full w-8 h-8" title="支払登録">add_circle</button>`
-          : ''}
+        ${payment.status === '部分払い' ? `<button onclick="event.stopPropagation(); openPayRegister(${payment.id})" class="material-symbols-outlined text-secondary hover:bg-secondary/10 rounded-full w-8 h-8" title="支払登録">add_circle</button>` : ''}
       </td>
     </tr>
-  `).join('');
+  `
+    )
+    .join('');
 }
 </script>
-<script src="/notify.js?v=58"></script>
+<script src="/notify.js?v=59"></script>
 </body>
 </html>

@@ -6,10 +6,10 @@
 <title>工事区分マスタ - WIN WIN様デモ</title>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
-<link rel="stylesheet" href="/styles.css?v=58"/>
-<script src="/sidebar.js?v=58"></script>
-<script src="/auth.js?v=58"></script>
-<script src="/header.js?v=58"></script>
+<link rel="stylesheet" href="/styles.css?v=59"/>
+<script src="/sidebar.js?v=59"></script>
+<script src="/auth.js?v=59"></script>
+<script src="/header.js?v=59"></script>
 <style>
 body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
@@ -216,139 +216,143 @@ CSV出力
 <script>
 function openModal(id) {
   const el = document.getElementById(id);
-  if(el) el.style.display = 'block';
+  if (el) el.style.display = 'block';
 }
 
 function closeModal(id) {
   const el = document.getElementById(id);
-  if(el) el.style.display = 'none';
+  if (el) el.style.display = 'none';
 }
 
 let editingId = null;
 
-        // グローバルキャッシュの初期化
-        if (!window.appCache) {
-            window.appCache = { projects: [], vendors: [], categories: [], orders: [] };
-        }
+// グローバルキャッシュの初期化
+if (!window.appCache) {
+  window.appCache = { projects: [], vendors: [], categories: [], orders: [] };
+}
 
-        function loadCategories() {
-            renderTable(window.appCache.categories);
-        }
+function loadCategories() {
+  renderTable(window.appCache.categories);
+}
 
-        function renderTable(categories) {
-            const tbody = document.getElementById('master-table-body');
-            tbody.innerHTML = categories.map(c => `
+function renderTable(categories) {
+  const tbody = document.getElementById('master-table-body');
+  tbody.innerHTML = categories
+    .map(
+      c => `
                 <tr class="hover:bg-surface-container-low transition-colors cursor-pointer group" onclick="openEditModal(${c.id}, '${c.code}', '${c.name}', ${c.order}, '${c.note.replace(/'/g, "\\'")}')">
                     <td class="px-3 py-1.5 text-label-md font-label-md text-primary tabular-numbers">${c.code}</td>
                     <td class="px-3 py-1.5 text-label-md font-label-md group-hover:text-primary transition-colors">${c.name}</td>
                     <td class="px-3 py-1.5 text-label-md font-label-md text-center tabular-numbers text-on-surface-variant">${c.order}</td>
                     <td class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant leading-relaxed">${c.note}</td>
                 </tr>
-            `).join('');
-            const totalCountEl = document.getElementById('total-count');
-            if (totalCountEl) totalCountEl.innerText = categories.length;
-        }
+            `
+    )
+    .join('');
+  const totalCountEl = document.getElementById('total-count');
+  if (totalCountEl) totalCountEl.innerText = categories.length;
+}
 
-        async function openEditModal(id, code, name, order, note) {
-            editingId = id;
-            document.getElementById('modal-code').value = code;
-            document.getElementById('modal-name').value = name;
-            document.getElementById('modal-order').value = order;
-            document.getElementById('modal-note').value = note;
-            const modal = document.getElementById('edit-modal');
-            modal.style.display = 'block';
-            document.body.style.overflow = 'hidden';
-        }
+async function openEditModal(id, code, name, order, note) {
+  editingId = id;
+  document.getElementById('modal-code').value = code;
+  document.getElementById('modal-name').value = name;
+  document.getElementById('modal-order').value = order;
+  document.getElementById('modal-note').value = note;
+  const modal = document.getElementById('edit-modal');
+  modal.style.display = 'block';
+  document.body.style.overflow = 'hidden';
+}
 
-        function openAddModal() {
-            editingId = null;
-            document.getElementById('new-modal-code').value = '';
-            document.getElementById('new-modal-name').value = '';
-            document.getElementById('new-modal-order').value = '';
-            document.getElementById('new-modal-note').value = '';
-            const modal = document.getElementById('add-modal');
-            modal.style.display = 'block';
-            document.body.style.overflow = 'hidden';
-        }
+function openAddModal() {
+  editingId = null;
+  document.getElementById('new-modal-code').value = '';
+  document.getElementById('new-modal-name').value = '';
+  document.getElementById('new-modal-order').value = '';
+  document.getElementById('new-modal-note').value = '';
+  const modal = document.getElementById('add-modal');
+  modal.style.display = 'block';
+  document.body.style.overflow = 'hidden';
+}
 
-        document.getElementById('save-btn').onclick = async () => {
-            if(!editingId) return;
-            const code = document.getElementById('modal-code').value;
-            const name = document.getElementById('modal-name').value;
-            const order = parseInt(document.getElementById('modal-order').value) || 0;
-            const note = document.getElementById('modal-note').value;
+document.getElementById('save-btn').onclick = async () => {
+  if (!editingId) return;
+  const code = document.getElementById('modal-code').value;
+  const name = document.getElementById('modal-name').value;
+  const order = parseInt(document.getElementById('modal-order').value) || 0;
+  const note = document.getElementById('modal-note').value;
 
-            try {
-                await fetch(`/api/categories/${editingId}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ code, name, order, note })
-                });
-                const res = await fetch('/api/categories');
-                window.appCache.categories = await res.json();
-                loadCategories();
-                closeModal('edit-modal');
-            } catch(e) {
-                alert('更新に失敗しました');
-            }
-        };
+  try {
+    await fetch(`/api/categories/${editingId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code, name, order, note }),
+    });
+    const res = await fetch('/api/categories');
+    window.appCache.categories = await res.json();
+    loadCategories();
+    closeModal('edit-modal');
+  } catch (e) {
+    alert('更新に失敗しました');
+  }
+};
 
-        document.getElementById('register-btn').onclick = async () => {
-            const name = document.getElementById('new-modal-name').value;
-            const order = parseInt(document.getElementById('new-modal-order').value) || 0;
-            const note = document.getElementById('new-modal-note').value;
+document.getElementById('register-btn').onclick = async () => {
+  const name = document.getElementById('new-modal-name').value;
+  const order = parseInt(document.getElementById('new-modal-order').value) || 0;
+  const note = document.getElementById('new-modal-note').value;
 
-            if(!name) return alert('工事区分名は必須です');
+  if (!name) return alert('工事区分名は必須です');
 
-            try {
-                await fetch('/api/categories', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name, order, note })
-                });
-                document.getElementById('new-modal-code').value = '';
-                document.getElementById('new-modal-name').value = '';
-                document.getElementById('new-modal-order').value = '';
-                document.getElementById('new-modal-note').value = '';
-                const res = await fetch('/api/categories');
-                window.appCache.categories = await res.json();
-                loadCategories();
-                closeModal('add-modal');
-            } catch(e) {
-                alert('登録に失敗しました');
-            }
-        };
+  try {
+    await fetch('/api/categories', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, order, note }),
+    });
+    document.getElementById('new-modal-code').value = '';
+    document.getElementById('new-modal-name').value = '';
+    document.getElementById('new-modal-order').value = '';
+    document.getElementById('new-modal-note').value = '';
+    const res = await fetch('/api/categories');
+    window.appCache.categories = await res.json();
+    loadCategories();
+    closeModal('add-modal');
+  } catch (e) {
+    alert('登録に失敗しました');
+  }
+};
 
-        document.getElementById('delete-btn').onclick = async () => {
-            if(!editingId) return;
-            if(confirm('この工事区分を削除してもよろしいですか？')) {
-                try {
-                    await fetch(`/api/categories/${editingId}`, { method: 'DELETE' });
-                    const res = await fetch('/api/categories');
-                    window.appCache.categories = await res.json();
-                    loadCategories();
-                    closeModal('edit-modal');
-                } catch(e) {
-                    alert('削除に失敗しました');
-                }
-            }
-        };
+document.getElementById('delete-btn').onclick = async () => {
+  if (!editingId) return;
+  if (confirm('この工事区分を削除してもよろしいですか？')) {
+    try {
+      await fetch(`/api/categories/${editingId}`, { method: 'DELETE' });
+      const res = await fetch('/api/categories');
+      window.appCache.categories = await res.json();
+      loadCategories();
+      closeModal('edit-modal');
+    } catch (e) {
+      alert('削除に失敗しました');
+    }
+  }
+};
 
-        document.getElementById('keyword-search')?.addEventListener('input', function(e) {
-            const term = e.target.value.toLowerCase();
-            const filtered = window.appCache.categories.filter(c => c.code.toLowerCase().includes(term) || c.name.toLowerCase().includes(term));
-            renderTable(filtered);
-        });
+document.getElementById('keyword-search')?.addEventListener('input', function (e) {
+  const term = e.target.value.toLowerCase();
+  const filtered = window.appCache.categories.filter(c => c.code.toLowerCase().includes(term) || c.name.toLowerCase().includes(term));
+  renderTable(filtered);
+});
 
-        // Initialize global cache if empty
-        (async () => {
-            if (window.appCache.categories.length === 0) {
-                const res = await fetch('/api/cache');
-                window.appCache = await res.json();
-            }
-            loadCategories();
-        })();
-    </script>
+// Initialize global cache if empty
+(async () => {
+  if (window.appCache.categories.length === 0) {
+    const res = await fetch('/api/cache');
+    window.appCache = await res.json();
+  }
+  loadCategories();
+})();
+</script>
 
-<script src="/notify.js?v=58"></script>
+<script src="/notify.js?v=59"></script>
 </html>

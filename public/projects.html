@@ -6,11 +6,11 @@
 <title>受注一覧 - WIN WIN様デモ</title>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
-<link rel="stylesheet" href="/styles.css?v=58"/>
-<script src="/sidebar.js?v=58"></script>
-<script src="/auth.js?v=58"></script>
-<script src="/header.js?v=58"></script>
-<script src="/status-utils.js?v=58"></script>
+<link rel="stylesheet" href="/styles.css?v=59"/>
+<script src="/sidebar.js?v=59"></script>
+<script src="/auth.js?v=59"></script>
+<script src="/header.js?v=59"></script>
+<script src="/status-utils.js?v=59"></script>
 <style>
 body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
@@ -313,12 +313,12 @@ CSV出力
 <script>
 function openModal(id) {
   const el = document.getElementById(id);
-  if(el) el.style.display = 'block';
+  if (el) el.style.display = 'block';
 }
 
 function closeModal(id) {
   const el = document.getElementById(id);
-  if(el) el.style.display = 'none';
+  if (el) el.style.display = 'none';
 }
 
 if (!window.appCache) {
@@ -330,7 +330,7 @@ async function initializeGlobalCache() {
     const res = await fetch('/api/cache', { headers: Auth.headers() });
     window.appCache = await res.json();
     populateCustomerDropdown();
-  } catch(e) {
+  } catch (e) {
     console.error('Failed to load cache:', e);
   }
 }
@@ -338,8 +338,10 @@ async function initializeGlobalCache() {
 function setupUserInfo() {
   const user = Auth.getUser();
   if (user) {
-    const nEl = document.getElementById('user-name'); if (nEl) nEl.textContent = user.name || user.email;
-    const rEl = document.getElementById('user-role'); if (rEl) rEl.textContent = user.role || 'user';
+    const nEl = document.getElementById('user-name');
+    if (nEl) nEl.textContent = user.name || user.email;
+    const rEl = document.getElementById('user-role');
+    if (rEl) rEl.textContent = user.role || 'user';
   }
 }
 
@@ -348,7 +350,7 @@ function toggleUserMenu() {
   panel.classList.toggle('hidden');
 }
 
-document.addEventListener('click', (e) => {
+document.addEventListener('click', e => {
   const panel = document.getElementById('user-menu-panel');
   const menu = document.getElementById('user-menu');
   if (!menu.contains(e.target)) panel.classList.add('hidden');
@@ -418,7 +420,9 @@ function loadProjects() {
 
 function renderTable(projects) {
   const tbody = document.getElementById('project-table-body');
-  tbody.innerHTML = projects.map((p, i) => `
+  tbody.innerHTML = projects
+    .map(
+      (p, i) => `
     <tr class="hover:bg-surface-container-low transition-colors group cursor-pointer" onclick="openEditModal(${p.id})">
       <td class="w-12 px-lg py-2 text-label-md font-label-md text-on-surface-variant tabular-numbers align-top">${String(p.id).padStart(5, '0')}</td>
       <td class="w-64 px-lg py-2 text-label-md font-label-md text-primary align-top break-words">${p.name}</td>
@@ -429,7 +433,7 @@ function renderTable(projects) {
       <td class="w-28 px-lg py-2 align-top" onclick="event.stopPropagation()">
         <div class="relative inline-block">
           <select onchange="updateProjectStatus(${p.id}, this.value)" class="appearance-none text-[11px] font-medium rounded-full pl-5 pr-5 py-1 text-center border border-transparent ring-1 ring-inset ring-black/5 cursor-pointer hover:opacity-90 focus:ring-2 focus:ring-secondary/40 shadow-sm transition-all ${getStatusClass(p.status)}">
-            ${['未対応','提案中','見積確認中','受注','失注'].map(s => `<option value="${s}" ${s === p.status ? 'selected' : ''}>${s}</option>`).join('')}
+            ${['未対応', '提案中', '見積確認中', '受注', '失注'].map(s => `<option value="${s}" ${s === p.status ? 'selected' : ''}>${s}</option>`).join('')}
           </select>
           <span class="material-symbols-outlined absolute right-0.5 top-1/2 -translate-y-1/2 text-[16px] pointer-events-none">expand_more</span>
         </div>
@@ -453,16 +457,18 @@ function renderTable(projects) {
         </div>
       </td>
     </tr>
-  `).join('');
+  `
+    )
+    .join('');
 }
 
 function getStatusClass(status) {
   const map = {
-    '未対応': 'bg-surface-container text-on-surface-variant',
-    '提案中': 'bg-secondary-container text-on-secondary-container',
-    '見積確認中': 'border border-outline-variant bg-surface-container-lowest text-on-surface-variant',
-    '受注': 'bg-secondary text-on-secondary',
-    '失注': 'bg-error-container text-on-error-container'
+    未対応: 'bg-surface-container text-on-surface-variant',
+    提案中: 'bg-secondary-container text-on-secondary-container',
+    見積確認中: 'border border-outline-variant bg-surface-container-lowest text-on-surface-variant',
+    受注: 'bg-secondary text-on-secondary',
+    失注: 'bg-error-container text-on-error-container',
   };
   return statusClass(map, status);
 }
@@ -475,7 +481,7 @@ async function updateProjectStatus(id, status) {
     await fetch(`/api/projects/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: p.name, client: p.client, clientCompany: p.clientCompany, clientPhone: p.clientPhone, clientEmail: p.clientEmail, clientAddress: p.clientAddress, amount: p.amount, startDate: p.startDate, endDate: p.endDate, status, notes: p.notes, paid: p.paid })
+      body: JSON.stringify({ name: p.name, client: p.client, clientCompany: p.clientCompany, clientPhone: p.clientPhone, clientEmail: p.clientEmail, clientAddress: p.clientAddress, amount: p.amount, startDate: p.startDate, endDate: p.endDate, status, notes: p.notes, paid: p.paid }),
     });
     p.status = status;
     applyProjectFilters();
@@ -490,7 +496,7 @@ function openEditModal(id) {
   editingId = id;
   populateCustomerDropdown();
   const p = window.appCache.projects.find(x => x.id === id);
-  if(p) {
+  if (p) {
     document.getElementById('edit-id').value = id;
     document.getElementById('edit-name').value = p.name;
     document.getElementById('edit-amount').value = p.amount;
@@ -526,13 +532,13 @@ function openRegisterModal() {
 }
 
 async function deleteProject() {
-  if(!editingId || !confirm('この案件を削除してもよろしいですか？')) return;
+  if (!editingId || !confirm('この案件を削除してもよろしいですか？')) return;
   try {
     await fetch(`/api/projects/${editingId}`, { method: 'DELETE' });
     await initializeGlobalCache();
     loadProjects();
     closeModal('edit-modal');
-  } catch(e) {
+  } catch (e) {
     alert('削除に失敗しました');
   }
 }
@@ -547,24 +553,24 @@ async function saveRegister() {
   const endDate = document.getElementById('reg-period-end').value;
   const notes = document.getElementById('reg-notes').value;
 
-  if(!name || !client) return alert('必須項目を入力してください');
+  if (!name || !client) return alert('必須項目を入力してください');
 
   try {
     const res = await fetch('/api/projects', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, client, clientCompany: client, amount, status, startDate, endDate, notes })
+      body: JSON.stringify({ name, client, clientCompany: client, amount, status, startDate, endDate, notes }),
     });
     await initializeGlobalCache();
     loadProjects();
     closeModal('register-modal');
-  } catch(e) {
+  } catch (e) {
     alert('保存に失敗しました');
   }
 }
 
 async function saveEdit() {
-  if(!editingId) return;
+  if (!editingId) return;
   const name = document.getElementById('edit-name').value;
   const customer = window.appCache.customers.find(c => c.id == document.getElementById('edit-customer-select').value);
   const client = customer ? customer.company : '';
@@ -578,12 +584,12 @@ async function saveEdit() {
     await fetch(`/api/projects/${editingId}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, client, clientCompany: client, amount, status, startDate, endDate, notes })
+      body: JSON.stringify({ name, client, clientCompany: client, amount, status, startDate, endDate, notes }),
     });
     await initializeGlobalCache();
     loadProjects();
     closeModal('edit-modal');
-  } catch(e) {
+  } catch (e) {
     alert('更新に失敗しました');
   }
 }
@@ -593,7 +599,11 @@ function applyProjectFilters() {
   const status = document.getElementById('status-filter').value;
   const periodStart = document.getElementById('period-start-filter').value;
   const periodEnd = document.getElementById('period-end-filter').value;
-  const parseD = (s) => { if (!s) return null; const d = new Date(String(s).replace(/\//g, '-')); return isNaN(d) ? null : d; };
+  const parseD = s => {
+    if (!s) return null;
+    const d = new Date(String(s).replace(/\//g, '-'));
+    return isNaN(d) ? null : d;
+  };
   const rStart = periodStart ? new Date(periodStart) : null;
   const rEnd = periodEnd ? new Date(periodEnd) : null;
 
@@ -602,7 +612,8 @@ function applyProjectFilters() {
     if (status && p.status !== status) return false;
     if (rStart || rEnd) {
       // 工期が指定範囲に重なる案件のみ
-      const st = parseD(p.startDate), en = parseD(p.endDate);
+      const st = parseD(p.startDate),
+        en = parseD(p.endDate);
       if (!st || !en) return false;
       if (rStart && en < rStart) return false;
       if (rEnd && st > rEnd) return false;
@@ -661,7 +672,12 @@ function generateInvoice(projectId) {
 
   const tbody = document.getElementById('inv-order-rows');
   tbody.innerHTML = orders.length
-    ? orders.map(o => { const a = o.decided || 0; return `<tr><td class="border border-outline-variant p-1.5">${o.category || '一式'}</td><td class="border border-outline-variant p-1.5 text-right">1</td><td class="border border-outline-variant p-1.5 text-center">式</td><td class="border border-outline-variant p-1.5 text-right tabular-numbers">¥${a.toLocaleString()}</td><td class="border border-outline-variant p-1.5 text-right tabular-numbers">¥${a.toLocaleString()}</td><td class="border border-outline-variant p-1.5"></td></tr>`; }).join('')
+    ? orders
+        .map(o => {
+          const a = o.decided || 0;
+          return `<tr><td class="border border-outline-variant p-1.5">${o.category || '一式'}</td><td class="border border-outline-variant p-1.5 text-right">1</td><td class="border border-outline-variant p-1.5 text-center">式</td><td class="border border-outline-variant p-1.5 text-right tabular-numbers">¥${a.toLocaleString()}</td><td class="border border-outline-variant p-1.5 text-right tabular-numbers">¥${a.toLocaleString()}</td><td class="border border-outline-variant p-1.5"></td></tr>`;
+        })
+        .join('')
     : '<tr><td colspan="6" class="border border-outline-variant p-4 text-center text-on-surface-variant">注文データがありません</td></tr>';
 
   // Pre-fill email fields
@@ -697,10 +713,12 @@ async function persistInvoice() {
     const res = await fetch('/api/invoices', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ projectId: currentInvoiceProjectId })
+      body: JSON.stringify({ projectId: currentInvoiceProjectId }),
     });
     if (res.ok) savedInvoiceProjects.add(currentInvoiceProjectId);
-  } catch (e) { /* noop */ }
+  } catch (e) {
+    /* noop */
+  }
 }
 
 async function downloadInvoice() {
@@ -743,7 +761,7 @@ async function sendInvoiceEmail() {
     const res = await fetch('/api/invoice/send', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ projectId: currentInvoiceProjectId, to, subject, body })
+      body: JSON.stringify({ projectId: currentInvoiceProjectId, to, subject, body }),
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || '送信失敗');
@@ -762,11 +780,17 @@ async function sendInvoiceEmail() {
 let currentEstimateProjectId = null;
 
 function generateEstimate(projectId) {
-  if (!projectId) { alert('案件を選択してから見積書を発行してください'); return; }
+  if (!projectId) {
+    alert('案件を選択してから見積書を発行してください');
+    return;
+  }
   const project = window.appCache.projects.find(p => p.id === projectId);
-  if (!project) { alert('案件が見つかりません'); return; }
+  if (!project) {
+    alert('案件が見つかりません');
+    return;
+  }
   const orders = (window.appCache.orders || []).filter(o => o.project_id === projectId);
-  const amt = (o) => (o.estimate || o.planned || o.decided || 0);
+  const amt = o => o.estimate || o.planned || o.decided || 0;
 
   currentEstimateProjectId = projectId;
 
@@ -789,7 +813,12 @@ function generateEstimate(projectId) {
 
   const tbody = document.getElementById('est-order-rows');
   tbody.innerHTML = orders.length
-    ? orders.map(o => { const a = amt(o); return `<tr><td class="border border-outline-variant p-1.5">${o.category || '一式'}</td><td class="border border-outline-variant p-1.5 text-right">1</td><td class="border border-outline-variant p-1.5 text-center">式</td><td class="border border-outline-variant p-1.5 text-right tabular-numbers">¥${a.toLocaleString()}</td><td class="border border-outline-variant p-1.5 text-right tabular-numbers">¥${a.toLocaleString()}</td><td class="border border-outline-variant p-1.5"></td></tr>`; }).join('')
+    ? orders
+        .map(o => {
+          const a = amt(o);
+          return `<tr><td class="border border-outline-variant p-1.5">${o.category || '一式'}</td><td class="border border-outline-variant p-1.5 text-right">1</td><td class="border border-outline-variant p-1.5 text-center">式</td><td class="border border-outline-variant p-1.5 text-right tabular-numbers">¥${a.toLocaleString()}</td><td class="border border-outline-variant p-1.5 text-right tabular-numbers">¥${a.toLocaleString()}</td><td class="border border-outline-variant p-1.5"></td></tr>`;
+        })
+        .join('')
     : '<tr><td colspan="6" class="border border-outline-variant p-4 text-center text-on-surface-variant">注文データがありません</td></tr>';
 
   document.getElementById('estimate-email-to').value = project.clientEmail || '';
@@ -841,7 +870,10 @@ async function sendEstimateEmail() {
   const to = document.getElementById('estimate-email-to').value.trim();
   const subject = document.getElementById('estimate-email-subject').value.trim();
   const body = document.getElementById('estimate-email-body').value.trim();
-  if (!to || !subject) { alert('宛先と件名を入力してください'); return; }
+  if (!to || !subject) {
+    alert('宛先と件名を入力してください');
+    return;
+  }
 
   const btn = document.getElementById('estimate-send-btn');
   btn.disabled = true;
@@ -850,7 +882,7 @@ async function sendEstimateEmail() {
     const res = await fetch('/api/estimate/send', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ projectId: currentEstimateProjectId, to, subject, body })
+      body: JSON.stringify({ projectId: currentEstimateProjectId, to, subject, body }),
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || '送信失敗');
@@ -863,7 +895,6 @@ async function sendEstimateEmail() {
     btn.innerHTML = '<span class="material-symbols-outlined text-[18px]">send</span>送信';
   }
 }
-
 </script>
 <!-- Invoice Preview Modal -->
 <div class="fixed inset-0 z-[150]" id="invoice-modal" style="display:none" onclick="closeInvoicePreview()">
@@ -1092,6 +1123,6 @@ async function sendEstimateEmail() {
   </div>
 </div>
 
-<script src="/notify.js?v=58"></script>
+<script src="/notify.js?v=59"></script>
 </body>
 </html>

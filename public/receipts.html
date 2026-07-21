@@ -6,11 +6,11 @@
 <title>売上・入金管理 - WIN WIN様デモ</title>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
-<link rel="stylesheet" href="/styles.css?v=58"/>
-<script src="/sidebar.js?v=58"></script>
-<script src="/auth.js?v=58"></script>
-<script src="/header.js?v=58"></script>
-<script src="/status-utils.js?v=58"></script>
+<link rel="stylesheet" href="/styles.css?v=59"/>
+<script src="/sidebar.js?v=59"></script>
+<script src="/auth.js?v=59"></script>
+<script src="/header.js?v=59"></script>
+<script src="/status-utils.js?v=59"></script>
 <style>
 body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
@@ -321,26 +321,28 @@ let salesData = [];
 let receiptsData = [];
 let histProjectId = null;
 
-function fmt(n) { return '¥' + (n || 0).toLocaleString(); }
+function fmt(n) {
+  return '¥' + (n || 0).toLocaleString();
+}
 
 // 対象月度を「YYYY/MM」の年月形式に正規化する（文字列「6月」等や入金日から補完）
 function toYearMonth(v, dateStr) {
   if (v) {
-    let m = String(v).match(/(\d{4})[-/年.\s]*(\d{1,2})/);   // 2026-06 / 2026/06 / 2026年6月
+    let m = String(v).match(/(\d{4})[-/年.\s]*(\d{1,2})/); // 2026-06 / 2026/06 / 2026年6月
     if (m) return `${m[1]}/${String(m[2]).padStart(2, '0')}`;
-    m = String(v).match(/^\s*(\d{1,2})\s*月?\s*$/);          // 「6月」など年なし → 入金日の年で補完
-    if (m && dateStr) { const y = (String(dateStr).match(/(\d{4})/) || [])[1]; if (y) return `${y}/${String(m[1]).padStart(2, '0')}`; }
+    m = String(v).match(/^\s*(\d{1,2})\s*月?\s*$/); // 「6月」など年なし → 入金日の年で補完
+    if (m && dateStr) {
+      const y = (String(dateStr).match(/(\d{4})/) || [])[1];
+      if (y) return `${y}/${String(m[1]).padStart(2, '0')}`;
+    }
   }
-  const d = String(dateStr || '').match(/^(\d{4})-(\d{2})/);  // 未入力なら入金日から
+  const d = String(dateStr || '').match(/^(\d{4})-(\d{2})/); // 未入力なら入金日から
   if (d) return `${d[1]}/${d[2]}`;
   return v || '-';
 }
 
 async function loadAll() {
-  const [salesRes, receiptsRes] = await Promise.all([
-    fetch('/api/sales-summary'),
-    fetch('/api/receipts')
-  ]);
+  const [salesRes, receiptsRes] = await Promise.all([fetch('/api/sales-summary'), fetch('/api/receipts')]);
   salesData = await salesRes.json();
   receiptsData = await receiptsRes.json();
   renderSales();
@@ -350,9 +352,9 @@ async function loadAll() {
 
 function payStatusClass(status) {
   const map = {
-    '入金済': 'bg-secondary-container text-on-secondary-container',
-    '一部入金': 'bg-tertiary-fixed text-on-tertiary-fixed-variant',
-    '未入金': 'bg-error/10 text-error'
+    入金済: 'bg-secondary-container text-on-secondary-container',
+    一部入金: 'bg-tertiary-fixed text-on-tertiary-fixed-variant',
+    未入金: 'bg-error/10 text-error',
   };
   return statusClass(map, status, 'bg-surface-container text-on-surface');
 }
@@ -365,12 +367,16 @@ async function updateReceiptStatus(id, value) {
   if (!s || s.pay_status === value) return;
   try {
     const res = await fetch(`/api/projects/${id}/receipt-status`, {
-      method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ value })
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ value }),
     });
     if (!res.ok) throw new Error('failed');
     s.pay_status = value;
     renderSales();
-  } catch (e) { alert('ステータス更新に失敗しました'); }
+  } catch (e) {
+    alert('ステータス更新に失敗しました');
+  }
 }
 
 function clearReceiptFilters() {
@@ -399,7 +405,9 @@ function renderSales() {
   if (filtered.length === 0) {
     tbody.innerHTML = '<tr><td colspan="15" class="px-3 py-8 text-center text-on-surface-variant text-label-md">該当する案件がありません</td></tr>';
   } else {
-    tbody.innerHTML = filtered.map(s => `
+    tbody.innerHTML = filtered
+      .map(
+        s => `
     <tr class="${s.pay_status === '未入金' ? 'bg-yellow-50 hover:bg-yellow-100' : 'hover:bg-surface-container-low'} transition-colors cursor-pointer" onclick="openSalesDetail(${s.id})">
       <td class="px-3 py-2.5 text-center">
         <button class="material-symbols-outlined text-secondary hover:bg-secondary/10 rounded-full w-8 h-8" onclick="event.stopPropagation(); openReceiptModal(${s.id})" title="入金登録">add_circle</button>
@@ -412,7 +420,7 @@ function renderSales() {
       <td class="px-3 py-2.5 text-label-md font-label-md text-primary">${s.name}</td>
       <td class="px-3 py-2.5 text-center"><span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] ${s.status === '受注' ? 'bg-secondary text-on-secondary' : 'bg-surface-container text-on-surface-variant'}">${s.status || '-'}</span></td>
       <td class="px-3 py-2.5 text-center text-label-md font-label-md ${s.invoice_issued ? 'text-secondary' : 'text-on-surface-variant/50'}">${s.invoice_issued ? '発行済' : '未発行'}</td>
-      <td class="px-3 py-2.5 text-center text-label-md font-label-md ${s.completed ? 'text-on-surface-variant tabular-nums' : 'text-error'}">${s.completed ? (s.last_receipt_date || '完成') : '未完'}</td>
+      <td class="px-3 py-2.5 text-center text-label-md font-label-md ${s.completed ? 'text-on-surface-variant tabular-nums' : 'text-error'}">${s.completed ? s.last_receipt_date || '完成' : '未完'}</td>
       <td class="px-3 py-2.5 text-label-md font-label-md text-right tabular-numbers">${fmt(s.contract_amount)}</td>
       <td class="px-3 py-2.5 text-label-md font-label-md text-right tabular-numbers text-secondary">${fmt(s.this_month_received)}</td>
       <td class="px-3 py-2.5 text-label-md font-label-md text-right tabular-numbers text-on-surface-variant">${fmt(s.prev_received)}</td>
@@ -422,13 +430,15 @@ function renderSales() {
       <td class="px-3 py-2.5 text-center" onclick="event.stopPropagation()">
         <div class="relative inline-block">
           <select onchange="updateReceiptStatus(${s.id}, this.value)" class="appearance-none text-[11px] font-medium rounded-full pl-5 pr-5 py-1 text-center border border-transparent ring-1 ring-inset ring-black/5 cursor-pointer hover:opacity-90 focus:ring-2 focus:ring-secondary/40 shadow-sm transition-all ${payStatusClass(s.pay_status)}">
-            ${['未入金','一部入金','入金済'].map(o => `<option value="${o}" ${o === s.pay_status ? 'selected' : ''}>${o}</option>`).join('')}
+            ${['未入金', '一部入金', '入金済'].map(o => `<option value="${o}" ${o === s.pay_status ? 'selected' : ''}>${o}</option>`).join('')}
           </select>
           <span class="material-symbols-outlined absolute right-0.5 top-1/2 -translate-y-1/2 text-[16px] pointer-events-none">expand_more</span>
         </div>
       </td>
     </tr>
-  `).join('');
+  `
+      )
+      .join('');
   }
 
   // サマリは絞り込み結果ベースで集計
@@ -445,9 +455,10 @@ function renderReceipts() {
     tbody.innerHTML = '<tr><td colspan="6" class="px-3 py-8 text-center text-on-surface-variant text-label-md">入金実績がありません</td></tr>';
     return;
   }
-  tbody.innerHTML = receiptsData.map(r => {
-    const project = salesData.find(s => s.id === r.project_id);
-    return `
+  tbody.innerHTML = receiptsData
+    .map(r => {
+      const project = salesData.find(s => s.id === r.project_id);
+      return `
     <tr class="hover:bg-surface-container-low transition-colors">
       <td class="px-3 py-2.5 text-label-md font-label-md text-on-surface-variant tabular-numbers">${r.received_date}</td>
       <td class="px-3 py-2.5 text-label-md font-label-md text-on-surface">${project ? project.name : '案件#' + r.project_id}</td>
@@ -458,20 +469,24 @@ function renderReceipts() {
         <button class="material-symbols-outlined text-error/70 hover:bg-error/10 rounded-full w-8 h-8 text-[20px]" onclick="deleteReceipt(${r.id})" title="削除">delete</button>
       </td>
     </tr>`;
-  }).join('');
+    })
+    .join('');
 }
 
 // 閲覧専用の売上・入金明細モーダル
 function openSalesDetail(id) {
   const s = salesData.find(x => x.id === id);
   if (!s) return;
-  const set = (eid, v) => { const el = document.getElementById(eid); if (el) el.textContent = v; };
+  const set = (eid, v) => {
+    const el = document.getElementById(eid);
+    if (el) el.textContent = v;
+  };
   set('sd-name', s.name || '-');
   set('sd-no', s.project_no || '-');
   set('sd-client', s.client || '-');
   set('sd-status', s.status || '-');
   set('sd-invoice', s.invoice_issued ? '発行済' : '未発行');
-  set('sd-done', s.completed ? (s.last_receipt_date || '完成') : '未完');
+  set('sd-done', s.completed ? s.last_receipt_date || '完成' : '未完');
   document.getElementById('sd-pay').innerHTML = payStatusBadge(s.pay_status);
   set('sd-contract', fmt(s.contract_amount));
   set('sd-cum', fmt(s.cum_received));
@@ -521,13 +536,14 @@ function closeHistoryModal() {
 }
 function renderHistory() {
   if (histProjectId == null) return;
-  const rows = receiptsData.filter(r => r.project_id === histProjectId)
-    .sort((a, b) => String(b.received_date).localeCompare(String(a.received_date)));
+  const rows = receiptsData.filter(r => r.project_id === histProjectId).sort((a, b) => String(b.received_date).localeCompare(String(a.received_date)));
   const tbody = document.getElementById('hist-table-body');
   if (rows.length === 0) {
     tbody.innerHTML = '<tr><td colspan="5" class="px-3 py-8 text-center text-on-surface-variant text-label-md">入金実績がありません</td></tr>';
   } else {
-    tbody.innerHTML = rows.map(r => `
+    tbody.innerHTML = rows
+      .map(
+        r => `
       <tr class="hover:bg-surface-container-low transition-colors">
         <td class="px-3 py-2.5 text-label-md font-label-md text-on-surface-variant tabular-numbers">${r.received_date}</td>
         <td class="px-3 py-2.5 text-label-md font-label-md text-right tabular-numbers text-secondary">${fmt(r.amount)}</td>
@@ -536,7 +552,9 @@ function renderHistory() {
         <td class="px-3 py-2.5 text-center">
           <button class="material-symbols-outlined text-error/70 hover:bg-error/10 rounded-full w-8 h-8 text-[20px]" onclick="deleteReceipt(${r.id})" title="削除">delete</button>
         </td>
-      </tr>`).join('');
+      </tr>`
+      )
+      .join('');
   }
   const total = rows.reduce((a, r) => a + (Number(r.amount) || 0), 0);
   document.getElementById('hist-total').textContent = fmt(total);
@@ -557,7 +575,7 @@ async function saveReceipt() {
   await fetch('/api/receipts', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ project_id, received_date, amount, month, memo })
+    body: JSON.stringify({ project_id, received_date, amount, month, memo }),
   });
   closeReceiptModal();
   loadAll();
@@ -585,7 +603,7 @@ async function importCSV(event) {
     const res = await fetch('/api/receipts/import', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ csv: text })
+      body: JSON.stringify({ csv: text }),
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || '取込失敗');
@@ -606,5 +624,5 @@ async function importCSV(event) {
 loadAll();
 </script>
 
-<script src="/notify.js?v=58"></script>
+<script src="/notify.js?v=59"></script>
 </body></html>

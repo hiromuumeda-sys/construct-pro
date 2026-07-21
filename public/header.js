@@ -45,7 +45,7 @@ function hdrToggleUserMenu(e) {
   if (panel) panel.classList.toggle('hidden');
 }
 
-document.addEventListener('click', (e) => {
+document.addEventListener('click', e => {
   const menu = document.getElementById('hdr-user-menu');
   const panel = document.getElementById('hdr-user-panel');
   if (panel && menu && !menu.contains(e.target)) panel.classList.add('hidden');
@@ -69,7 +69,9 @@ const HDR_ROLE_LABEL = { admin: '管理者', accounting: '経理部', staff: '�
 function hdrRenderUser() {
   // localStorage を直接参照（auth.js の Auth は const のため window.Auth で取れない）
   let u = null;
-  try { u = JSON.parse(localStorage.getItem('user') || 'null'); } catch (_) {}
+  try {
+    u = JSON.parse(localStorage.getItem('user') || 'null');
+  } catch (_) {}
   if (!u) return;
   const n = document.getElementById('hdr-user-name');
   const r = document.getElementById('hdr-user-role');

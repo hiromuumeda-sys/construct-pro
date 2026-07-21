@@ -6,11 +6,11 @@
 <title>工事計画 - WIN WIN様デモ</title>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
-<link rel="stylesheet" href="/styles.css?v=58"/>
-<script src="/sidebar.js?v=58"></script>
-<script src="/auth.js?v=58"></script>
-<script src="/header.js?v=58"></script>
-<script src="/status-utils.js?v=58"></script>
+<link rel="stylesheet" href="/styles.css?v=59"/>
+<script src="/sidebar.js?v=59"></script>
+<script src="/auth.js?v=59"></script>
+<script src="/header.js?v=59"></script>
+<script src="/status-utils.js?v=59"></script>
 <style>
 body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
@@ -393,7 +393,7 @@ CSV出力
 // Global cache - only for this page's needed data
 // グローバルキャッシュの初期化
 if (!window.appCache) {
-    window.appCache = { projects: [], vendors: [], categories: [], orders: [] };
+  window.appCache = { projects: [], vendors: [], categories: [], orders: [] };
 }
 
 let orders = [];
@@ -402,50 +402,65 @@ let projectId = parseInt(new URLSearchParams(window.location.search).get('projec
 
 // データ読み込み
 function loadOrders() {
-    // Use global cached data
-    const allOrders = window.appCache.orders;
+  // Use global cached data
+  const allOrders = window.appCache.orders;
 
-    // project_id でフィルタリング
-    if (projectId) {
-        orders = allOrders.filter(o => o.project_id == projectId);
-    } else {
-        orders = allOrders;
-    }
+  // project_id でフィルタリング
+  if (projectId) {
+    orders = allOrders.filter(o => o.project_id == projectId);
+  } else {
+    orders = allOrders;
+  }
 
-    renderTable();
-    updateSummary();
+  renderTable();
+  updateSummary();
 }
 
 // テーブルの描画
 // 表示中の工事計画（案件の注文明細）をCSVでダウンロード
 function exportOrdersCSV() {
-    if (!orders || orders.length === 0) { alert('出力する工事計画データがありません'); return; }
-    const cols = [
-        ['工事区分', 'category'], ['発注先', 'vendor'], ['見積額', 'estimate'], ['予定金額', 'planned'],
-        ['決定金額', 'decided'], ['ステータス', 'status'], ['工事場所', 'site'],
-        ['工事開始日', 'period_start'], ['工事終了日', 'period_end'], ['検査・引渡時期', 'handover'],
-        ['支払条件', 'payment'], ['支払状況', 'paymentStatus'], ['支払期日', 'paymentDate'], ['工事内容', 'details'],
-    ];
-    const esc = (v) => {
-        const s = (v === null || v === undefined) ? '' : String(v);
-        return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
-    };
-    const header = cols.map(c => c[0]).join(',');
-    const body = orders.map(o => cols.map(c => esc(o[c[1]])).join(',')).join('\n');
-    const pname = (document.getElementById('project-name').textContent || '工事計画').trim();
-    const blob = new Blob(['﻿' + header + '\n' + body + '\n'], { type: 'text/csv;charset=utf-8;' });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = `工事計画_${pname || projectId || ''}.csv`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(a.href);
+  if (!orders || orders.length === 0) {
+    alert('出力する工事計画データがありません');
+    return;
+  }
+  const cols = [
+    ['工事区分', 'category'],
+    ['発注先', 'vendor'],
+    ['見積額', 'estimate'],
+    ['予定金額', 'planned'],
+    ['決定金額', 'decided'],
+    ['ステータス', 'status'],
+    ['工事場所', 'site'],
+    ['工事開始日', 'period_start'],
+    ['工事終了日', 'period_end'],
+    ['検査・引渡時期', 'handover'],
+    ['支払条件', 'payment'],
+    ['支払状況', 'paymentStatus'],
+    ['支払期日', 'paymentDate'],
+    ['工事内容', 'details'],
+  ];
+  const esc = v => {
+    const s = v === null || v === undefined ? '' : String(v);
+    return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  };
+  const header = cols.map(c => c[0]).join(',');
+  const body = orders.map(o => cols.map(c => esc(o[c[1]])).join(',')).join('\n');
+  const pname = (document.getElementById('project-name').textContent || '工事計画').trim();
+  const blob = new Blob(['﻿' + header + '\n' + body + '\n'], { type: 'text/csv;charset=utf-8;' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `工事計画_${pname || projectId || ''}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(a.href);
 }
 
 function renderTable() {
-    const tbody = document.getElementById('orders-table-body');
-    tbody.innerHTML = orders.map((order) => `
+  const tbody = document.getElementById('orders-table-body');
+  tbody.innerHTML = orders
+    .map(
+      order => `
         <tr class="hover:bg-surface-container-low transition-colors group">
             <td class="px-3 py-1.5 text-label-md font-label-md text-on-surface cursor-pointer group-hover:text-primary transition-colors" onclick="openOrderDetailModal(${order.id})">${order.category || '-'}</td>
             <td class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant cursor-pointer" onclick="openOrderDetailModal(${order.id})">${order.vendor || '-'}</td>
@@ -455,16 +470,20 @@ function renderTable() {
             <td class="px-3 py-1.5 text-label-md font-label-md text-right tabular-numbers cursor-pointer" onclick="openOrderDetailModal(${order.id})">${order.decided ? order.decided.toLocaleString() : '-'}</td>
             <td class="px-3 py-1.5 text-label-md font-label-md text-center whitespace-nowrap cursor-pointer" onclick="openOrderDetailModal(${order.id})">
                 <div class="relative inline-block" onclick="event.stopPropagation()">
-                  <select onchange="updateOrderStatus(${order.id}, this.value)" class="appearance-none text-[11px] font-medium rounded-full pl-5 pr-5 py-1 text-center border border-transparent ring-1 ring-inset ring-black/5 cursor-pointer hover:opacity-90 focus:ring-2 focus:ring-secondary/40 shadow-sm transition-all ${getStatusColor(order.status)}">${['未処理','見積待ち','決定済み','発注完了','支払済み'].map(s => `<option value="${s}" ${s === order.status ? 'selected' : ''}>${s}</option>`).join('')}</select>
+                  <select onchange="updateOrderStatus(${order.id}, this.value)" class="appearance-none text-[11px] font-medium rounded-full pl-5 pr-5 py-1 text-center border border-transparent ring-1 ring-inset ring-black/5 cursor-pointer hover:opacity-90 focus:ring-2 focus:ring-secondary/40 shadow-sm transition-all ${getStatusColor(order.status)}">${['未処理', '見積待ち', '決定済み', '発注完了', '支払済み'].map(s => `<option value="${s}" ${s === order.status ? 'selected' : ''}>${s}</option>`).join('')}</select>
                   <span class="material-symbols-outlined absolute right-0.5 top-1/2 -translate-y-1/2 text-[16px] pointer-events-none">expand_more</span>
                 </div>
             </td>
-            <td class="px-3 py-1.5 text-center whitespace-nowrap">${order.invoice_has_file
-              ? `<button onclick="event.stopPropagation(); openDocModal(${order.id},'invoice')" class="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-secondary-container text-on-secondary-container text-[11px] font-bold hover:opacity-80 transition-opacity max-w-[120px]" title="請求書PDFを表示"><span class="material-symbols-outlined text-[15px]">picture_as_pdf</span><span class="truncate">請求書</span></button>`
-              : `<button onclick="event.stopPropagation(); requestDocUpload(${order.id},'invoice')" class="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-surface-container text-on-surface-variant text-[11px] hover:bg-surface-container-high transition-colors" title="請求書PDFをアップロード"><span class="material-symbols-outlined text-[16px]">upload_file</span></button>`}</td>
-            <td class="px-3 py-1.5 text-center whitespace-nowrap">${order.ack_has_file
-              ? `<button onclick="event.stopPropagation(); openDocModal(${order.id},'ack')" class="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-secondary-container text-on-secondary-container text-[11px] font-bold hover:opacity-80 transition-opacity max-w-[120px]" title="請書PDFを表示"><span class="material-symbols-outlined text-[15px]">picture_as_pdf</span><span class="truncate">請書</span></button>`
-              : `<button onclick="event.stopPropagation(); requestDocUpload(${order.id},'ack')" class="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-surface-container text-on-surface-variant text-[11px] hover:bg-surface-container-high transition-colors" title="請書PDFをアップロード"><span class="material-symbols-outlined text-[16px]">upload_file</span></button>`}</td>
+            <td class="px-3 py-1.5 text-center whitespace-nowrap">${
+              order.invoice_has_file
+                ? `<button onclick="event.stopPropagation(); openDocModal(${order.id},'invoice')" class="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-secondary-container text-on-secondary-container text-[11px] font-bold hover:opacity-80 transition-opacity max-w-[120px]" title="請求書PDFを表示"><span class="material-symbols-outlined text-[15px]">picture_as_pdf</span><span class="truncate">請求書</span></button>`
+                : `<button onclick="event.stopPropagation(); requestDocUpload(${order.id},'invoice')" class="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-surface-container text-on-surface-variant text-[11px] hover:bg-surface-container-high transition-colors" title="請求書PDFをアップロード"><span class="material-symbols-outlined text-[16px]">upload_file</span></button>`
+            }</td>
+            <td class="px-3 py-1.5 text-center whitespace-nowrap">${
+              order.ack_has_file
+                ? `<button onclick="event.stopPropagation(); openDocModal(${order.id},'ack')" class="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-secondary-container text-on-secondary-container text-[11px] font-bold hover:opacity-80 transition-opacity max-w-[120px]" title="請書PDFを表示"><span class="material-symbols-outlined text-[15px]">picture_as_pdf</span><span class="truncate">請書</span></button>`
+                : `<button onclick="event.stopPropagation(); requestDocUpload(${order.id},'ack')" class="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-surface-container text-on-surface-variant text-[11px] hover:bg-surface-container-high transition-colors" title="請書PDFをアップロード"><span class="material-symbols-outlined text-[16px]">upload_file</span></button>`
+            }</td>
             <td class="px-3 py-1.5 text-center">
               <button class="inline-flex items-center gap-1 px-2 py-1.5 rounded-lg bg-primary/10 text-primary text-[12px] font-normal hover:bg-primary/20 transition-colors whitespace-nowrap" onclick="event.stopPropagation(); showPoPreview(${order.id})" title="発注書プレビュー">
                 <span class="material-symbols-outlined text-[16px]">receipt_long</span>
@@ -472,305 +491,360 @@ function renderTable() {
               </button>
             </td>
         </tr>
-    `).join('');
+    `
+    )
+    .join('');
 }
 
 function getStatusColor(status) {
-    const colors = {
-        '未処理': 'bg-surface-container text-on-surface-variant',
-        '見積待ち': 'bg-tertiary-container text-on-tertiary-container',
-        '決定済み': 'bg-primary-container text-on-primary-container',
-        '発注完了': 'bg-secondary-container text-on-secondary-container',
-        '支払済み': 'bg-secondary text-on-secondary'
-    };
-    return statusClass(colors, status, 'bg-surface-container text-on-surface');
+  const colors = {
+    未処理: 'bg-surface-container text-on-surface-variant',
+    見積待ち: 'bg-tertiary-container text-on-tertiary-container',
+    決定済み: 'bg-primary-container text-on-primary-container',
+    発注完了: 'bg-secondary-container text-on-secondary-container',
+    支払済み: 'bg-secondary text-on-secondary',
+  };
+  return statusClass(colors, status, 'bg-surface-container text-on-surface');
 }
 
 // 未/済バッジ（済=緑、未=グレー）
 function doneBadge(done) {
-    const cls = done ? 'bg-secondary-container text-on-secondary-container' : 'bg-surface-dim text-on-surface-variant';
-    return `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] ${cls} hover:opacity-80">${done ? '済' : '未'}</span>`;
+  const cls = done ? 'bg-secondary-container text-on-secondary-container' : 'bg-surface-dim text-on-surface-variant';
+  return `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] ${cls} hover:opacity-80">${done ? '済' : '未'}</span>`;
 }
 
 // 請書（注文請書）の受領状況：DB列(ack_done)優先、未設定なら発注完了/支払済みを済とみなす
 function isAckDone(order) {
-    if (order.ack_done === true || order.ack_done === false) return order.ack_done;
-    return ['発注完了', '支払済み'].includes(order.status);
+  if (order.ack_done === true || order.ack_done === false) return order.ack_done;
+  return ['発注完了', '支払済み'].includes(order.status);
 }
 // 請求書の発行状況：DB列(invoice_done)優先、未設定なら該当案件に請求書が登録済みか
 function isInvoiceDone(order) {
-    if (order.invoice_done === true || order.invoice_done === false) return order.invoice_done;
-    const invoices = window.appCache.invoices || [];
-    return invoices.some(inv => inv.project_id == order.project_id);
+  if (order.invoice_done === true || order.invoice_done === false) return order.invoice_done;
+  const invoices = window.appCache.invoices || [];
+  return invoices.some(inv => inv.project_id == order.project_id);
 }
-function ackBadge(order) { return doneBadge(isAckDone(order)); }
-function invoiceBadge(order) { return doneBadge(isInvoiceDone(order)); }
+function ackBadge(order) {
+  return doneBadge(isAckDone(order));
+}
+function invoiceBadge(order) {
+  return doneBadge(isInvoiceDone(order));
+}
 
 // 未/済を変更（DB保存＋履歴記録）
 async function setDocStatus(kind, id, value) {
-    const apply = (o) => { if (o) o[kind === 'invoice' ? 'invoice_done' : 'ack_done'] = value; };
-    try {
-        const res = await fetch(`/api/orders/${id}/doc-status`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ kind, value })
-        });
-        if (!res.ok) throw new Error('failed');
-        apply(orders.find(o => o.id === id));
-        apply(window.appCache.orders.find(o => o.id === id));
-        renderTable();
-    } catch (e) {
-        alert('更新に失敗しました');
-    }
+  const apply = o => {
+    if (o) o[kind === 'invoice' ? 'invoice_done' : 'ack_done'] = value;
+  };
+  try {
+    const res = await fetch(`/api/orders/${id}/doc-status`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ kind, value }),
+    });
+    if (!res.ok) throw new Error('failed');
+    apply(orders.find(o => o.id === id));
+    apply(window.appCache.orders.find(o => o.id === id));
+    renderTable();
+  } catch (e) {
+    alert('更新に失敗しました');
+  }
 }
 // 請書/請求書 PDF アップロード（グレーのアップボタン押下→ファイル選択→保存）
 const DOC_LABEL = { ack: '請書', invoice: '請求書' };
 let _docUpload = { id: null, kind: null };
 function requestDocUpload(id, kind) {
-    _docUpload = { id, kind };
-    const input = document.getElementById('doc-file-input');
-    input.value = '';
-    input.click();
+  _docUpload = { id, kind };
+  const input = document.getElementById('doc-file-input');
+  input.value = '';
+  input.click();
 }
 document.addEventListener('DOMContentLoaded', () => {
-    const input = document.getElementById('doc-file-input');
-    if (input) input.addEventListener('change', handleDocFileSelected);
+  const input = document.getElementById('doc-file-input');
+  if (input) input.addEventListener('change', handleDocFileSelected);
 });
 async function handleDocFileSelected(e) {
-    const file = e.target.files && e.target.files[0];
-    const { id, kind } = _docUpload;
-    if (!file || id == null) return;
-    const label = DOC_LABEL[kind] || '書類';
-    if (file.type !== 'application/pdf' && !/\.pdf$/i.test(file.name)) { alert('PDFファイルを選択してください'); _docUpload = { id: null, kind: null }; return; }
-    if (file.size > 3 * 1024 * 1024) { alert('ファイルサイズは3MBまでにしてください（サーバー制限）。\n大きいPDFは圧縮してからアップロードしてください。'); _docUpload = { id: null, kind: null }; return; }
-    const dataUrl = await new Promise((resolve, reject) => {
-        const r = new FileReader();
-        r.onload = () => resolve(r.result);
-        r.onerror = reject;
-        r.readAsDataURL(file);
+  const file = e.target.files && e.target.files[0];
+  const { id, kind } = _docUpload;
+  if (!file || id == null) return;
+  const label = DOC_LABEL[kind] || '書類';
+  if (file.type !== 'application/pdf' && !/\.pdf$/i.test(file.name)) {
+    alert('PDFファイルを選択してください');
+    _docUpload = { id: null, kind: null };
+    return;
+  }
+  if (file.size > 3 * 1024 * 1024) {
+    alert('ファイルサイズは3MBまでにしてください（サーバー制限）。\n大きいPDFは圧縮してからアップロードしてください。');
+    _docUpload = { id: null, kind: null };
+    return;
+  }
+  const dataUrl = await new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(r.result);
+    r.onerror = reject;
+    r.readAsDataURL(file);
+  });
+  try {
+    const res = await fetch(`/api/orders/${id}/file/${kind}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ filename: file.name, dataUrl }),
     });
-    try {
-        const res = await fetch(`/api/orders/${id}/file/${kind}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ filename: file.name, dataUrl })
-        });
-        if (!res.ok) {
-            if (res.status === 413) throw new Error('ファイルが大きすぎます（3MB以下に圧縮してください）');
-            const d = await res.json().catch(() => ({})); throw new Error(d.error || `HTTP ${res.status}`);
-        }
-        const mark = (o) => {
-            if (!o) return;
-            if (kind === 'invoice') { o.invoice_has_file = true; o.invoice_filename = file.name; o.invoice_done = true; }
-            else { o.ack_has_file = true; o.ack_filename = file.name; o.ack_done = true; }
-        };
-        mark(orders.find(o => o.id === id));
-        mark(window.appCache.orders.find(o => o.id === id));
-        renderTable();
-    } catch (err) {
-        alert(`${label}のアップロードに失敗しました：` + err.message);
-    } finally {
-        _docUpload = { id: null, kind: null };
+    if (!res.ok) {
+      if (res.status === 413) throw new Error('ファイルが大きすぎます（3MB以下に圧縮してください）');
+      const d = await res.json().catch(() => ({}));
+      throw new Error(d.error || `HTTP ${res.status}`);
     }
+    const mark = o => {
+      if (!o) return;
+      if (kind === 'invoice') {
+        o.invoice_has_file = true;
+        o.invoice_filename = file.name;
+        o.invoice_done = true;
+      } else {
+        o.ack_has_file = true;
+        o.ack_filename = file.name;
+        o.ack_done = true;
+      }
+    };
+    mark(orders.find(o => o.id === id));
+    mark(window.appCache.orders.find(o => o.id === id));
+    renderTable();
+  } catch (err) {
+    alert(`${label}のアップロードに失敗しました：` + err.message);
+  } finally {
+    _docUpload = { id: null, kind: null };
+  }
 }
 
 // アップ済みPDFをモーダルで表示
 let _docModal = { id: null, kind: null };
 function openDocModal(id, kind) {
-    _docModal = { id, kind };
-    const order = orders.find(o => o.id === id) || window.appCache.orders.find(o => o.id === id);
-    document.getElementById('doc-modal-title').textContent = DOC_LABEL[kind] || '書類';
-    document.getElementById('doc-modal-name').textContent = order ? `（${order.category || ''} / ${order.vendor || ''}）` : '';
-    document.getElementById('doc-frame').src = `/api/orders/${id}/file/${kind}#toolbar=1&view=FitH`;
-    document.getElementById('doc-modal').style.display = 'block';
+  _docModal = { id, kind };
+  const order = orders.find(o => o.id === id) || window.appCache.orders.find(o => o.id === id);
+  document.getElementById('doc-modal-title').textContent = DOC_LABEL[kind] || '書類';
+  document.getElementById('doc-modal-name').textContent = order ? `（${order.category || ''} / ${order.vendor || ''}）` : '';
+  document.getElementById('doc-frame').src = `/api/orders/${id}/file/${kind}#toolbar=1&view=FitH`;
+  document.getElementById('doc-modal').style.display = 'block';
 }
 function closeDocModal() {
-    document.getElementById('doc-modal').style.display = 'none';
-    document.getElementById('doc-frame').src = 'about:blank';
-    _docModal = { id: null, kind: null };
+  document.getElementById('doc-modal').style.display = 'none';
+  document.getElementById('doc-frame').src = 'about:blank';
+  _docModal = { id: null, kind: null };
 }
 async function deleteDocFile() {
-    const { id, kind } = _docModal;
-    if (id == null) return;
-    const label = DOC_LABEL[kind] || '書類';
-    if (!confirm(`${label}PDFを削除します。よろしいですか？`)) return;
-    try {
-        const res = await fetch(`/api/orders/${id}/file/${kind}`, { method: 'DELETE' });
-        if (!res.ok) throw new Error('failed');
-        const mark = (o) => {
-            if (!o) return;
-            if (kind === 'invoice') { o.invoice_has_file = false; o.invoice_filename = null; o.invoice_done = false; }
-            else { o.ack_has_file = false; o.ack_filename = null; o.ack_done = false; }
-        };
-        mark(orders.find(o => o.id === id));
-        mark(window.appCache.orders.find(o => o.id === id));
-        closeDocModal();
-        renderTable();
-    } catch (err) {
-        alert(`${label}の削除に失敗しました`);
-    }
+  const { id, kind } = _docModal;
+  if (id == null) return;
+  const label = DOC_LABEL[kind] || '書類';
+  if (!confirm(`${label}PDFを削除します。よろしいですか？`)) return;
+  try {
+    const res = await fetch(`/api/orders/${id}/file/${kind}`, { method: 'DELETE' });
+    if (!res.ok) throw new Error('failed');
+    const mark = o => {
+      if (!o) return;
+      if (kind === 'invoice') {
+        o.invoice_has_file = false;
+        o.invoice_filename = null;
+        o.invoice_done = false;
+      } else {
+        o.ack_has_file = false;
+        o.ack_filename = null;
+        o.ack_done = false;
+      }
+    };
+    mark(orders.find(o => o.id === id));
+    mark(window.appCache.orders.find(o => o.id === id));
+    closeDocModal();
+    renderTable();
+  } catch (err) {
+    alert(`${label}の削除に失敗しました`);
+  }
 }
 
 function toggleAck(id) {
-    const order = orders.find(o => o.id === id) || window.appCache.orders.find(o => o.id === id);
-    if (!order) return;
-    const cur = isAckDone(order);
-    if (confirm(`請書のステータスを「${cur ? '済' : '未'}」→「${cur ? '未' : '済'}」に変更しますか？`)) {
-        setDocStatus('ack', id, !cur);
-    }
+  const order = orders.find(o => o.id === id) || window.appCache.orders.find(o => o.id === id);
+  if (!order) return;
+  const cur = isAckDone(order);
+  if (confirm(`請書のステータスを「${cur ? '済' : '未'}」→「${cur ? '未' : '済'}」に変更しますか？`)) {
+    setDocStatus('ack', id, !cur);
+  }
 }
 function toggleInvoice(id) {
-    const order = orders.find(o => o.id === id) || window.appCache.orders.find(o => o.id === id);
-    if (!order) return;
-    const cur = isInvoiceDone(order);
-    if (confirm(`請求書のステータスを「${cur ? '済' : '未'}」→「${cur ? '未' : '済'}」に変更しますか？`)) {
-        setDocStatus('invoice', id, !cur);
-    }
+  const order = orders.find(o => o.id === id) || window.appCache.orders.find(o => o.id === id);
+  if (!order) return;
+  const cur = isInvoiceDone(order);
+  if (confirm(`請求書のステータスを「${cur ? '済' : '未'}」→「${cur ? '未' : '済'}」に変更しますか？`)) {
+    setDocStatus('invoice', id, !cur);
+  }
 }
 
 // 一覧から直接ステータス変更（PUTで保存→履歴記録）
 async function updateOrderStatus(id, status) {
-    const o = window.appCache.orders.find(x => x.id === id);
-    if (!o || o.status === status) return;
-    const b = { project_id: o.project_id, category: o.category, vendor: o.vendor, estimate: o.estimate, planned: o.planned, decided: o.decided, status, details: o.details, site: o.site, period_start: o.period_start, period_end: o.period_end, handover: o.handover, payment: o.payment, paymentStatus: o.paymentStatus, paymentDate: o.paymentDate, paymentNotes: o.paymentNotes };
-    try {
-        const res = await fetch(`/api/orders/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(b) });
-        if (!res.ok) throw new Error('failed');
-        o.status = status;
-        const inView = orders.find(x => x.id === id); if (inView) inView.status = status;
-        filterTable();
-    } catch (e) {
-        alert('ステータス更新に失敗しました');
-    }
+  const o = window.appCache.orders.find(x => x.id === id);
+  if (!o || o.status === status) return;
+  const b = {
+    project_id: o.project_id,
+    category: o.category,
+    vendor: o.vendor,
+    estimate: o.estimate,
+    planned: o.planned,
+    decided: o.decided,
+    status,
+    details: o.details,
+    site: o.site,
+    period_start: o.period_start,
+    period_end: o.period_end,
+    handover: o.handover,
+    payment: o.payment,
+    paymentStatus: o.paymentStatus,
+    paymentDate: o.paymentDate,
+    paymentNotes: o.paymentNotes,
+  };
+  try {
+    const res = await fetch(`/api/orders/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(b) });
+    if (!res.ok) throw new Error('failed');
+    o.status = status;
+    const inView = orders.find(x => x.id === id);
+    if (inView) inView.status = status;
+    filterTable();
+  } catch (e) {
+    alert('ステータス更新に失敗しました');
+  }
 }
 
 function updateSummary() {
-    const revenue = orders.reduce((sum, o) => sum + (o.decided || o.planned || 0), 0);
-    const cost = orders.reduce((sum, o) => sum + (o.estimate || 0), 0);
-    const profit = revenue - cost;
-    const margin = revenue > 0 ? (profit / revenue * 100) : 0;
-    const budgetRevenue = 25000000;
-    const budgetCost = 18000000;
-    const achievementRate = budgetRevenue > 0 ? Math.round(revenue / budgetRevenue * 100) : 0;
-    const costRate = budgetCost > 0 ? Math.round(cost / budgetCost * 100) : 0;
-    const revenueWidth = Math.min(100, achievementRate);
-    const costWidth = Math.min(100, costRate);
+  const revenue = orders.reduce((sum, o) => sum + (o.decided || o.planned || 0), 0);
+  const cost = orders.reduce((sum, o) => sum + (o.estimate || 0), 0);
+  const profit = revenue - cost;
+  const margin = revenue > 0 ? (profit / revenue) * 100 : 0;
+  const budgetRevenue = 25000000;
+  const budgetCost = 18000000;
+  const achievementRate = budgetRevenue > 0 ? Math.round((revenue / budgetRevenue) * 100) : 0;
+  const costRate = budgetCost > 0 ? Math.round((cost / budgetCost) * 100) : 0;
+  const revenueWidth = Math.min(100, achievementRate);
+  const costWidth = Math.min(100, costRate);
 
-    // Update summary values
-    const summaryRevenue = document.querySelector('.summary-revenue');
-    const summaryRate = document.querySelector('.summary-rate');
-    const progressRevenue = document.querySelector('.progress-revenue');
-    if (summaryRevenue) summaryRevenue.textContent = revenue.toLocaleString();
-    if (summaryRate) summaryRate.textContent = '予算達成率 ' + achievementRate + '%';
-    if (progressRevenue) progressRevenue.style.width = revenueWidth + '%';
+  // Update summary values
+  const summaryRevenue = document.querySelector('.summary-revenue');
+  const summaryRate = document.querySelector('.summary-rate');
+  const progressRevenue = document.querySelector('.progress-revenue');
+  if (summaryRevenue) summaryRevenue.textContent = revenue.toLocaleString();
+  if (summaryRate) summaryRate.textContent = '予算達成率 ' + achievementRate + '%';
+  if (progressRevenue) progressRevenue.style.width = revenueWidth + '%';
 
-    const summaryCost = document.querySelector('.summary-cost');
-    const summaryCostRate = document.querySelector('.summary-cost-rate');
-    const progressCost = document.querySelector('.progress-cost');
-    if (summaryCost) summaryCost.textContent = cost.toLocaleString();
-    if (summaryCostRate) summaryCostRate.textContent = costRate > 100 ? '予算超過注意' : '予算内';
-    if (progressCost) progressCost.style.width = costWidth + '%';
+  const summaryCost = document.querySelector('.summary-cost');
+  const summaryCostRate = document.querySelector('.summary-cost-rate');
+  const progressCost = document.querySelector('.progress-cost');
+  if (summaryCost) summaryCost.textContent = cost.toLocaleString();
+  if (summaryCostRate) summaryCostRate.textContent = costRate > 100 ? '予算超過注意' : '予算内';
+  if (progressCost) progressCost.style.width = costWidth + '%';
 
-    const summaryProfit = document.querySelector('.summary-profit');
-    const budgetProfit = 7000000;
-    const profitWidth = budgetProfit > 0 ? Math.min(100, Math.max(0, profit / budgetProfit * 100)) : 0;
-    const progressProfit = document.querySelector('.progress-profit');
-    if (summaryProfit) summaryProfit.textContent = profit.toLocaleString();
-    if (progressProfit) progressProfit.style.width = profitWidth + '%';
+  const summaryProfit = document.querySelector('.summary-profit');
+  const budgetProfit = 7000000;
+  const profitWidth = budgetProfit > 0 ? Math.min(100, Math.max(0, (profit / budgetProfit) * 100)) : 0;
+  const progressProfit = document.querySelector('.progress-profit');
+  if (summaryProfit) summaryProfit.textContent = profit.toLocaleString();
+  if (progressProfit) progressProfit.style.width = profitWidth + '%';
 
-    const summaryMargin = document.querySelector('.summary-margin');
-    if (summaryMargin) summaryMargin.textContent = margin.toFixed(1) + '%';
+  const summaryMargin = document.querySelector('.summary-margin');
+  if (summaryMargin) summaryMargin.textContent = margin.toFixed(1) + '%';
 }
 
 // 発注先がその工事区分に対応するか。タグ未指定なら全工事区分で表示、1つでもあればその区分のみ。
 function vendorMatchesCategory(v, categoryName) {
-    const tags = (v.categories || '').split(',').map(s => s.trim()).filter(Boolean);
-    if (tags.length === 0) return true;          // 未指定 → 全工事区分に表示
-    return !!categoryName && tags.includes(categoryName); // 指定あり → その区分のみ
+  const tags = (v.categories || '')
+    .split(',')
+    .map(s => s.trim())
+    .filter(Boolean);
+  if (tags.length === 0) return true; // 未指定 → 全工事区分に表示
+  return !!categoryName && tags.includes(categoryName); // 指定あり → その区分のみ
 }
 
 // 工事区分に連動して発注先プルダウンを再構築（選択中の値は可能なら維持）
 function populateVendorSelect(categoryName, keepValue) {
-    const sel = document.getElementById('edit-vendor');
-    const cur = keepValue !== undefined ? keepValue : sel.value;
-    const list = (window.appCache.vendors || []).filter(v => vendorMatchesCategory(v, categoryName));
-    sel.innerHTML = '<option value="">選択してください</option>' +
-        list.map(v => `<option value="${v.company}">${v.company}</option>`).join('');
-    if (cur && list.some(v => v.company === cur)) sel.value = cur;
+  const sel = document.getElementById('edit-vendor');
+  const cur = keepValue !== undefined ? keepValue : sel.value;
+  const list = (window.appCache.vendors || []).filter(v => vendorMatchesCategory(v, categoryName));
+  sel.innerHTML = '<option value="">選択してください</option>' + list.map(v => `<option value="${v.company}">${v.company}</option>`).join('');
+  if (cur && list.some(v => v.company === cur)) sel.value = cur;
 }
 
 function openOrderModal(id, category, vendor, estimate, planned, status) {
-    editingId = id || null;
-    if (id) {
-        const order = orders.find(o => o.id === id);
-        document.getElementById('edit-category').value = order.category;
-        populateVendorSelect(order.category, order.vendor);
-        document.getElementById('edit-vendor').value = order.vendor;
-        document.getElementById('edit-estimate').value = order.estimate;
-        document.getElementById('edit-planned').value = order.planned;
-        document.getElementById('edit-decided').value = order.decided;
-        document.getElementById('edit-status').value = order.status;
-        document.getElementById('edit-id').value = order.id;
-    } else {
-        document.getElementById('edit-category').value = '';
-        populateVendorSelect('');
-        document.getElementById('edit-vendor').value = '';
-        document.getElementById('edit-estimate').value = '';
-        document.getElementById('edit-planned').value = '';
-        document.getElementById('edit-decided').value = '';
-        document.getElementById('edit-status').value = '未処理';
-    }
+  editingId = id || null;
+  if (id) {
+    const order = orders.find(o => o.id === id);
+    document.getElementById('edit-category').value = order.category;
+    populateVendorSelect(order.category, order.vendor);
+    document.getElementById('edit-vendor').value = order.vendor;
+    document.getElementById('edit-estimate').value = order.estimate;
+    document.getElementById('edit-planned').value = order.planned;
+    document.getElementById('edit-decided').value = order.decided;
+    document.getElementById('edit-status').value = order.status;
+    document.getElementById('edit-id').value = order.id;
+  } else {
+    document.getElementById('edit-category').value = '';
+    populateVendorSelect('');
+    document.getElementById('edit-vendor').value = '';
+    document.getElementById('edit-estimate').value = '';
+    document.getElementById('edit-planned').value = '';
+    document.getElementById('edit-decided').value = '';
+    document.getElementById('edit-status').value = '未処理';
+  }
 
-    const modal = document.getElementById('edit-modal');
-    modal.style.display = 'block';
-    document.body.style.overflow = 'hidden';
+  const modal = document.getElementById('edit-modal');
+  modal.style.display = 'block';
+  document.body.style.overflow = 'hidden';
 }
 
 function closeOrderModal() {
-    const modal = document.getElementById('edit-modal');
-    modal.style.display = 'none';
-    document.body.style.overflow = '';
+  const modal = document.getElementById('edit-modal');
+  modal.style.display = 'none';
+  document.body.style.overflow = '';
 }
 
 // PO preview modal
 let currentPoOrderId = null;
 
 function showPoPreview(orderId) {
-    const order = window.appCache.orders.find(o => o.id === orderId);
-    if (!order) return;
+  const order = window.appCache.orders.find(o => o.id === orderId);
+  if (!order) return;
 
-    currentPoOrderId = orderId;
-    const project = window.appCache.projects.find(p => p.id === order.project_id);
+  currentPoOrderId = orderId;
+  const project = window.appCache.projects.find(p => p.id === order.project_id);
 
-    // Build and show modal
-    showPoModal(order, project);
+  // Build and show modal
+  showPoModal(order, project);
 }
 
 function showPoModal(order, project) {
-    const modal = document.createElement('div');
-    modal.className = 'fixed inset-0 z-[150]';
-    modal.id = 'po-preview-modal';
-    modal.onclick = closePoPreview;
+  const modal = document.createElement('div');
+  modal.className = 'fixed inset-0 z-[150]';
+  modal.id = 'po-preview-modal';
+  modal.onclick = closePoPreview;
 
-    const periodStart = order.period_start;
-    const periodEnd = order.period_end;
-    const period = (periodStart && periodEnd) ? `着手予定　${periodStart}　～　完成予定　${periodEnd}` : '---';
-    const vendorName = order.vendor || '---';
-    const net = Number(order.decided || order.planned || order.estimate) || 0;
-    const tax = Math.floor(net * 0.1), total = net + tax;
-    const _d = new Date(), wy = _d.getFullYear() - 2018, wm = _d.getMonth() + 1, wd = _d.getDate();
-    const poFields = [
-      ['工事名', project ? project.name : (order.details || '---')],
-      ['工事内容', order.category || order.details || '---'],
-      ['工事場所', order.site || '---'],
-      ['工事期間', period],
-      ['検査及び引渡し時期（施主に対して）', order.handover || '---'],
-      ['請負代金', `￥${total.toLocaleString()}（内消費税額　￥${tax.toLocaleString()}　）`],
-      ['支払条件／支払方法', order.payment || '---'],
-    ];
-    const poRows = poFields.map(([l, v]) => `<tr><td class="border border-outline-variant p-2 align-top w-[34%] bg-surface-container-low/50">□ ${l}</td><td class="border border-outline-variant p-2 align-top">${v}</td></tr>`).join('');
+  const periodStart = order.period_start;
+  const periodEnd = order.period_end;
+  const period = periodStart && periodEnd ? `着手予定　${periodStart}　～　完成予定　${periodEnd}` : '---';
+  const vendorName = order.vendor || '---';
+  const net = Number(order.decided || order.planned || order.estimate) || 0;
+  const tax = Math.floor(net * 0.1),
+    total = net + tax;
+  const _d = new Date(),
+    wy = _d.getFullYear() - 2018,
+    wm = _d.getMonth() + 1,
+    wd = _d.getDate();
+  const poFields = [
+    ['工事名', project ? project.name : order.details || '---'],
+    ['工事内容', order.category || order.details || '---'],
+    ['工事場所', order.site || '---'],
+    ['工事期間', period],
+    ['検査及び引渡し時期（施主に対して）', order.handover || '---'],
+    ['請負代金', `￥${total.toLocaleString()}（内消費税額　￥${tax.toLocaleString()}　）`],
+    ['支払条件／支払方法', order.payment || '---'],
+  ];
+  const poRows = poFields.map(([l, v]) => `<tr><td class="border border-outline-variant p-2 align-top w-[34%] bg-surface-container-low/50">□ ${l}</td><td class="border border-outline-variant p-2 align-top">${v}</td></tr>`).join('');
 
-    modal.innerHTML = `
+  modal.innerHTML = `
       <div class="absolute inset-0 bg-inverse-surface/60 backdrop-blur-md"></div>
       <div class="flex items-center justify-center min-h-screen p-4" onclick="event.stopPropagation()">
         <div class="bg-white w-full max-w-2xl rounded-lg shadow-2xl overflow-hidden relative border border-outline-variant" onclick="event.stopPropagation()">
@@ -810,47 +884,47 @@ function showPoModal(order, project) {
         </div>
       </div>
     `;
-    document.body.appendChild(modal);
-    document.body.style.overflow = 'hidden';
+  document.body.appendChild(modal);
+  document.body.style.overflow = 'hidden';
 }
 
 function closePoPreview() {
-    const modal = document.getElementById('po-preview-modal');
-    if (modal) modal.remove();
-    const emailPanel = document.getElementById('po-email-panel');
-    if (emailPanel) emailPanel.remove();
-    document.body.style.overflow = '';
+  const modal = document.getElementById('po-preview-modal');
+  if (modal) modal.remove();
+  const emailPanel = document.getElementById('po-email-panel');
+  if (emailPanel) emailPanel.remove();
+  document.body.style.overflow = '';
 }
 
 async function downloadPo() {
-    if (!currentPoOrderId) return;
-    try {
-        const res = await fetch(`/api/po/${currentPoOrderId}`);
-        if (!res.ok) throw new Error('Failed');
-        const blob = await res.blob();
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `po-${currentPoOrderId}.pdf`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-    } catch (err) {
-        alert('ダウンロードに失敗しました: ' + err.message);
-    }
+  if (!currentPoOrderId) return;
+  try {
+    const res = await fetch(`/api/po/${currentPoOrderId}`);
+    if (!res.ok) throw new Error('Failed');
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `po-${currentPoOrderId}.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  } catch (err) {
+    alert('ダウンロードに失敗しました: ' + err.message);
+  }
 }
 
 function openPoEmailForm() {
-    const order = window.appCache.orders.find(o => o.id === currentPoOrderId);
-    if (!order) return;
+  const order = window.appCache.orders.find(o => o.id === currentPoOrderId);
+  if (!order) return;
 
-    const panel = document.createElement('div');
-    panel.className = 'fixed inset-0 z-[160] flex items-center justify-center p-4 bg-black/20';
-    panel.id = 'po-email-panel';
-    panel.onclick = closePoEmailForm;
+  const panel = document.createElement('div');
+  panel.className = 'fixed inset-0 z-[160] flex items-center justify-center p-4 bg-black/20';
+  panel.id = 'po-email-panel';
+  panel.onclick = closePoEmailForm;
 
-    panel.innerHTML = `
+  panel.innerHTML = `
       <div class="bg-white rounded-lg shadow-2xl w-full max-w-lg border border-outline-variant overflow-hidden" onclick="event.stopPropagation()">
         <div class="px-lg py-md border-b border-outline-variant flex justify-between items-center">
           <h3 class="text-sm font-bold text-on-surface flex items-center gap-2">
@@ -868,7 +942,7 @@ function openPoEmailForm() {
           </div>
           <div>
             <label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">件名</label>
-            <input id="po-email-subject" type="text" class="w-full bg-surface-container-low border border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent transition-all" value="【発注書送付】${project ? project.name : (order.category || '工事')}"/>
+            <input id="po-email-subject" type="text" class="w-full bg-surface-container-low border border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent transition-all" value="【発注書送付】${project ? project.name : order.category || '工事'}"/>
           </div>
           <div>
             <label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">本文</label>
@@ -877,7 +951,7 @@ function openPoEmailForm() {
 いつもお世話になっております。
 株式会社WIN WINでございます。
 
-このたびは「${project ? project.name : (order.category || '本工事')}」につきまして、発注書を添付のとおりお送りいたします。
+このたびは「${project ? project.name : order.category || '本工事'}」につきまして、発注書を添付のとおりお送りいたします。
 ご査収のうえ、注文請書のご返送を賜りますようお願い申し上げます。
 
 ご不明な点がございましたら、お気軽にお問い合わせください。
@@ -902,212 +976,219 @@ TEL：075-777-1236
         </div>
       </div>
     `;
-    document.body.appendChild(panel);
+  document.body.appendChild(panel);
 }
 
 function closePoEmailForm() {
-    const panel = document.getElementById('po-email-panel');
-    if (panel) panel.remove();
+  const panel = document.getElementById('po-email-panel');
+  if (panel) panel.remove();
 }
 
 async function sendPoEmail() {
-    alert('メール送信機能は準備中です');
+  alert('メール送信機能は準備中です');
+  return;
+  const to = document.getElementById('po-email-to').value.trim();
+  const subject = document.getElementById('po-email-subject').value.trim();
+  const body = document.getElementById('po-email-body').value.trim();
+
+  if (!to || !subject) {
+    alert('宛先と件名を入力してください');
     return;
-    const to = document.getElementById('po-email-to').value.trim();
-    const subject = document.getElementById('po-email-subject').value.trim();
-    const body = document.getElementById('po-email-body').value.trim();
+  }
 
-    if (!to || !subject) {
-        alert('宛先と件名を入力してください');
-        return;
-    }
+  const btn = document.getElementById('po-send-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="material-symbols-outlined text-[18px]">hourglass_empty</span>送信中...';
 
-    const btn = document.getElementById('po-send-btn');
-    btn.disabled = true;
-    btn.innerHTML = '<span class="material-symbols-outlined text-[18px]">hourglass_empty</span>送信中...';
-
-    try {
-        const res = await fetch('/api/po/send', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ orderId: currentPoOrderId, to, subject, body })
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || '送信失敗');
-        alert(`メールを送信しました\n\n宛先: ${to}`);
-        closePoEmailForm();
-        closePoPreview();
-    } catch (err) {
-        alert('メール送信に失敗しました: ' + err.message);
-    } finally {
-        btn.disabled = false;
-        btn.innerHTML = '<span class="material-symbols-outlined text-[18px]">send</span>送信';
-    }
+  try {
+    const res = await fetch('/api/po/send', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ orderId: currentPoOrderId, to, subject, body }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || '送信失敗');
+    alert(`メールを送信しました\n\n宛先: ${to}`);
+    closePoEmailForm();
+    closePoPreview();
+  } catch (err) {
+    alert('メール送信に失敗しました: ' + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<span class="material-symbols-outlined text-[18px]">send</span>送信';
+  }
 }
 
 async function saveOrder() {
-    const id = document.getElementById('edit-id').value;
-    const data = {
-        project_id: projectId || null,
-        category: document.getElementById('edit-category').value,
-        vendor: document.getElementById('edit-vendor').value,
-        estimate: parseInt(document.getElementById('edit-estimate').value) || 0,
-        planned: parseInt(document.getElementById('edit-planned').value) || 0,
-        decided: parseInt(document.getElementById('edit-decided').value) || 0,
-        status: document.getElementById('edit-status').value,
-        site: document.getElementById('edit-site').value || '',
-        period_start: document.getElementById('edit-period-start').value || '',
-        period_end: document.getElementById('edit-period-end').value || '',
-        handover: document.getElementById('edit-handover').value || '',
-        payment: document.getElementById('edit-payment').value || '',
-        details: document.getElementById('edit-details').value || ''
-    };
+  const id = document.getElementById('edit-id').value;
+  const data = {
+    project_id: projectId || null,
+    category: document.getElementById('edit-category').value,
+    vendor: document.getElementById('edit-vendor').value,
+    estimate: parseInt(document.getElementById('edit-estimate').value) || 0,
+    planned: parseInt(document.getElementById('edit-planned').value) || 0,
+    decided: parseInt(document.getElementById('edit-decided').value) || 0,
+    status: document.getElementById('edit-status').value,
+    site: document.getElementById('edit-site').value || '',
+    period_start: document.getElementById('edit-period-start').value || '',
+    period_end: document.getElementById('edit-period-end').value || '',
+    handover: document.getElementById('edit-handover').value || '',
+    payment: document.getElementById('edit-payment').value || '',
+    details: document.getElementById('edit-details').value || '',
+  };
 
-    if (id) {
-        await fetch(`/api/orders/${id}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data)
-        });
-    } else {
-        await fetch('/api/orders', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data)
-        });
-    }
+  if (id) {
+    await fetch(`/api/orders/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+  } else {
+    await fetch('/api/orders', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+  }
 
-    // Update cache after save
-    const ordersRes = await fetch('/api/orders');
-    window.appCache.orders = await ordersRes.json();
-    loadOrders();
-    closeOrderModal();
+  // Update cache after save
+  const ordersRes = await fetch('/api/orders');
+  window.appCache.orders = await ordersRes.json();
+  loadOrders();
+  closeOrderModal();
 }
 
 async function deleteOrder(e, id) {
-    e.stopPropagation();
-    if (confirm('削除してもよろしいですか？')) {
-        await fetch(`/api/orders/${id}`, { method: 'DELETE' });
-        // Update cache after delete
-        const ordersRes = await fetch('/api/orders');
-        window.appCache.orders = await ordersRes.json();
-        loadOrders();
-    }
+  e.stopPropagation();
+  if (confirm('削除してもよろしいですか？')) {
+    await fetch(`/api/orders/${id}`, { method: 'DELETE' });
+    // Update cache after delete
+    const ordersRes = await fetch('/api/orders');
+    window.appCache.orders = await ordersRes.json();
+    loadOrders();
+  }
 }
 
 function editOrder(id) {
-    const order = orders.find(o => o.id === id);
-    if (order) {
-        openOrderModal(order.id, order.category, order.vendor, order.estimate, order.planned, order.status);
-    }
+  const order = orders.find(o => o.id === id);
+  if (order) {
+    openOrderModal(order.id, order.category, order.vendor, order.estimate, order.planned, order.status);
+  }
 }
 
 function openOrderDetailModal(id) {
-    editingId = id;
-    const order = window.appCache.orders.find(o => o.id === id);
+  editingId = id;
+  const order = window.appCache.orders.find(o => o.id === id);
 
-    if (order) {
-        document.getElementById('edit-id').value = order.id;
-        document.getElementById('edit-category').value = order.category;
-        populateVendorSelect(order.category, order.vendor);
-        document.getElementById('edit-vendor').value = order.vendor;
-        document.getElementById('edit-estimate').value = order.estimate;
-        document.getElementById('edit-planned').value = order.planned;
-        document.getElementById('edit-decided').value = order.decided;
-        document.getElementById('edit-status').value = order.status;
-        document.getElementById('edit-site').value = order.site || '';
-        document.getElementById('edit-period-start').value = order.period_start || '';
-        document.getElementById('edit-period-end').value = order.period_end || '';
-        document.getElementById('edit-handover').value = order.handover || '';
-        document.getElementById('edit-payment').value = order.payment || '';
-        document.getElementById('edit-details').value = order.details || '';
+  if (order) {
+    document.getElementById('edit-id').value = order.id;
+    document.getElementById('edit-category').value = order.category;
+    populateVendorSelect(order.category, order.vendor);
+    document.getElementById('edit-vendor').value = order.vendor;
+    document.getElementById('edit-estimate').value = order.estimate;
+    document.getElementById('edit-planned').value = order.planned;
+    document.getElementById('edit-decided').value = order.decided;
+    document.getElementById('edit-status').value = order.status;
+    document.getElementById('edit-site').value = order.site || '';
+    document.getElementById('edit-period-start').value = order.period_start || '';
+    document.getElementById('edit-period-end').value = order.period_end || '';
+    document.getElementById('edit-handover').value = order.handover || '';
+    document.getElementById('edit-payment').value = order.payment || '';
+    document.getElementById('edit-details').value = order.details || '';
+  }
+
+  const modal = document.getElementById('edit-modal');
+  modal.style.display = 'block';
+  setTimeout(() => {
+    const content = modal.querySelector('.bg-surface-container-lowest');
+    if (content) {
+      content.classList.remove('scale-95', 'opacity-0');
+      content.classList.add('scale-100', 'opacity-100');
     }
-
-    const modal = document.getElementById('edit-modal');
-    modal.style.display = 'block';
-    setTimeout(() => {
-        const content = modal.querySelector('.bg-surface-container-lowest');
-        if (content) {
-            content.classList.remove('scale-95', 'opacity-0');
-            content.classList.add('scale-100', 'opacity-100');
-        }
-    }, 10);
-    document.body.style.overflow = 'hidden';
+  }, 10);
+  document.body.style.overflow = 'hidden';
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
-    // Check if cache is empty and populate it
-    if (window.appCache.orders.length === 0) {
-        const res = await fetch('/api/cache');
-        window.appCache = await res.json();
-    }
+  // Check if cache is empty and populate it
+  if (window.appCache.orders.length === 0) {
+    const res = await fetch('/api/cache');
+    window.appCache = await res.json();
+  }
 
-    // projectIdが無い場合（ヘッダー/サイドバーから遷移）は案件選択画面を表示
-    if (!projectId) {
-        document.getElementById('orders-content').style.display = 'none';
-        document.getElementById('project-select-view').style.display = 'block';
-        renderProjectSelectList();
-        document.getElementById('keyword-search').addEventListener('input', renderProjectSelectList);
-        loadMasterData();
-        return;
-    }
-
-    // projectIdがある場合は工事計画明細を表示
-    document.getElementById('project-select-view').style.display = 'none';
-    document.getElementById('orders-content').style.display = 'block';
-    const project = window.appCache.projects.find(p => p.id == projectId);
-    if (project) {
-        document.getElementById('project-name').textContent = project.name;
-    }
-
-    loadOrders();
+  // projectIdが無い場合（ヘッダー/サイドバーから遷移）は案件選択画面を表示
+  if (!projectId) {
+    document.getElementById('orders-content').style.display = 'none';
+    document.getElementById('project-select-view').style.display = 'block';
+    renderProjectSelectList();
+    document.getElementById('keyword-search').addEventListener('input', renderProjectSelectList);
     loadMasterData();
+    return;
+  }
 
-    document.getElementById('category-filter').addEventListener('change', filterTable);
-    document.getElementById('status-filter').addEventListener('change', filterTable);
-    document.getElementById('keyword-search').addEventListener('input', filterTable);
+  // projectIdがある場合は工事計画明細を表示
+  document.getElementById('project-select-view').style.display = 'none';
+  document.getElementById('orders-content').style.display = 'block';
+  const project = window.appCache.projects.find(p => p.id == projectId);
+  if (project) {
+    document.getElementById('project-name').textContent = project.name;
+  }
+
+  loadOrders();
+  loadMasterData();
+
+  document.getElementById('category-filter').addEventListener('change', filterTable);
+  document.getElementById('status-filter').addEventListener('change', filterTable);
+  document.getElementById('keyword-search').addEventListener('input', filterTable);
 });
 
 function renderProjectSelectList() {
-    // 画面内検索とヘッダー検索の両方を反映
-    const kwInline = (document.getElementById('project-search').value || '').toLowerCase();
-    const kwHeader = (document.getElementById('keyword-search')?.value || '').toLowerCase();
-    const dateStart = document.getElementById('project-date-start').value;
-    const dateEnd = document.getElementById('project-date-end').value;
-    const list = document.getElementById('project-select-list');
-    const parseD = (s) => { if (!s) return null; const d = new Date(String(s).replace(/\//g, '-')); return isNaN(d) ? null : d; };
-    const rangeStart = dateStart ? new Date(dateStart) : null;
-    const rangeEnd = dateEnd ? new Date(dateEnd) : null;
+  // 画面内検索とヘッダー検索の両方を反映
+  const kwInline = (document.getElementById('project-search').value || '').toLowerCase();
+  const kwHeader = (document.getElementById('keyword-search')?.value || '').toLowerCase();
+  const dateStart = document.getElementById('project-date-start').value;
+  const dateEnd = document.getElementById('project-date-end').value;
+  const list = document.getElementById('project-select-list');
+  const parseD = s => {
+    if (!s) return null;
+    const d = new Date(String(s).replace(/\//g, '-'));
+    return isNaN(d) ? null : d;
+  };
+  const rangeStart = dateStart ? new Date(dateStart) : null;
+  const rangeEnd = dateEnd ? new Date(dateEnd) : null;
 
-    const projects = window.appCache.projects.filter(p => {
-        const name = p.name.toLowerCase();
-        if (kwInline && !name.includes(kwInline)) return false;
-        if (kwHeader && !name.includes(kwHeader)) return false;
-        // 期間で絞り込み：案件の工期が指定範囲に重なるもの
-        if (rangeStart || rangeEnd) {
-            const st = parseD(p.startDate), en = parseD(p.endDate);
-            if (!st || !en) return false;
-            if (rangeStart && en < rangeStart) return false;
-            if (rangeEnd && st > rangeEnd) return false;
-        }
-        return true;
-    });
-    if (projects.length === 0) {
-        list.innerHTML = '<tr><td colspan="7" class="px-3 py-10 text-center text-label-md text-on-surface-variant">該当する案件がありません</td></tr>';
-        return;
+  const projects = window.appCache.projects.filter(p => {
+    const name = p.name.toLowerCase();
+    if (kwInline && !name.includes(kwInline)) return false;
+    if (kwHeader && !name.includes(kwHeader)) return false;
+    // 期間で絞り込み：案件の工期が指定範囲に重なるもの
+    if (rangeStart || rangeEnd) {
+      const st = parseD(p.startDate),
+        en = parseD(p.endDate);
+      if (!st || !en) return false;
+      if (rangeStart && en < rangeStart) return false;
+      if (rangeEnd && st > rangeEnd) return false;
     }
-    const stClass = (s) => ({
-        '未対応': 'bg-surface-container text-on-surface-variant',
-        '提案中': 'bg-secondary-container text-on-secondary-container',
-        '見積確認中': 'border border-outline-variant bg-surface-container-lowest text-on-surface-variant',
-        '受注': 'bg-secondary text-on-secondary',
-        '失注': 'bg-error-container text-on-error-container'
+    return true;
+  });
+  if (projects.length === 0) {
+    list.innerHTML = '<tr><td colspan="7" class="px-3 py-10 text-center text-label-md text-on-surface-variant">該当する案件がありません</td></tr>';
+    return;
+  }
+  const stClass = s =>
+    ({
+      未対応: 'bg-surface-container text-on-surface-variant',
+      提案中: 'bg-secondary-container text-on-secondary-container',
+      見積確認中: 'border border-outline-variant bg-surface-container-lowest text-on-surface-variant',
+      受注: 'bg-secondary text-on-secondary',
+      失注: 'bg-error-container text-on-error-container',
     })[s] || 'bg-surface-container text-on-surface-variant';
-    const esc = (x) => String(x ?? '').replace(/[&<>"]/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c]));
-    list.innerHTML = projects.map(p => {
-        const period = (p.startDate && p.endDate) ? `${p.startDate} 〜 ${p.endDate}` : '工期未設定';
-        const amount = p.amount ? ('¥' + Number(p.amount).toLocaleString()) : '—';
-        return `
+  const esc = x => String(x ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+  list.innerHTML = projects
+    .map(p => {
+      const period = p.startDate && p.endDate ? `${p.startDate} 〜 ${p.endDate}` : '工期未設定';
+      const amount = p.amount ? '¥' + Number(p.amount).toLocaleString() : '—';
+      return `
         <tr class="hover:bg-surface-container-low cursor-pointer transition-colors" onclick="location.href='/orders-list.html?projectId=${p.id}'">
             <td class="px-3 py-2.5 text-label-md text-on-surface-variant tabular-nums whitespace-nowrap">${esc(p.project_no || '-')}</td>
             <td class="px-3 py-2.5 text-label-md font-label-md text-primary">${esc(p.name)}</td>
@@ -1117,53 +1198,55 @@ function renderProjectSelectList() {
             <td class="px-3 py-2.5 text-center"><span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] whitespace-nowrap ${stClass(p.status)}">${esc(p.status || '-')}</span></td>
             <td class="px-3 py-2.5 text-center"><span class="material-symbols-outlined text-secondary text-[20px]">chevron_right</span></td>
         </tr>
-    `;}).join('');
+    `;
+    })
+    .join('');
 }
 
 function loadMasterData() {
-    // Use global cached data
-    const categories = window.appCache.categories;
-    const vendors = window.appCache.vendors;
+  // Use global cached data
+  const categories = window.appCache.categories;
+  const vendors = window.appCache.vendors;
 
-    // Load categories to edit-category
-    const categorySelect = document.getElementById('edit-category');
-    categories.forEach(c => {
-        const option = document.createElement('option');
-        option.value = c.name;
-        option.textContent = c.name;
-        categorySelect.appendChild(option);
-    });
+  // Load categories to edit-category
+  const categorySelect = document.getElementById('edit-category');
+  categories.forEach(c => {
+    const option = document.createElement('option');
+    option.value = c.name;
+    option.textContent = c.name;
+    categorySelect.appendChild(option);
+  });
 
-    // 発注先は工事区分に連動して絞り込む（初期は全件）
-    populateVendorSelect('');
-    categorySelect.addEventListener('change', (e) => populateVendorSelect(e.target.value));
+  // 発注先は工事区分に連動して絞り込む（初期は全件）
+  populateVendorSelect('');
+  categorySelect.addEventListener('change', e => populateVendorSelect(e.target.value));
 
-    // Load categories to category-filter
-    const categoryFilter = document.getElementById('category-filter');
-    categories.forEach(c => {
-        const option = document.createElement('option');
-        option.value = c.name;
-        option.textContent = c.name;
-        categoryFilter.appendChild(option);
-    });
+  // Load categories to category-filter
+  const categoryFilter = document.getElementById('category-filter');
+  categories.forEach(c => {
+    const option = document.createElement('option');
+    option.value = c.name;
+    option.textContent = c.name;
+    categoryFilter.appendChild(option);
+  });
 }
 
 function filterTable() {
-    const category = document.getElementById('category-filter').value;
-    const status = document.getElementById('status-filter').value;
-    const keyword = document.getElementById('keyword-search').value.toLowerCase();
+  const category = document.getElementById('category-filter').value;
+  const status = document.getElementById('status-filter').value;
+  const keyword = document.getElementById('keyword-search').value.toLowerCase();
 
-    const filtered = orders.filter(o => {
-        const matchCategory = !category || o.category === category;
-        const matchStatus = !status || o.status === status;
-        const matchKeyword = !keyword ||
-            o.category.toLowerCase().includes(keyword) ||
-            o.vendor.toLowerCase().includes(keyword);
-        return matchCategory && matchStatus && matchKeyword;
-    });
+  const filtered = orders.filter(o => {
+    const matchCategory = !category || o.category === category;
+    const matchStatus = !status || o.status === status;
+    const matchKeyword = !keyword || o.category.toLowerCase().includes(keyword) || o.vendor.toLowerCase().includes(keyword);
+    return matchCategory && matchStatus && matchKeyword;
+  });
 
-    const tbody = document.getElementById('orders-table-body');
-    tbody.innerHTML = filtered.map((order) => `
+  const tbody = document.getElementById('orders-table-body');
+  tbody.innerHTML = filtered
+    .map(
+      order => `
         <tr class="hover:bg-surface-container-low transition-colors cursor-pointer group" onclick="openOrderDetailModal(${order.id})">
             <td class="px-3 py-1.5 text-label-md font-label-md text-on-surface group-hover:text-primary transition-colors">${order.category || '-'}</td>
             <td class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant">${order.vendor || '-'}</td>
@@ -1172,15 +1255,16 @@ function filterTable() {
             <td class="px-3 py-1.5 text-label-md font-label-md text-right tabular-numbers">${order.decided ? order.decided.toLocaleString() : '-'}</td>
             <td class="px-3 py-1.5 text-label-md font-label-md text-center whitespace-nowrap">
                 <div class="relative inline-block" onclick="event.stopPropagation()">
-                  <select onchange="updateOrderStatus(${order.id}, this.value)" class="appearance-none text-[11px] font-medium rounded-full pl-5 pr-5 py-1 text-center border border-transparent ring-1 ring-inset ring-black/5 cursor-pointer hover:opacity-90 focus:ring-2 focus:ring-secondary/40 shadow-sm transition-all ${getStatusColor(order.status)}">${['未処理','見積待ち','決定済み','発注完了','支払済み'].map(s => `<option value="${s}" ${s === order.status ? 'selected' : ''}>${s}</option>`).join('')}</select>
+                  <select onchange="updateOrderStatus(${order.id}, this.value)" class="appearance-none text-[11px] font-medium rounded-full pl-5 pr-5 py-1 text-center border border-transparent ring-1 ring-inset ring-black/5 cursor-pointer hover:opacity-90 focus:ring-2 focus:ring-secondary/40 shadow-sm transition-all ${getStatusColor(order.status)}">${['未処理', '見積待ち', '決定済み', '発注完了', '支払済み'].map(s => `<option value="${s}" ${s === order.status ? 'selected' : ''}>${s}</option>`).join('')}</select>
                   <span class="material-symbols-outlined absolute right-0.5 top-1/2 -translate-y-1/2 text-[16px] pointer-events-none">expand_more</span>
                 </div>
             </td>
         </tr>
-    `).join('');
+    `
+    )
+    .join('');
 }
-
 </script>
-<script src="/notify.js?v=58"></script>
+<script src="/notify.js?v=59"></script>
 </body>
 </html>
