@@ -131,6 +131,32 @@ create table payment_records (
   created_at timestamp default current_timestamp
 );
 
+-- 案件外の支払（工事外費用・給与その他）。工事計画（orders）に紐づかない支払を管理
+create table misc_payments (
+  id           serial primary key,
+  category     text,
+  type         text default '支払', -- 支払 | 返金
+  payee        text,
+  amount       bigint,
+  payment_date text,
+  status       text default '未払い', -- 未払い | 部分払い | 支払済み
+  notes        text,
+  created_at   timestamp default current_timestamp
+);
+
+-- 案件外の入金（案件に紐づかない売上・雑収入等）
+create table misc_receipts (
+  id           serial primary key,
+  category     text,
+  type         text default '入金', -- 入金 | 返金
+  payer        text,
+  amount       bigint,
+  receipt_date text,
+  status       text default '未入金', -- 未入金 | 一部入金 | 入金済
+  notes        text,
+  created_at   timestamp default current_timestamp
+);
+
 -- アカウント招待（24時間有効の発行リンク）
 create table invitations (
   id          serial primary key,

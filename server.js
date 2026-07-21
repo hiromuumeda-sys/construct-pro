@@ -766,6 +766,112 @@ app.delete(
   })
 );
 
+// ============ 案件外支払（工事外費用・給与その他） API ============
+app.get(
+  '/api/misc-payments',
+  h(async (req, res) => {
+    res.json(await q('SELECT * FROM misc_payments ORDER BY id DESC'));
+  })
+);
+
+app.post(
+  '/api/misc-payments',
+  h(async (req, res) => {
+    const { category, type, payee, amount, payment_date, status, notes } = req.body;
+    const row = await one('INSERT INTO misc_payments (category, type, payee, amount, payment_date, status, notes) VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING id', [
+      category || '',
+      type || '支払',
+      payee || '',
+      amount || 0,
+      payment_date || '',
+      status || '未払い',
+      notes || '',
+    ]);
+    await logAuditReq(req, 'CREATE', 'misc_payments', row.id, { name: `${category || '-'}（${payee || '-'}）`, changes: [`新規登録（${type || '支払'}: ¥${(amount || 0).toLocaleString()}）`] });
+    res.json({ id: row.id, ...req.body });
+  })
+);
+
+app.put(
+  '/api/misc-payments/:id',
+  h(async (req, res) => {
+    const { category, type, payee, amount, payment_date, status, notes } = req.body;
+    const before = await one('SELECT * FROM misc_payments WHERE id=$1', [req.params.id]);
+    await q('UPDATE misc_payments SET category=$1, type=$2, payee=$3, amount=$4, payment_date=$5, status=$6, notes=$7 WHERE id=$8', [
+      category ?? before?.category,
+      type ?? before?.type,
+      payee ?? before?.payee,
+      amount ?? before?.amount,
+      payment_date ?? before?.payment_date,
+      status ?? before?.status,
+      notes ?? before?.notes,
+      req.params.id,
+    ]);
+    await logAuditReq(req, 'UPDATE', 'misc_payments', parseInt(req.params.id), { name: `${before?.category || category || ''}（${before?.payee || payee || ''}）`, changes: [`更新`] });
+    res.json({ id: req.params.id, ...req.body });
+  })
+);
+
+app.delete(
+  '/api/misc-payments/:id',
+  deleteWithAudit('misc_payments', {
+    buildDetails: before => ({ name: `${before?.category || ''}（${before?.payee || ''}）`, changes: [`削除（${before?.category || '-'} / ${before?.payee || '-'}）`] }),
+  })
+);
+
+// ============ 案件外入金（案件に紐づかない入金） API ============
+app.get(
+  '/api/misc-receipts',
+  h(async (req, res) => {
+    res.json(await q('SELECT * FROM misc_receipts ORDER BY id DESC'));
+  })
+);
+
+app.post(
+  '/api/misc-receipts',
+  h(async (req, res) => {
+    const { category, type, payer, amount, receipt_date, status, notes } = req.body;
+    const row = await one('INSERT INTO misc_receipts (category, type, payer, amount, receipt_date, status, notes) VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING id', [
+      category || '',
+      type || '入金',
+      payer || '',
+      amount || 0,
+      receipt_date || '',
+      status || '未入金',
+      notes || '',
+    ]);
+    await logAuditReq(req, 'CREATE', 'misc_receipts', row.id, { name: `${category || '-'}（${payer || '-'}）`, changes: [`新規登録（${type || '入金'}: ¥${(amount || 0).toLocaleString()}）`] });
+    res.json({ id: row.id, ...req.body });
+  })
+);
+
+app.put(
+  '/api/misc-receipts/:id',
+  h(async (req, res) => {
+    const { category, type, payer, amount, receipt_date, status, notes } = req.body;
+    const before = await one('SELECT * FROM misc_receipts WHERE id=$1', [req.params.id]);
+    await q('UPDATE misc_receipts SET category=$1, type=$2, payer=$3, amount=$4, receipt_date=$5, status=$6, notes=$7 WHERE id=$8', [
+      category ?? before?.category,
+      type ?? before?.type,
+      payer ?? before?.payer,
+      amount ?? before?.amount,
+      receipt_date ?? before?.receipt_date,
+      status ?? before?.status,
+      notes ?? before?.notes,
+      req.params.id,
+    ]);
+    await logAuditReq(req, 'UPDATE', 'misc_receipts', parseInt(req.params.id), { name: `${before?.category || category || ''}（${before?.payer || payer || ''}）`, changes: [`更新`] });
+    res.json({ id: req.params.id, ...req.body });
+  })
+);
+
+app.delete(
+  '/api/misc-receipts/:id',
+  deleteWithAudit('misc_receipts', {
+    buildDetails: before => ({ name: `${before?.category || ''}（${before?.payer || ''}）`, changes: [`削除（${before?.category || '-'} / ${before?.payer || '-'}）`] }),
+  })
+);
+
 // ============ Customers API ============
 app.get(
   '/api/customers',
