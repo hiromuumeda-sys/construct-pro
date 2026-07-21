@@ -471,7 +471,7 @@ app.delete(
 );
 
 // ============ Orders API ============
-const ORDER_COLS = 'project_id, category, vendor, estimate, planned, decided, status, details, site, period_start, period_end, handover, payment, "paymentStatus", "paymentDate", "paymentNotes"';
+const ORDER_COLS = 'project_id, category, vendor, estimate, planned, decided, status, details, site, period_start, period_end, handover, payment, "paymentStatus", "paymentDate", "paymentNotes", assignee';
 const ORDERED_STATUSES = ['発注完了', '支払済み']; // 注文（発注）が確定した状態。この状態になって初めて注文番号を採番する
 
 // 注文番号 WW-YYYYMM-001 を採番（同一年月内で連番、既存件数+1）
@@ -480,6 +480,15 @@ async function nextOrderNo(date = new Date()) {
   const prefix = `WW-${ym}-`;
   const r = await one('SELECT COUNT(*) AS cnt FROM orders WHERE order_no LIKE $1', [prefix + '%']);
   return prefix + String(Number(r.cnt) + 1).padStart(3, '0');
+}
+
+// 注文番号が未採番なら、この時点（注文書の発行）で確定・採番する。採番済みならそのまま返す
+async function ensureOrderNo(order) {
+  if (order.order_no) return order.order_no;
+  const order_no = await nextOrderNo();
+  await q('UPDATE orders SET order_no=$1 WHERE id=$2', [order_no, order.id]);
+  order.order_no = order_no;
+  return order_no;
 }
 
 app.get(
@@ -571,7 +580,7 @@ app.post(
   h(async (req, res) => {
     await ensureAux();
     const b = req.body;
-    const ins = await one(`INSERT INTO orders (${ORDER_COLS}) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16) RETURNING id`, [
+    const ins = await one(`INSERT INTO orders (${ORDER_COLS}) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17) RETURNING id`, [
       b.project_id,
       b.category,
       b.vendor,
@@ -588,6 +597,7 @@ app.post(
       b.paymentStatus || '未払い',
       b.paymentDate || '',
       b.paymentNotes || '',
+      b.assignee || '',
     ]);
     // 残金の初期値＝費用（決定金額）
     await q('UPDATE orders SET remaining = $1 WHERE id = $2', [b.remaining != null ? b.remaining : b.decided || 0, ins.id]);
@@ -612,7 +622,7 @@ app.put(
     const order_no = !before?.order_no && ORDERED_STATUSES.includes(newStatus) ? await nextOrderNo() : before?.order_no;
     // 呼び出し元によって送られてくる項目が一部だけの場合があるため、未送信の項目は既存値を維持する
     // (例: 工事詳細編集モーダルは支払状況/支払期日/支払備考を送らないため、これが無いと保存のたびに消えてしまう)
-    await q(`UPDATE orders SET project_id=$1, category=$2, vendor=$3, estimate=$4, planned=$5, decided=$6, status=$7, details=$8, site=$9, period_start=$10, period_end=$11, handover=$12, payment=$13, "paymentStatus"=$14, "paymentDate"=$15, "paymentNotes"=$16, order_no=$17 WHERE id=$18`, [
+    await q(`UPDATE orders SET project_id=$1, category=$2, vendor=$3, estimate=$4, planned=$5, decided=$6, status=$7, details=$8, site=$9, period_start=$10, period_end=$11, handover=$12, payment=$13, "paymentStatus"=$14, "paymentDate"=$15, "paymentNotes"=$16, order_no=$17, assignee=$18 WHERE id=$19`, [
       b.project_id ?? before?.project_id,
       b.category ?? before?.category,
       b.vendor ?? before?.vendor,
@@ -630,6 +640,7 @@ app.put(
       b.paymentDate ?? before?.paymentDate,
       b.paymentNotes ?? before?.paymentNotes,
       order_no,
+      b.assignee ?? before?.assignee,
       req.params.id,
     ]);
     await logAuditReq(req, 'UPDATE', 'orders', parseInt(req.params.id), { name: `${before?.category || b.category || ''}（${before?.vendor || b.vendor || ''}）`, changes: diffChanges('orders', before, b) });
@@ -677,6 +688,17 @@ app.put(
       changes: [`残金を ${fmtVal(prev)} → ${fmtVal(value)} に変更`],
     });
     res.json({ success: true });
+  })
+);
+
+// 注文番号を（未採番なら）確定する。注文書プレビュー表示時にダウンロード結果と番号を一致させるために使用
+app.post(
+  '/api/orders/:id/ensure-order-no',
+  h(async (req, res) => {
+    const order = await one('SELECT * FROM orders WHERE id=$1', [req.params.id]);
+    if (!order) return res.status(404).json({ error: 'order not found' });
+    const order_no = await ensureOrderNo(order);
+    res.json({ order_no });
   })
 );
 
@@ -1577,6 +1599,8 @@ function buildPurchaseOrderPDF(order, project, vendor) {
     const vendorAddr = (vendor && vendor.address) || '';
     const period = order.period_start || order.period_end ? `着手予定　${order.period_start || '-'}　～　完成予定　${order.period_end || '-'}` : '-';
     const fields = [
+      ['注文番号', order.order_no || '-'],
+      ['担当者', order.assignee || '-'],
       ['工事名', project ? project.name : order.details || '-'],
       ['工事内容', order.category || order.details || '-'],
       ['工事場所', order.site || '-'],
@@ -1804,6 +1828,7 @@ app.get(
   h(async (req, res) => {
     const order = await one('SELECT * FROM orders WHERE id=$1', [req.params.orderId]);
     if (!order) return res.status(404).json({ error: '発注明細が見つかりません' });
+    await ensureOrderNo(order);
     const project = await one('SELECT * FROM projects WHERE id=$1', [order.project_id]);
     const vendor = await one('SELECT * FROM vendors WHERE company=$1', [order.vendor]);
     const pdfBuffer = await buildPurchaseOrderPDF(order, project, vendor);
@@ -1822,6 +1847,7 @@ app.post(
     if (!orderId || !to || !subject) return res.status(400).json({ error: '必須パラメータが不足しています' });
     const order = await one('SELECT * FROM orders WHERE id=$1', [orderId]);
     if (!order) return res.status(404).json({ error: '発注明細が見つかりません' });
+    await ensureOrderNo(order);
     const project = await one('SELECT * FROM projects WHERE id=$1', [order.project_id]);
     const vendor = await one('SELECT * FROM vendors WHERE company=$1', [order.vendor]);
     const pdfBuffer = await buildPurchaseOrderPDF(order, project, vendor);

@@ -352,6 +352,10 @@ CSV出力
 <input class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent transition-all" id="edit-payment" type="text"/>
 </div>
 <div class="col-span-2">
+<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">担当者</label>
+<input class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent transition-all" id="edit-assignee" type="text" placeholder="注文書・メールに表示される社内担当者名"/>
+</div>
+<div class="col-span-2">
 <label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">工事内容</label>
 <textarea class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent transition-all" id="edit-details" rows="3"></textarea>
 </div>
@@ -673,6 +677,7 @@ async function updateOrderStatus(id, status) {
     paymentStatus: o.paymentStatus,
     paymentDate: o.paymentDate,
     paymentNotes: o.paymentNotes,
+    assignee: o.assignee,
   };
   try {
     const res = await fetch(`/api/orders/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(b) });
@@ -768,6 +773,14 @@ function openOrderModal(id, category, vendor, estimate, planned, status) {
     document.getElementById('edit-planned').value = '';
     document.getElementById('edit-decided').value = '';
     document.getElementById('edit-status').value = '未処理';
+    document.getElementById('edit-site').value = '';
+    document.getElementById('edit-period-start').value = '';
+    document.getElementById('edit-period-end').value = '';
+    document.getElementById('edit-handover').value = '';
+    document.getElementById('edit-payment').value = '';
+    document.getElementById('edit-details').value = '';
+    document.getElementById('edit-payment-notes').value = '';
+    document.getElementById('edit-assignee').value = '';
   }
 
   const modal = document.getElementById('edit-modal');
@@ -784,12 +797,22 @@ function closeOrderModal() {
 // PO preview modal
 let currentPoOrderId = null;
 
-function showPoPreview(orderId) {
+async function showPoPreview(orderId) {
   const order = window.appCache.orders.find(o => o.id === orderId);
   if (!order) return;
 
   currentPoOrderId = orderId;
   const project = window.appCache.projects.find(p => p.id === order.project_id);
+
+  // 注文書を実際に発行する（プレビューする）時点で注文番号を確定し、ダウンロード結果と一致させる
+  if (!order.order_no) {
+    try {
+      const res = await fetch(`/api/orders/${orderId}/ensure-order-no`, { method: 'POST' });
+      if (res.ok) order.order_no = (await res.json()).order_no;
+    } catch (e) {
+      /* noop：番号取得に失敗してもプレビュー自体は表示する */
+    }
+  }
 
   // Build and show modal
   showPoModal(order, project);
@@ -813,6 +836,8 @@ function showPoModal(order, project) {
     wm = _d.getMonth() + 1,
     wd = _d.getDate();
   const poFields = [
+    ['注文番号', order.order_no || '---'],
+    ['担当者', order.assignee || '---'],
     ['工事名', project ? project.name : order.details || '---'],
     ['工事内容', order.category || order.details || '---'],
     ['工事場所', order.site || '---'],
@@ -921,7 +946,7 @@ function openPoEmailForm() {
           </div>
           <div>
             <label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">件名</label>
-            <input id="po-email-subject" type="text" class="w-full bg-surface-container-low border border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent transition-all" value="【注文書送付】${project ? project.name : order.category || '工事'}"/>
+            <input id="po-email-subject" type="text" class="w-full bg-surface-container-low border border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent transition-all" value="【注文書送付】${project ? project.name : order.category || '工事'}${order.order_no ? `（${order.order_no}）` : ''}"/>
           </div>
           <div>
             <label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">本文</label>
@@ -937,7 +962,7 @@ function openPoEmailForm() {
 今後とも何卒よろしくお願い申し上げます。
 
 ──────────────────
-株式会社WIN WIN
+株式会社WIN WIN${order.assignee ? `\nご担当：${order.assignee}` : ''}
 〒604-0924 京都市中京区一之船入町537-20 FIS御池ビル505号
 TEL：075-777-1236
 ──────────────────</textarea>
@@ -1015,6 +1040,7 @@ async function saveOrder() {
     payment: document.getElementById('edit-payment').value || '',
     details: document.getElementById('edit-details').value || '',
     paymentNotes: document.getElementById('edit-payment-notes').value || '',
+    assignee: document.getElementById('edit-assignee').value || '',
   };
 
   if (id) {
@@ -1069,6 +1095,7 @@ function openOrderDetailModal(id) {
     document.getElementById('edit-payment').value = order.payment || '';
     document.getElementById('edit-details').value = order.details || '';
     document.getElementById('edit-payment-notes').value = order.paymentNotes || '';
+    document.getElementById('edit-assignee').value = order.assignee || '';
   }
 
   const modal = document.getElementById('edit-modal');

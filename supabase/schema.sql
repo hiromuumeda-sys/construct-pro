@@ -107,7 +107,8 @@ create table orders (
   ack_done        boolean,
   invoice_done    boolean,
   remaining       bigint,
-  order_no        text
+  order_no        text,
+  assignee        text
 );
 
 -- 添付書類（請書/請求書のPDF）。orders × kind ごとに1件。
