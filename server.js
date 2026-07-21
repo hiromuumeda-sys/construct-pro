@@ -351,24 +351,25 @@ app.post(
 app.put(
   '/api/projects/:id',
   h(async (req, res) => {
-    const { name, client, clientCompany, clientPhone, clientEmail, clientAddress, amount, startDate, endDate, status, notes, deliveryMonth, processInfo } = req.body;
+    const b = req.body;
     const before = await one('SELECT * FROM projects WHERE id=$1', [req.params.id]);
+    // 呼び出し元によって送られてくる項目が一部だけの場合があるため、未送信の項目は既存値を維持する
     await q(
       `UPDATE projects SET name=$1, client=$2, "clientCompany"=$3, "clientPhone"=$4, "clientEmail"=$5, "clientAddress"=$6, amount=$7, "startDate"=$8, "endDate"=$9, status=$10, notes=$11, delivery_month=$12, process_info=$13 WHERE id=$14`,
       [
-        name,
-        client,
-        clientCompany,
-        clientPhone,
-        clientEmail,
-        clientAddress,
-        amount,
-        startDate,
-        endDate,
-        status,
-        notes,
-        deliveryMonth ?? before?.delivery_month,
-        processInfo ?? before?.process_info,
+        b.name ?? before?.name,
+        b.client ?? before?.client,
+        b.clientCompany ?? before?.clientCompany,
+        b.clientPhone ?? before?.clientPhone,
+        b.clientEmail ?? before?.clientEmail,
+        b.clientAddress ?? before?.clientAddress,
+        b.amount ?? before?.amount,
+        b.startDate ?? before?.startDate,
+        b.endDate ?? before?.endDate,
+        b.status ?? before?.status,
+        b.notes ?? before?.notes,
+        b.deliveryMonth ?? before?.delivery_month,
+        b.processInfo ?? before?.process_info,
         req.params.id,
       ]
     );

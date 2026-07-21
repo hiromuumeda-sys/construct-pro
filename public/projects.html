@@ -6,11 +6,11 @@
 <title>受注一覧 - WIN WIN様デモ</title>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
-<link rel="stylesheet" href="/styles.css?v=65"/>
-<script src="/sidebar.js?v=65"></script>
-<script src="/auth.js?v=65"></script>
-<script src="/header.js?v=65"></script>
-<script src="/status-utils.js?v=65"></script>
+<link rel="stylesheet" href="/styles.css?v=66"/>
+<script src="/sidebar.js?v=66"></script>
+<script src="/auth.js?v=66"></script>
+<script src="/header.js?v=66"></script>
+<script src="/status-utils.js?v=66"></script>
 <style>
 body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
@@ -218,13 +218,15 @@ CSV出力
 </div>
 
 <!-- Edit Modal -->
-<div class="fixed inset-0 z-[100] bg-primary/20 backdrop-blur-md" id="edit-modal" style="display:none" onclick="closeModal('edit-modal')">
-<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl max-h-[90vh] bg-surface-container-lowest rounded-lg custom-shadow border border-outline-variant overflow-hidden" onclick="event.stopPropagation()">
+<template id="edit-modal-template">
+<tr>
+<td colspan="11" class="p-0">
+<div class="bg-surface-container-lowest border-y-2 border-secondary/40">
 <div class="px-lg py-md flex justify-between items-center border-b border-outline-variant bg-surface-container-low">
 <h3 class="text-label-md font-label-md text-primary">案件詳細の編集</h3>
-<button class="material-symbols-outlined text-label-md text-on-surface-variant hover:text-primary" onclick="closeModal('edit-modal')">close</button>
+<button class="material-symbols-outlined text-label-md text-on-surface-variant hover:text-primary" onclick="closeEditModal()">close</button>
 </div>
-<div class="p-lg space-y-md overflow-y-auto flex-1">
+<div class="p-lg space-y-md">
 <input id="edit-id" type="hidden"/>
 <div class="grid grid-cols-2 gap-md">
 <div class="col-span-2">
@@ -279,12 +281,14 @@ CSV出力
 削除
 </button>
 <div class="flex items-center gap-md">
-<button class="px-4 py-1.5 text-label-md font-label-md font-normal text-on-surface-variant hover:bg-surface-container rounded-lg transition-all" onclick="closeModal('edit-modal')">キャンセル</button>
+<button class="px-4 py-1.5 text-label-md font-label-md font-normal text-on-surface-variant hover:bg-surface-container rounded-lg transition-all" onclick="closeEditModal()">キャンセル</button>
 <button class="bg-secondary text-on-secondary px-4 py-1.5 text-label-md font-label-md font-normal rounded-lg shadow-lg hover:scale-[1.02] transition-all" onclick="saveEdit()">保存</button>
 </div>
 </div>
 </div>
-</div>
+</td>
+</tr>
+</template>
 
 <!-- Register Modal -->
 <div class="fixed inset-0 z-[100] bg-primary/20 backdrop-blur-md" id="register-modal" style="display:none" onclick="closeModal('register-modal')">
@@ -349,6 +353,18 @@ CSV出力
 </div>
 
 <script>
+// 案件の工期はDB上「yyyy/mm/dd」形式で保持されているが、<input type="date">はISO(yyyy-mm-dd)しか
+// 受け付けず、形式不一致だと値が無言で空になり、そのまま保存すると工期が消えてしまう。
+// 表示・保存の両方で変換して形式差を吸収する。
+function toIsoDate(s) {
+  if (!s) return '';
+  const d = new Date(String(s).replace(/\//g, '-'));
+  return isNaN(d) ? '' : d.toISOString().slice(0, 10);
+}
+function toSlashDate(iso) {
+  return iso ? iso.replace(/-/g, '/') : '';
+}
+
 function openModal(id) {
   const el = document.getElementById(id);
   if (el) el.style.display = 'block';
@@ -357,6 +373,23 @@ function openModal(id) {
 function closeModal(id) {
   const el = document.getElementById(id);
   if (el) el.style.display = 'none';
+}
+
+// モーダルではなく、対象行の直下にインラインで編集パネルを展開する
+function insertEditRow(afterEl) {
+  closeEditModal();
+  const tpl = document.getElementById('edit-modal-template');
+  const frag = tpl.content.cloneNode(true);
+  const tr = frag.querySelector('tr');
+  tr.id = 'edit-modal';
+  if (afterEl) afterEl.after(tr);
+  else document.getElementById('project-table-body').prepend(tr);
+  return tr;
+}
+
+function closeEditModal() {
+  const modal = document.getElementById('edit-modal');
+  if (modal) modal.remove();
 }
 
 if (!window.appCache) {
@@ -461,7 +494,7 @@ function renderTable(projects) {
   tbody.innerHTML = projects
     .map(
       (p, i) => `
-    <tr class="hover:bg-surface-container-low transition-colors group cursor-pointer" onclick="openEditModal(${p.id})">
+    <tr class="hover:bg-surface-container-low transition-colors group cursor-pointer" data-project-id="${p.id}" onclick="openEditModal(${p.id})">
       <td class="w-12 px-lg py-2 text-label-md font-label-md text-on-surface-variant tabular-numbers align-top">${String(p.id).padStart(5, '0')}</td>
       <td class="w-64 px-lg py-2 text-label-md font-label-md text-primary align-top break-words">${p.name}</td>
       <td class="w-24 px-lg py-2 text-label-md font-label-md text-on-surface-variant align-top break-words">${p.client}</td>
@@ -627,30 +660,27 @@ let editingId = null;
 
 function openEditModal(id) {
   editingId = id;
-  populateCustomerDropdown();
   const p = window.appCache.projects.find(x => x.id === id);
-  if (p) {
-    document.getElementById('edit-id').value = id;
-    document.getElementById('edit-name').value = p.name;
-    document.getElementById('edit-amount').value = p.amount;
-    document.getElementById('edit-status').value = p.status;
-    document.getElementById('edit-period-start').value = p.startDate || '';
-    document.getElementById('edit-period-end').value = p.endDate || '';
-    document.getElementById('edit-delivery-month').value = p.deliveryMonth || '';
-    document.getElementById('edit-process-info').value = p.processInfo || '';
-    document.getElementById('edit-notes').value = p.notes || '';
+  if (!p) return;
 
-    setTimeout(() => {
-      const customer = window.appCache.customers.find(c => c.company === p.clientCompany);
-      const customerSelect = document.getElementById('edit-customer-select');
-      if (customer) {
-        customerSelect.value = customer.id;
-      } else {
-        customerSelect.value = '';
-      }
-    }, 100);
-  }
-  openModal('edit-modal');
+  const rowEl = document.querySelector(`tr[data-project-id="${id}"]`);
+  insertEditRow(rowEl);
+  populateCustomerDropdown();
+
+  document.getElementById('edit-id').value = id;
+  document.getElementById('edit-name').value = p.name;
+  document.getElementById('edit-amount').value = p.amount;
+  document.getElementById('edit-status').value = p.status;
+  document.getElementById('edit-period-start').value = toIsoDate(p.startDate);
+  document.getElementById('edit-period-end').value = toIsoDate(p.endDate);
+  document.getElementById('edit-delivery-month').value = p.deliveryMonth || '';
+  document.getElementById('edit-process-info').value = p.processInfo || '';
+  document.getElementById('edit-notes').value = p.notes || '';
+
+  const customer = window.appCache.customers.find(c => c.company === p.clientCompany);
+  document.getElementById('edit-customer-select').value = customer ? customer.id : '';
+
+  document.getElementById('edit-modal').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
 function openRegisterModal() {
@@ -674,7 +704,7 @@ async function deleteProject() {
     await fetch(`/api/projects/${editingId}`, { method: 'DELETE' });
     await initializeGlobalCache();
     loadProjects();
-    closeModal('edit-modal');
+    closeEditModal();
   } catch (e) {
     alert('削除に失敗しました');
   }
@@ -686,8 +716,8 @@ async function saveRegister() {
   const client = customer ? customer.company : '';
   const amount = parseInt(document.getElementById('reg-amount').value) || 0;
   const status = document.getElementById('reg-status').value;
-  const startDate = document.getElementById('reg-period-start').value;
-  const endDate = document.getElementById('reg-period-end').value;
+  const startDate = toSlashDate(document.getElementById('reg-period-start').value);
+  const endDate = toSlashDate(document.getElementById('reg-period-end').value);
   const deliveryMonth = document.getElementById('reg-delivery-month').value;
   const processInfo = document.getElementById('reg-process-info').value;
   const notes = document.getElementById('reg-notes').value;
@@ -715,8 +745,8 @@ async function saveEdit() {
   const client = customer ? customer.company : '';
   const amount = parseInt(document.getElementById('edit-amount').value) || 0;
   const status = document.getElementById('edit-status').value;
-  const startDate = document.getElementById('edit-period-start').value;
-  const endDate = document.getElementById('edit-period-end').value;
+  const startDate = toSlashDate(document.getElementById('edit-period-start').value);
+  const endDate = toSlashDate(document.getElementById('edit-period-end').value);
   const deliveryMonth = document.getElementById('edit-delivery-month').value;
   const processInfo = document.getElementById('edit-process-info').value;
   const notes = document.getElementById('edit-notes').value;
@@ -729,7 +759,7 @@ async function saveEdit() {
     });
     await initializeGlobalCache();
     loadProjects();
-    closeModal('edit-modal');
+    closeEditModal();
   } catch (e) {
     alert('更新に失敗しました');
   }
@@ -1330,6 +1360,6 @@ async function sendEstimateEmail() {
   </div>
 </div>
 
-<script src="/notify.js?v=65"></script>
+<script src="/notify.js?v=66"></script>
 </body>
 </html>
