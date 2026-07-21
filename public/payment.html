@@ -6,11 +6,11 @@
 <title>支払管理 - WIN WIN様デモ</title>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
-<link rel="stylesheet" href="/styles.css?v=61"/>
-<script src="/sidebar.js?v=61"></script>
-<script src="/auth.js?v=61"></script>
-<script src="/header.js?v=61"></script>
-<script src="/status-utils.js?v=61"></script>
+<link rel="stylesheet" href="/styles.css?v=62"/>
+<script src="/sidebar.js?v=62"></script>
+<script src="/auth.js?v=62"></script>
+<script src="/header.js?v=62"></script>
+<script src="/status-utils.js?v=62"></script>
 <style>
 body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
@@ -312,11 +312,24 @@ async function loadPayments() {
   renderTable();
 }
 
-function renderTable() {
-  const tbody = document.getElementById('payment-table-body');
-  tbody.innerHTML = payments
-    .map(
-      payment => `
+// 支払期日の緊急度（支払済みは対象外）。通知(/api/notifications)の閾値と揃える：0-7日=接近、超過=期日超過
+function paymentDueUrgency(dateStr, status) {
+  if (status === '支払済み' || !dateStr) return null;
+  const d = new Date(String(dateStr).replace(/\//g, '-'));
+  if (isNaN(d)) return null;
+  const today = new Date(new Date().toDateString());
+  const days = Math.ceil((d - today) / 86400000);
+  if (days < 0) return 'overdue';
+  if (days <= 7) return 'soon';
+  return null;
+}
+
+function renderPaymentRow(payment) {
+  const urgency = paymentDueUrgency(payment.paymentDate, payment.status);
+  const dueCls = urgency === 'overdue' ? 'text-error font-bold' : urgency === 'soon' ? 'text-amber-600 font-bold' : 'text-on-surface-variant';
+  const dueIcon = urgency === 'overdue' ? '<span class="material-symbols-outlined text-[14px] align-text-bottom mr-0.5">error</span>' : urgency === 'soon' ? '<span class="material-symbols-outlined text-[14px] align-text-bottom mr-0.5">schedule</span>' : '';
+  const dueTitle = urgency === 'overdue' ? '支払期日を超過しています' : urgency === 'soon' ? '支払期日が近づいています' : '';
+  return `
     <tr class="${payment.status === '未払い' ? 'bg-yellow-50 hover:bg-yellow-100' : 'hover:bg-surface-container-low'} transition-colors cursor-pointer group" onclick="openModal(${payment.id})">
       <td class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant tabular-numbers">${String(payment.id).padStart(6, '0')}</td>
       <td class="px-3 py-1.5 text-label-md font-label-md text-on-surface group-hover:text-primary transition-colors">${payment.projectName}</td>
@@ -324,7 +337,7 @@ function renderTable() {
       <td class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant">${payment.vendor}</td>
       <td class="px-3 py-1.5 text-label-md font-label-md text-right tabular-numbers">¥${payment.amount.toLocaleString()}</td>
       <td class="px-3 py-1.5 text-label-md font-label-md text-right tabular-numbers text-error font-bold">¥${(payment.remaining ?? payment.amount).toLocaleString()}</td>
-      <td class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant tabular-numbers">${payment.paymentDate || '-'}</td>
+      <td class="px-3 py-1.5 text-label-md font-label-md tabular-numbers ${dueCls}" title="${dueTitle}">${dueIcon}${payment.paymentDate || '-'}</td>
       <td class="px-3 py-1.5 text-label-md font-label-md">${payment.bank && payment.bank.name ? `<span class="text-on-surface">${payment.bank.name}</span>` : '<span class="text-on-surface-variant/40">-</span>'}</td>
       <td class="px-3 py-1.5 text-label-md font-label-md text-center whitespace-nowrap">
         <div class="relative inline-block" onclick="event.stopPropagation()">
@@ -338,9 +351,12 @@ function renderTable() {
         ${payment.status === '部分払い' ? `<button onclick="event.stopPropagation(); openPayRegister(${payment.id})" class="material-symbols-outlined text-secondary hover:bg-secondary/10 rounded-full w-8 h-8" title="支払登録">add_circle</button>` : ''}
       </td>
     </tr>
-  `
-    )
-    .join('');
+  `;
+}
+
+function renderTable() {
+  const tbody = document.getElementById('payment-table-body');
+  tbody.innerHTML = payments.map(renderPaymentRow).join('');
 }
 
 function getStatusColor(status) {
@@ -569,35 +585,9 @@ function filterTable() {
   });
 
   const tbody = document.getElementById('payment-table-body');
-  tbody.innerHTML = filtered
-    .map(
-      payment => `
-    <tr class="${payment.status === '未払い' ? 'bg-yellow-50 hover:bg-yellow-100' : 'hover:bg-surface-container-low'} transition-colors cursor-pointer group" onclick="openModal(${payment.id})">
-      <td class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant tabular-numbers">${String(payment.id).padStart(6, '0')}</td>
-      <td class="px-3 py-1.5 text-label-md font-label-md text-on-surface group-hover:text-primary transition-colors">${payment.projectName}</td>
-      <td class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant">${payment.category}</td>
-      <td class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant">${payment.vendor}</td>
-      <td class="px-3 py-1.5 text-label-md font-label-md text-right tabular-numbers">¥${payment.amount.toLocaleString()}</td>
-      <td class="px-3 py-1.5 text-label-md font-label-md text-right tabular-numbers text-error font-bold">¥${(payment.remaining ?? payment.amount).toLocaleString()}</td>
-      <td class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant tabular-numbers">${payment.paymentDate || '-'}</td>
-      <td class="px-3 py-1.5 text-label-md font-label-md">${payment.bank && payment.bank.name ? `<span class="text-on-surface">${payment.bank.name}</span>` : '<span class="text-on-surface-variant/40">-</span>'}</td>
-      <td class="px-3 py-1.5 text-label-md font-label-md text-center whitespace-nowrap">
-        <div class="relative inline-block" onclick="event.stopPropagation()">
-          <select onchange="updatePaymentStatus(${payment.id}, this.value)" class="appearance-none text-[11px] font-medium rounded-full pl-5 pr-5 py-1 text-center border border-transparent ring-1 ring-inset ring-black/5 cursor-pointer hover:opacity-90 focus:ring-2 focus:ring-secondary/40 shadow-sm transition-all ${getStatusColor(payment.status)}">
-            ${['未払い', '部分払い', '支払済み'].map(s => `<option value="${s}" ${s === payment.status ? 'selected' : ''}>${s}</option>`).join('')}
-          </select>
-          <span class="material-symbols-outlined absolute right-0.5 top-1/2 -translate-y-1/2 text-[16px] pointer-events-none">expand_more</span>
-        </div>
-      </td>
-      <td class="px-3 py-1.5 text-center whitespace-nowrap" onclick="event.stopPropagation()">
-        ${payment.status === '部分払い' ? `<button onclick="event.stopPropagation(); openPayRegister(${payment.id})" class="material-symbols-outlined text-secondary hover:bg-secondary/10 rounded-full w-8 h-8" title="支払登録">add_circle</button>` : ''}
-      </td>
-    </tr>
-  `
-    )
-    .join('');
+  tbody.innerHTML = filtered.map(renderPaymentRow).join('');
 }
 </script>
-<script src="/notify.js?v=61"></script>
+<script src="/notify.js?v=62"></script>
 </body>
 </html>
