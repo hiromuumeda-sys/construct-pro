@@ -677,9 +677,14 @@ async function updateOrderStatus(id, status) {
   try {
     const res = await fetch(`/api/orders/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(b) });
     if (!res.ok) throw new Error('failed');
+    const data = await res.json();
     o.status = status;
+    o.order_no = data.order_no;
     const inView = orders.find(x => x.id === id);
-    if (inView) inView.status = status;
+    if (inView) {
+      inView.status = status;
+      inView.order_no = data.order_no;
+    }
     filterTable();
   } catch (e) {
     alert('ステータス更新に失敗しました');

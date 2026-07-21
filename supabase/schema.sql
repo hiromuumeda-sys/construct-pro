@@ -106,7 +106,8 @@ create table orders (
   "paymentNotes"  text,
   ack_done        boolean,
   invoice_done    boolean,
-  remaining       bigint
+  remaining       bigint,
+  order_no        text
 );
 
 -- 添付書類（請書/請求書のPDF）。orders × kind ごとに1件。

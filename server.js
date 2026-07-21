@@ -472,6 +472,15 @@ app.delete(
 
 // ============ Orders API ============
 const ORDER_COLS = 'project_id, category, vendor, estimate, planned, decided, status, details, site, period_start, period_end, handover, payment, "paymentStatus", "paymentDate", "paymentNotes"';
+const ORDERED_STATUSES = ['発注完了', '支払済み']; // 注文（発注）が確定した状態。この状態になって初めて注文番号を採番する
+
+// 注文番号 WW-YYYYMM-001 を採番（同一年月内で連番、既存件数+1）
+async function nextOrderNo(date = new Date()) {
+  const ym = `${date.getFullYear()}${String(date.getMonth() + 1).padStart(2, '0')}`;
+  const prefix = `WW-${ym}-`;
+  const r = await one('SELECT COUNT(*) AS cnt FROM orders WHERE order_no LIKE $1', [prefix + '%']);
+  return prefix + String(Number(r.cnt) + 1).padStart(3, '0');
+}
 
 app.get(
   '/api/orders',
@@ -582,8 +591,14 @@ app.post(
     ]);
     // 残金の初期値＝費用（決定金額）
     await q('UPDATE orders SET remaining = $1 WHERE id = $2', [b.remaining != null ? b.remaining : b.decided || 0, ins.id]);
+    // 作成時点で既に発注確定状態なら注文番号を採番
+    let order_no = null;
+    if (ORDERED_STATUSES.includes(b.status)) {
+      order_no = await nextOrderNo();
+      await q('UPDATE orders SET order_no=$1 WHERE id=$2', [order_no, ins.id]);
+    }
     await logAuditReq(req, 'CREATE', 'orders', ins.id, { name: `${b.category || ''}（${b.vendor || ''}）`, changes: [`新規登録（工事区分: ${b.category || '-'} / 発注先: ${b.vendor || '-'}）`] });
-    res.json({ id: ins.id, ...b });
+    res.json({ id: ins.id, ...b, order_no });
   })
 );
 
@@ -592,16 +607,19 @@ app.put(
   h(async (req, res) => {
     const b = req.body;
     const before = await one('SELECT * FROM orders WHERE id=$1', [req.params.id]);
+    const newStatus = b.status ?? before?.status;
+    // 発注が確定した状態に遷移した時点で初めて注文番号を採番（未処理/見積待ち等の段階では発注実体が無いため採番しない）
+    const order_no = !before?.order_no && ORDERED_STATUSES.includes(newStatus) ? await nextOrderNo() : before?.order_no;
     // 呼び出し元によって送られてくる項目が一部だけの場合があるため、未送信の項目は既存値を維持する
     // (例: 工事詳細編集モーダルは支払状況/支払期日/支払備考を送らないため、これが無いと保存のたびに消えてしまう)
-    await q(`UPDATE orders SET project_id=$1, category=$2, vendor=$3, estimate=$4, planned=$5, decided=$6, status=$7, details=$8, site=$9, period_start=$10, period_end=$11, handover=$12, payment=$13, "paymentStatus"=$14, "paymentDate"=$15, "paymentNotes"=$16 WHERE id=$17`, [
+    await q(`UPDATE orders SET project_id=$1, category=$2, vendor=$3, estimate=$4, planned=$5, decided=$6, status=$7, details=$8, site=$9, period_start=$10, period_end=$11, handover=$12, payment=$13, "paymentStatus"=$14, "paymentDate"=$15, "paymentNotes"=$16, order_no=$17 WHERE id=$18`, [
       b.project_id ?? before?.project_id,
       b.category ?? before?.category,
       b.vendor ?? before?.vendor,
       b.estimate ?? before?.estimate,
       b.planned ?? before?.planned,
       b.decided ?? before?.decided,
-      b.status ?? before?.status,
+      newStatus,
       b.details ?? before?.details,
       b.site ?? before?.site,
       b.period_start ?? before?.period_start,
@@ -611,10 +629,11 @@ app.put(
       b.paymentStatus ?? before?.paymentStatus,
       b.paymentDate ?? before?.paymentDate,
       b.paymentNotes ?? before?.paymentNotes,
+      order_no,
       req.params.id,
     ]);
     await logAuditReq(req, 'UPDATE', 'orders', parseInt(req.params.id), { name: `${before?.category || b.category || ''}（${before?.vendor || b.vendor || ''}）`, changes: diffChanges('orders', before, b) });
-    res.json({ id: req.params.id, ...b });
+    res.json({ id: req.params.id, ...b, order_no });
   })
 );
 
