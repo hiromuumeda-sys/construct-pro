@@ -17,7 +17,7 @@ const SIDEBAR_LINKS = [
   { href: '/receipts.html', icon: 'savings', label: '売上・入金管理' },
   { href: '/payment.html', icon: 'payments', label: '支払管理' },
   { href: '/orders-list.html', icon: 'receipt_long', label: '工事計画' },
-  { href: '/history.html', icon: 'history', label: '履歴詳細' },
+  { href: '/history.html', icon: 'history', label: '履歴詳細', roles: ['admin', 'accounting'] },
   { href: '/invite.html', icon: 'person_add', label: 'アカウント発行' },
 ];
 
@@ -27,8 +27,14 @@ const ICON_STYLE = 'font-size:18px';
 function buildSidebar() {
   const current = window.location.pathname;
   const isActive = href => href && current.endsWith(href);
+  // 履歴閲覧は限定メンバーのみ（議事録論点）。roles指定のあるリンクは対象ロール以外に表示しない
+  let currentRole = null;
+  try {
+    currentRole = JSON.parse(localStorage.getItem('user') || 'null')?.role || null;
+  } catch (_) {}
+  const visibleLinks = SIDEBAR_LINKS.filter(l => !l.roles || l.roles.includes(currentRole));
 
-  const items = SIDEBAR_LINKS.map(l => {
+  const items = visibleLinks.map(l => {
     const base = 'flex items-center gap-2 px-4 py-2.5 transition-colors';
 
     // グループ（マスタ設定）：ホバーで右側にサブメニューを表示

@@ -29,6 +29,17 @@ const Auth = {
       window.location.href = '/login.html';
     }
   },
+
+  // 権限で閲覧を制限する画面（例：履歴詳細）で使用。実際の権限判定はAPI側（requireRoleミドルウェア）が最終防衛線。
+  redirectIfNotAllowedRole(allowedRoles, fallbackUrl = '/reporting.html') {
+    const user = this.getUser();
+    if (!user || !allowedRoles.includes(user.role)) {
+      alert('このページを閲覧する権限がありません');
+      window.location.href = fallbackUrl;
+      return false;
+    }
+    return true;
+  },
 };
 
 // fetch を自動ラップ：/api/ への全リクエストに認証トークンを付与する。

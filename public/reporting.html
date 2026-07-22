@@ -6,10 +6,10 @@
 <title>レポーティング - WIN WIN様デモ</title>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
-<link rel="stylesheet" href="/styles.css?v=70"/>
-<script src="/sidebar.js?v=70"></script>
-<script src="/auth.js?v=70"></script>
-<script src="/header.js?v=70"></script>
+<link rel="stylesheet" href="/styles.css?v=72"/>
+<script src="/sidebar.js?v=72"></script>
+<script src="/auth.js?v=72"></script>
+<script src="/header.js?v=72"></script>
 <style>
 body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
@@ -282,6 +282,14 @@ body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 </div>
 </div>
 
+<!-- 協力会社別の発注偏り可視化（議事録論点：協力会社別の発注偏りを可視化） -->
+<div class="bg-surface-container-lowest rounded-lg custom-shadow border border-outline-variant overflow-hidden">
+<div class="px-lg py-2.5 border-b border-outline-variant bg-surface-container-low">
+<h3 class="text-label-md font-label-md text-primary">協力会社別の発注偏り（全案件・決定金額ベース）</h3>
+</div>
+<div class="p-lg space-y-2" id="vendor-concentration-body"></div>
+</div>
+
 <!-- 明細レコードテーブル（サマリの根拠・最大15件スクロール） -->
 <div class="bg-surface-container-lowest rounded-lg custom-shadow border border-outline-variant overflow-hidden">
 <div class="px-lg py-2.5 border-b border-outline-variant bg-surface-container-low flex justify-between items-center">
@@ -527,6 +535,46 @@ function updateReports() {
   } else {
     generateVendorReport();
   }
+  renderVendorConcentration();
+}
+
+// 協力会社別の発注偏り可視化（議事録論点）。フィルタに関わらず全案件の決定金額で集計する。
+function renderVendorConcentration() {
+  const el = document.getElementById('vendor-concentration-body');
+  if (!el) return;
+  const orders = window.appCache.orders || [];
+  const totals = {};
+  let grandTotal = 0;
+  orders.forEach(o => {
+    const vendor = o.vendor || '未設定';
+    const amount = Number(o.decided || o.planned || 0);
+    if (!amount) return;
+    totals[vendor] = (totals[vendor] || 0) + amount;
+    grandTotal += amount;
+  });
+  const sorted = Object.entries(totals).sort((a, b) => b[1] - a[1]);
+  if (grandTotal === 0 || sorted.length === 0) {
+    el.innerHTML = '<p class="text-label-md text-on-surface-variant">対象データがありません</p>';
+    return;
+  }
+  const barColors = ['bg-secondary', 'bg-primary', 'bg-tertiary-fixed-dim', 'bg-outline'];
+  el.innerHTML = sorted
+    .slice(0, 10)
+    .map(([vendor, amount], i) => {
+      const pct = (amount / grandTotal) * 100;
+      const biased = pct >= 30;
+      return `
+      <div>
+        <div class="flex justify-between items-baseline mb-0.5">
+          <span class="text-label-md font-label-md ${biased ? 'text-error font-bold' : 'text-on-surface'}">${vendor}${biased ? '　⚠️発注偏り' : ''}</span>
+          <span class="text-label-sm text-on-surface-variant tabular-nums">¥${amount.toLocaleString()}（${pct.toFixed(1)}%）</span>
+        </div>
+        <div class="w-full h-2.5 bg-surface-container-low rounded-full overflow-hidden">
+          <div class="h-full ${biased ? 'bg-error' : barColors[i % barColors.length]} rounded-full" style="width:${Math.min(100, pct)}%"></div>
+        </div>
+      </div>`;
+    })
+    .join('');
 }
 
 function generateCustomerReport() {
@@ -873,6 +921,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   setReportType('customer');
 });
 </script>
-<script src="/notify.js?v=70"></script>
+<script src="/notify.js?v=72"></script>
 </body>
 </html>

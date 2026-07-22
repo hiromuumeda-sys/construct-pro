@@ -6,11 +6,11 @@
 <title>受注一覧 - WIN WIN様デモ</title>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
-<link rel="stylesheet" href="/styles.css?v=70"/>
-<script src="/sidebar.js?v=70"></script>
-<script src="/auth.js?v=70"></script>
-<script src="/header.js?v=70"></script>
-<script src="/status-utils.js?v=70"></script>
+<link rel="stylesheet" href="/styles.css?v=72"/>
+<script src="/sidebar.js?v=72"></script>
+<script src="/auth.js?v=72"></script>
+<script src="/header.js?v=72"></script>
+<script src="/status-utils.js?v=72"></script>
 <style>
 body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
@@ -490,6 +490,14 @@ function loadProjects() {
   renderTable(window.appCache.projects);
 }
 
+// 引き渡し月の変更から7日以内ならハイライト対象（議事録決定事項：引き渡し月の変更でレコードの色が変わる）
+function isRecentDeliveryMonthChange(p) {
+  if (!p.delivery_month_changed_at) return false;
+  const changed = new Date(p.delivery_month_changed_at);
+  if (isNaN(changed)) return false;
+  return Date.now() - changed.getTime() < 7 * 24 * 60 * 60 * 1000;
+}
+
 function renderTable(projects) {
   const tbody = document.getElementById('project-table-body');
   tbody.innerHTML = projects
@@ -498,10 +506,12 @@ function renderTable(projects) {
     <tr class="hover:bg-surface-container-low transition-colors group cursor-pointer" data-project-id="${p.id}" onclick="openEditModal(${p.id})">
       <td class="w-12 px-lg py-2 text-label-md font-label-md text-on-surface-variant tabular-numbers align-top">${String(p.id).padStart(5, '0')}</td>
       <td class="w-64 px-lg py-2 text-label-md font-label-md text-primary align-top break-words">${p.name}</td>
-      <td class="w-24 px-lg py-2 text-label-md font-label-md text-on-surface-variant align-top break-words">${p.client}</td>
+      <td class="w-24 px-lg py-2 text-label-md font-label-md text-on-surface-variant align-top break-words">
+        <span class="inline-flex items-center gap-0.5">${p.client}<button class="material-symbols-outlined text-[14px] text-on-surface-variant/60 hover:text-secondary align-middle" onclick="event.stopPropagation(); showClientInfoPopover(event, ${p.id})" title="クライアント情報を表示">info</button></span>
+      </td>
       <td class="w-[28%] px-lg py-2 text-label-md font-label-md text-on-surface-variant align-top break-words whitespace-normal">${p.notes || '-'}</td>
       <td class="w-28 px-lg py-2 text-label-md font-label-md text-on-surface-variant tabular-numbers align-top">${p.startDate || '-'} 〜 ${p.endDate || '-'}</td>
-      <td class="w-20 px-lg py-2 text-label-md font-label-md text-on-surface-variant tabular-numbers align-top">${p.deliveryMonth || '-'}</td>
+      <td class="w-20 px-lg py-2 text-label-md font-label-md tabular-numbers align-top ${isRecentDeliveryMonthChange(p) ? 'bg-amber-100 text-amber-800 rounded-lg font-bold' : 'text-on-surface-variant'}" title="${isRecentDeliveryMonthChange(p) ? '引き渡し月が最近変更されました' : ''}">${p.deliveryMonth || '-'}</td>
       <td class="w-32 px-lg py-2 text-label-md font-label-md text-on-surface-variant align-top truncate" title="${(p.processInfo || '').replace(/"/g, '&quot;')}">${p.processInfo || '-'}</td>
       <td class="w-28 px-lg py-2 text-label-md font-label-md text-primary tabular-numbers text-right align-top">¥${p.amount.toLocaleString()}</td>
       <td class="w-28 px-lg py-2 align-top" onclick="event.stopPropagation()">
@@ -531,7 +541,7 @@ function renderTable(projects) {
           ${
             p.contract_has_file
               ? `<button class="inline-flex items-center gap-0.5 px-1.5 py-1 rounded-lg bg-secondary-container text-on-secondary-container text-[11px] font-bold hover:opacity-80 transition-opacity whitespace-nowrap" onclick="event.stopPropagation(); openContractModal(${p.id})" title="契約書PDFを表示"><span class="material-symbols-outlined text-[15px]">picture_as_pdf</span>契約書</button>`
-              : `<button class="inline-flex items-center gap-0.5 px-1.5 py-1 rounded-lg bg-surface-container text-on-surface-variant text-[11px] hover:bg-surface-container-high transition-colors whitespace-nowrap" onclick="event.stopPropagation(); requestContractUpload(${p.id})" title="契約書PDFをアップロード"><span class="material-symbols-outlined text-[15px]">upload_file</span>契約書</button>`
+              : `<button class="inline-flex items-center gap-0.5 px-1.5 py-1 rounded-lg bg-error-container text-on-error-container text-[11px] font-bold hover:opacity-80 transition-opacity whitespace-nowrap" onclick="event.stopPropagation(); requestContractUpload(${p.id})" title="契約書が未締結です（未アップロード）"><span class="material-symbols-outlined text-[15px]">upload_file</span>契約書未締結</button>`
           }
         </div>
       </td>
@@ -638,6 +648,38 @@ async function deleteContractFile() {
   } catch (e) {
     alert('削除に失敗しました');
   }
+}
+
+// クライアント情報ポップオーバー（資本金・企業規模・コーポレートサイト。議事録：一覧で把握したい）
+function closeClientInfoPopover() {
+  const el = document.getElementById('client-info-popover');
+  if (el) el.remove();
+  document.removeEventListener('click', closeClientInfoPopover);
+}
+function showClientInfoPopover(event, projectId) {
+  closeClientInfoPopover();
+  const p = window.appCache.projects.find(x => x.id === projectId);
+  if (!p) return;
+  const customer = window.appCache.customers.find(c => c.company === (p.clientCompany || p.client));
+  const rect = event.currentTarget.getBoundingClientRect();
+  const pop = document.createElement('div');
+  pop.id = 'client-info-popover';
+  pop.className = 'fixed z-[200] w-64 bg-surface-container-lowest border border-outline-variant rounded-lg custom-shadow p-3 text-label-md';
+  pop.style.top = `${rect.bottom + window.scrollY + 4}px`;
+  pop.style.left = `${Math.max(8, rect.left + window.scrollX - 200)}px`;
+  pop.onclick = e => e.stopPropagation();
+  if (!customer) {
+    pop.innerHTML = `<p class="text-on-surface-variant">「${p.client}」の顧客マスタ登録がありません</p>`;
+  } else {
+    pop.innerHTML = `
+      <p class="font-bold text-primary mb-1.5">${customer.company}</p>
+      <p class="text-on-surface-variant mb-1"><span class="text-label-sm uppercase tracking-wider">資本金</span><br/>${customer.capital ? '¥' + Number(customer.capital).toLocaleString() : '-'}</p>
+      <p class="text-on-surface-variant mb-1"><span class="text-label-sm uppercase tracking-wider">企業規模</span><br/>${customer.company_scale || '-'}</p>
+      <p class="text-on-surface-variant"><span class="text-label-sm uppercase tracking-wider">サイト</span><br/>${customer.website ? `<a href="${customer.website}" target="_blank" rel="noopener noreferrer" class="text-secondary hover:underline break-all">${customer.website}</a>` : '-'}</p>
+    `;
+  }
+  document.body.appendChild(pop);
+  setTimeout(() => document.addEventListener('click', closeClientInfoPopover), 0);
 }
 
 // 一覧から直接ステータス変更（PUTで保存→履歴記録、現在の絞り込みを維持して再描画）
@@ -1361,6 +1403,6 @@ async function sendEstimateEmail() {
   </div>
 </div>
 
-<script src="/notify.js?v=70"></script>
+<script src="/notify.js?v=72"></script>
 </body>
 </html>

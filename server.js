@@ -63,6 +63,12 @@ function ensureAux() {
         note       text,
         created_at timestamp default current_timestamp
       )`);
+      // クライアント情報の拡張（資本金・企業規模・コーポレートサイトURL）
+      await createIfMissing('ALTER TABLE customers ADD COLUMN IF NOT EXISTS capital bigint');
+      await createIfMissing('ALTER TABLE customers ADD COLUMN IF NOT EXISTS company_scale text');
+      await createIfMissing('ALTER TABLE customers ADD COLUMN IF NOT EXISTS website text');
+      // 引き渡し月の変更検知用（変更のたびに更新し、直近変更を一覧でハイライトする）
+      await createIfMissing('ALTER TABLE projects ADD COLUMN IF NOT EXISTS delivery_month_changed_at timestamp');
     })().catch(e => {
       _auxReady = null;
       throw e;
@@ -136,6 +142,17 @@ const authMiddleware = (req, res, next) => {
     next();
   } catch (err) {
     res.status(401).json({ error: 'Invalid token' });
+  }
+};
+
+// 履歴閲覧は限定メンバーのみ（議事録論点）。JWTにroleを積んでいないため都度DB参照する。
+const requireRole = allowedRoles => async (req, res, next) => {
+  try {
+    const user = await one('SELECT role FROM users WHERE id=$1', [req.user.id]);
+    if (!user || !allowedRoles.includes(user.role)) return res.status(403).json({ error: 'このページを閲覧する権限がありません' });
+    next();
+  } catch (err) {
+    res.status(500).json({ error: 'permission check failed' });
   }
 };
 
@@ -288,6 +305,7 @@ app.post('/api/auth/logout', authMiddleware, (req, res) => {
 app.get(
   '/api/audit-logs',
   authMiddleware,
+  requireRole(['admin', 'accounting']),
   h(async (req, res) => {
     const logs = await q(`
     SELECT al.*, u.email FROM audit_logs al
@@ -301,6 +319,7 @@ app.get(
 app.get(
   '/api/audit-logs/:tableName',
   authMiddleware,
+  requireRole(['admin', 'accounting']),
   h(async (req, res) => {
     const logs = await q(
       `
@@ -326,6 +345,9 @@ app.get(
     res.json(
       projects.map(p => ({
         ...p,
+        // delivery_month/process_infoはDBカラム名がsnake_caseのため、フロント側の慣習(camelCase)に合わせて別名を付与
+        deliveryMonth: p.delivery_month,
+        processInfo: p.process_info,
         contract_has_file: fmap.has(key(p.id, 'contract')),
         contract_filename: fmap.get(key(p.id, 'contract')) || null,
       }))
@@ -351,11 +373,15 @@ app.post(
 app.put(
   '/api/projects/:id',
   h(async (req, res) => {
+    await ensureAux();
     const b = req.body;
     const before = await one('SELECT * FROM projects WHERE id=$1', [req.params.id]);
+    const newDeliveryMonth = b.deliveryMonth ?? before?.delivery_month;
+    // 引き渡し月が変更された場合はタイムスタンプを更新（一覧での直近変更ハイライトに使用。議事録決定事項）
+    const deliveryMonthChanged = b.deliveryMonth !== undefined && b.deliveryMonth !== before?.delivery_month;
     // 呼び出し元によって送られてくる項目が一部だけの場合があるため、未送信の項目は既存値を維持する
     await q(
-      `UPDATE projects SET name=$1, client=$2, "clientCompany"=$3, "clientPhone"=$4, "clientEmail"=$5, "clientAddress"=$6, amount=$7, "startDate"=$8, "endDate"=$9, status=$10, notes=$11, delivery_month=$12, process_info=$13 WHERE id=$14`,
+      `UPDATE projects SET name=$1, client=$2, "clientCompany"=$3, "clientPhone"=$4, "clientEmail"=$5, "clientAddress"=$6, amount=$7, "startDate"=$8, "endDate"=$9, status=$10, notes=$11, delivery_month=$12, process_info=$13, delivery_month_changed_at=$14 WHERE id=$15`,
       [
         b.name ?? before?.name,
         b.client ?? before?.client,
@@ -368,8 +394,9 @@ app.put(
         b.endDate ?? before?.endDate,
         b.status ?? before?.status,
         b.notes ?? before?.notes,
-        b.deliveryMonth ?? before?.delivery_month,
+        newDeliveryMonth,
         b.processInfo ?? before?.process_info,
+        deliveryMonthChanged ? new Date().toISOString() : before?.delivery_month_changed_at,
         req.params.id,
       ]
     );
@@ -952,6 +979,7 @@ app.delete(
 app.get(
   '/api/customers',
   h(async (req, res) => {
+    await ensureAux();
     res.json(await q('SELECT * FROM customers ORDER BY id DESC'));
   })
 );
@@ -959,8 +987,12 @@ app.get(
 app.post(
   '/api/customers',
   h(async (req, res) => {
-    const { company, department, contact, email, phone, address, notes } = req.body;
-    const ins = await one('INSERT INTO customers (company, department, contact, email, phone, address, notes) VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING id', [company, department, contact, email, phone, address, notes]);
+    await ensureAux();
+    const { company, department, contact, email, phone, address, notes, capital, company_scale, website } = req.body;
+    const ins = await one(
+      'INSERT INTO customers (company, department, contact, email, phone, address, notes, capital, company_scale, website) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING id',
+      [company, department, contact, email, phone, address, notes, capital || null, company_scale || null, website || null]
+    );
     await logAuditReq(req, 'CREATE', 'customers', ins.id, { name: company, changes: [`新規登録（顧客: ${company || '-'}）`] });
     res.json({ id: ins.id, ...req.body });
   })
@@ -969,9 +1001,22 @@ app.post(
 app.put(
   '/api/customers/:id',
   h(async (req, res) => {
-    const { company, department, contact, email, phone, address, notes } = req.body;
+    await ensureAux();
+    const { company, department, contact, email, phone, address, notes, capital, company_scale, website } = req.body;
     const before = await one('SELECT * FROM customers WHERE id=$1', [req.params.id]);
-    await q('UPDATE customers SET company=$1, department=$2, contact=$3, email=$4, phone=$5, address=$6, notes=$7 WHERE id=$8', [company, department, contact, email, phone, address, notes, req.params.id]);
+    await q('UPDATE customers SET company=$1, department=$2, contact=$3, email=$4, phone=$5, address=$6, notes=$7, capital=$8, company_scale=$9, website=$10 WHERE id=$11', [
+      company,
+      department,
+      contact,
+      email,
+      phone,
+      address,
+      notes,
+      capital || null,
+      company_scale || null,
+      website || null,
+      req.params.id,
+    ]);
     await logAuditReq(req, 'UPDATE', 'customers', parseInt(req.params.id), { name: before?.company || company, changes: diffChanges('customers', before, req.body) });
     res.json({ id: req.params.id, ...req.body });
   })
@@ -1214,6 +1259,7 @@ app.delete(
 app.get(
   '/api/notifications',
   h(async (req, res) => {
+    await ensureAux();
     const notifications = [];
     const today = new Date();
     const daysBetween = d => {
@@ -1227,8 +1273,8 @@ app.get(
       if (!o.paymentDate) return;
       const d = daysBetween(o.paymentDate);
       if (d === null) return;
-      if (d < 0) notifications.push({ type: 'payment', level: 'error', icon: 'error', title: '支払期日超過', message: `${o.vendor} への支払（${o.category}）が${Math.abs(d)}日超過しています`, date: o.paymentDate, link: '/payment.html' });
-      else if (d <= 7) notifications.push({ type: 'payment', level: 'warning', icon: 'schedule', title: '支払期日接近', message: `${o.vendor} への支払（${o.category}）まであと${d}日です`, date: o.paymentDate, link: '/payment.html' });
+      if (d < 0) notifications.push({ type: 'payment', level: 'error', icon: 'error', title: '支払期日超過', message: `${o.vendor} への支払（${o.category}）が${Math.abs(d)}日超過しています`, date: o.paymentDate, link: '/payment.html', assignee: o.assignee || null });
+      else if (d <= 7) notifications.push({ type: 'payment', level: 'warning', icon: 'schedule', title: '支払期日接近', message: `${o.vendor} への支払（${o.category}）まであと${d}日です`, date: o.paymentDate, link: '/payment.html', assignee: o.assignee || null });
     });
 
     const invoices = await q('SELECT * FROM invoices');
@@ -1251,7 +1297,35 @@ app.get(
     }
 
     const undelivered = await q("SELECT * FROM orders WHERE status NOT IN ('発注完了', '支払済み') AND decided > 0");
-    if (undelivered.length > 0) notifications.push({ type: 'missing', level: 'info', icon: 'receipt_long', title: '注文書未発行', message: `決定済みで注文書未発行の明細が${undelivered.length}件あります`, date: null, link: '/orders-list.html' });
+    if (undelivered.length > 0) {
+      // 担当者ベースのタスク通知（担当者ごとに個別表示。議事録論点）
+      const byAssignee = {};
+      undelivered.forEach(o => {
+        const key = o.assignee || '';
+        byAssignee[key] = (byAssignee[key] || 0) + 1;
+      });
+      Object.entries(byAssignee).forEach(([assignee, cnt]) => {
+        notifications.push({
+          type: 'missing',
+          level: 'info',
+          icon: 'receipt_long',
+          title: '注文書未発行',
+          message: assignee ? `${assignee}さん担当で決定済み・注文書未発行の明細が${cnt}件あります` : `担当者未設定で決定済み・注文書未発行の明細が${cnt}件あります`,
+          date: null,
+          link: '/orders-list.html',
+          assignee: assignee || null,
+        });
+      });
+    }
+
+    // 契約書未締結アラート（議事録決定事項：着工日超過で未締結ならアラート）
+    const contractCheckProjects = await q('SELECT * FROM projects WHERE "startDate" IS NOT NULL');
+    for (const p of contractCheckProjects) {
+      const d = daysBetween(p.startDate);
+      if (d === null || d >= 0) continue; // 着工日が未到来の案件は対象外
+      const file = await one('SELECT 1 FROM project_files WHERE project_id=$1 AND kind=$2', [p.id, 'contract']);
+      if (!file) notifications.push({ type: 'contract', level: 'error', icon: 'error', title: '契約書未締結', message: `${p.name} は着工日を${Math.abs(d)}日超過していますが契約書が未締結です`, date: p.startDate, link: '/projects.html' });
+    }
 
     // デモ用テスト通知（20件）
     const demoNotifications = [
@@ -1657,6 +1731,9 @@ app.get(
     const pfmap = new Map(projectFiles.map(f => [fkey(f.project_id, f.kind), f.filename]));
     const projectsWithFiles = projects.map(p => ({
       ...p,
+      // delivery_month/process_infoはDBカラム名がsnake_caseのため、フロント側の慣習(camelCase)に合わせて別名を付与
+      deliveryMonth: p.delivery_month,
+      processInfo: p.process_info,
       contract_has_file: pfmap.has(fkey(p.id, 'contract')),
       contract_filename: pfmap.get(fkey(p.id, 'contract')) || null,
     }));

@@ -17,9 +17,14 @@ const HEADER_RIGHT_HTML = `<div class="hdr-ready flex items-center gap-6">
 <div class="relative" id="notif-wrap">
 <button class="material-symbols-outlined text-on-surface-variant hover:text-primary relative" onclick="toggleNotif(event)">notifications<span id="notif-badge" class="absolute -top-1 -right-1 bg-error text-on-error text-[9px] font-normal rounded-full min-w-[16px] h-4 px-1 flex items-center justify-center" style="display:none">0</span></button>
 <div id="notif-panel" class="absolute right-0 mt-2 w-96 max-h-[480px] overflow-y-auto bg-surface-container-lowest border border-outline-variant rounded-lg custom-shadow z-[200]" style="display:none" onclick="event.stopPropagation()">
-<div class="px-4 py-3 border-b border-outline-variant flex justify-between items-center sticky top-0 bg-surface-container-lowest">
+<div class="px-4 py-3 border-b border-outline-variant sticky top-0 bg-surface-container-lowest">
+<div class="flex justify-between items-center">
 <span class="text-label-md font-label-md text-primary">通知</span>
 <span class="text-label-sm text-on-surface-variant" id="notif-count-label"></span>
+</div>
+<select id="notif-assignee-filter" class="mt-2 w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-sm px-2 py-1" style="display:none" onchange="renderNotif()" onclick="event.stopPropagation()">
+<option value="">担当者：すべて表示</option>
+</select>
 </div>
 <div id="notif-list"></div>
 </div>

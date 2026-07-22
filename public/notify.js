@@ -52,8 +52,24 @@ async function loadNotif(force) {
   await __notifFetching;
   renderNotif();
 }
+// 担当者ベースのタスク通知：担当者が付いている通知だけを対象に絞り込み選択肢を作る（議事録論点）
+function renderNotifAssigneeFilter() {
+  const sel = document.getElementById('notif-assignee-filter');
+  if (!sel) return;
+  const assignees = [...new Set(__notifItems.map(n => n.assignee).filter(Boolean))].sort();
+  if (assignees.length === 0) {
+    sel.style.display = 'none';
+    return;
+  }
+  const current = sel.value;
+  sel.innerHTML = '<option value="">担当者：すべて表示</option>' + assignees.map(a => `<option value="${a}">${a}さんの通知のみ</option>`).join('');
+  if (assignees.includes(current)) sel.value = current;
+  sel.style.display = '';
+}
 function renderNotif() {
-  const items = __notifItems;
+  renderNotifAssigneeFilter();
+  const assigneeFilter = document.getElementById('notif-assignee-filter')?.value || '';
+  const items = assigneeFilter ? __notifItems.filter(n => n.assignee === assigneeFilter) : __notifItems;
   const badge = document.getElementById('notif-badge');
   const list = document.getElementById('notif-list');
   const countLabel = document.getElementById('notif-count-label');
