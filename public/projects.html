@@ -1053,6 +1053,7 @@ async function sendInvoiceEmail() {
 
 // ===== 見積書 =====
 let currentEstimateProjectId = null;
+let estimateItems = []; // 見積書プレビュー上でのみ編集可能な内訳（マスタのordersには反映しない）
 
 function generateEstimate(projectId) {
   if (!projectId) {
@@ -1078,17 +1079,10 @@ function generateEstimate(projectId) {
   document.getElementById('est-date').textContent = now.toLocaleDateString('ja-JP');
   document.getElementById('est-valid').textContent = valid.toLocaleDateString('ja-JP');
 
-  const subtotal = orders.reduce((s, o) => s + amt(o), 0);
-  const tax = Math.floor(subtotal * 0.1);
-  const grand = subtotal + tax;
-  document.getElementById('est-total').textContent = grand.toLocaleString();
-  document.getElementById('est-subtotal').textContent = '¥' + subtotal.toLocaleString();
-  document.getElementById('est-tax').textContent = '¥' + tax.toLocaleString();
-  document.getElementById('est-grand').textContent = '¥' + grand.toLocaleString();
-
   // 品目別の工事内訳は出さず、品名＝案件名・金額＝総額の1行のみを表示する（議事録決定事項）
-  const tbody = document.getElementById('est-order-rows');
-  tbody.innerHTML = `<tr><td class="border border-outline-variant p-1.5">${project.name}</td><td class="border border-outline-variant p-1.5 text-right">1</td><td class="border border-outline-variant p-1.5 text-center">式</td><td class="border border-outline-variant p-1.5 text-right tabular-numbers">¥${subtotal.toLocaleString()}</td><td class="border border-outline-variant p-1.5 text-right tabular-numbers">¥${subtotal.toLocaleString()}</td><td class="border border-outline-variant p-1.5"></td></tr>`;
+  const subtotal = orders.reduce((s, o) => s + amt(o), 0);
+  estimateItems = [{ name: project.name, qty: 1, unit: '式', price: subtotal, note: '' }];
+  renderEstimateItems();
 
   document.getElementById('estimate-email-to').value = project.clientEmail || '';
   document.getElementById('estimate-email-subject').value = `【お見積書送付】${project.name}`;
@@ -1097,6 +1091,59 @@ function generateEstimate(projectId) {
 
   document.getElementById('estimate-modal').style.display = 'block';
   document.body.style.overflow = 'hidden';
+}
+
+// 内訳（品名・数量・単位・単価・摘要）を見積書プレビュー上で編集可能に描画
+function renderEstimateItems() {
+  const tbody = document.getElementById('est-order-rows');
+  tbody.innerHTML = estimateItems.length
+    ? estimateItems
+        .map(
+          (it, i) => `
+    <tr>
+      <td class="border border-outline-variant p-1"><input type="text" value="${(it.name || '').replace(/"/g, '&quot;')}" class="w-full text-xs border-0 bg-transparent focus:ring-1 focus:ring-primary/40 rounded px-1 py-0.5" oninput="updateEstimateItem(${i},'name',this.value)"/></td>
+      <td class="border border-outline-variant p-1"><input type="number" value="${it.qty}" class="w-full text-xs text-right border-0 bg-transparent focus:ring-1 focus:ring-primary/40 rounded px-1 py-0.5" oninput="updateEstimateItem(${i},'qty',this.value)"/></td>
+      <td class="border border-outline-variant p-1"><input type="text" value="${(it.unit || '').replace(/"/g, '&quot;')}" class="w-full text-xs text-center border-0 bg-transparent focus:ring-1 focus:ring-primary/40 rounded px-1 py-0.5" oninput="updateEstimateItem(${i},'unit',this.value)"/></td>
+      <td class="border border-outline-variant p-1"><input type="number" value="${it.price}" class="w-full text-xs text-right border-0 bg-transparent focus:ring-1 focus:ring-primary/40 rounded px-1 py-0.5" oninput="updateEstimateItem(${i},'price',this.value)"/></td>
+      <td class="border border-outline-variant p-1.5 text-right tabular-numbers" id="est-item-amount-${i}">¥${((it.qty || 0) * (it.price || 0)).toLocaleString()}</td>
+      <td class="border border-outline-variant p-1"><input type="text" value="${(it.note || '').replace(/"/g, '&quot;')}" class="w-full text-xs border-0 bg-transparent focus:ring-1 focus:ring-primary/40 rounded px-1 py-0.5" oninput="updateEstimateItem(${i},'note',this.value)"/></td>
+      <td class="border border-outline-variant p-1 text-center"><button onclick="removeEstimateItem(${i})" class="text-error hover:opacity-70 transition-opacity" title="行を削除"><span class="material-symbols-outlined text-[15px]">close</span></button></td>
+    </tr>`
+        )
+        .join('')
+    : '<tr><td colspan="7" class="border border-outline-variant p-4 text-center text-on-surface-variant">明細がありません</td></tr>';
+  recalcEstimateTotals();
+}
+
+function updateEstimateItem(i, field, value) {
+  if (field === 'qty' || field === 'price') {
+    estimateItems[i][field] = parseFloat(value) || 0;
+    const amt = (estimateItems[i].qty || 0) * (estimateItems[i].price || 0);
+    document.getElementById(`est-item-amount-${i}`).textContent = '¥' + amt.toLocaleString();
+  } else {
+    estimateItems[i][field] = value;
+  }
+  recalcEstimateTotals();
+}
+
+function addEstimateItem() {
+  estimateItems.push({ name: '', qty: 1, unit: '式', price: 0, note: '' });
+  renderEstimateItems();
+}
+
+function removeEstimateItem(i) {
+  estimateItems.splice(i, 1);
+  renderEstimateItems();
+}
+
+function recalcEstimateTotals() {
+  const subtotal = estimateItems.reduce((s, it) => s + (it.qty || 0) * (it.price || 0), 0);
+  const tax = Math.floor(subtotal * 0.1);
+  const grand = subtotal + tax;
+  document.getElementById('est-total').textContent = grand.toLocaleString();
+  document.getElementById('est-subtotal').textContent = '¥' + subtotal.toLocaleString();
+  document.getElementById('est-tax').textContent = '¥' + tax.toLocaleString();
+  document.getElementById('est-grand').textContent = '¥' + grand.toLocaleString();
 }
 
 function closeEstimatePreview() {
@@ -1117,7 +1164,11 @@ function closeEstimateEmailForm() {
 async function downloadEstimate() {
   if (!currentEstimateProjectId) return;
   try {
-    const res = await fetch(`/api/estimate/project/${currentEstimateProjectId}`);
+    const res = await fetch(`/api/estimate/project/${currentEstimateProjectId}/pdf`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ items: estimateItems }),
+    });
     if (!res.ok) throw new Error('Failed');
     const blob = await res.blob();
     const url = URL.createObjectURL(blob);
@@ -1151,7 +1202,7 @@ async function sendEstimateEmail() {
     const res = await fetch('/api/estimate/send', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ projectId: currentEstimateProjectId, to, subject, body }),
+      body: JSON.stringify({ projectId: currentEstimateProjectId, to, subject, body, items: estimateItems }),
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || '送信失敗');
@@ -1345,7 +1396,7 @@ async function sendEstimateEmail() {
               <div>有効期限：<span id="est-valid">---</span></div>
             </div>
           </div>
-          <table class="w-full text-xs mb-4" style="border-collapse:collapse">
+          <table class="w-full text-xs mb-1" style="border-collapse:collapse">
             <thead>
               <tr class="text-white" style="background:#7030A0">
                 <th class="border border-[#7030A0] p-1.5 text-left">品　名</th>
@@ -1354,10 +1405,14 @@ async function sendEstimateEmail() {
                 <th class="border border-[#7030A0] p-1.5 w-24 text-right">単価</th>
                 <th class="border border-[#7030A0] p-1.5 w-24 text-right">金額</th>
                 <th class="border border-[#7030A0] p-1.5 w-20">摘要</th>
+                <th class="border border-[#7030A0] p-1.5 w-8"></th>
               </tr>
             </thead>
             <tbody id="est-order-rows"></tbody>
           </table>
+          <button onclick="addEstimateItem()" class="mb-4 inline-flex items-center gap-1 text-[11px] text-primary hover:opacity-70 transition-opacity">
+            <span class="material-symbols-outlined text-[15px]">add</span>行を追加
+          </button>
           <div class="flex justify-end">
             <table class="text-xs" style="border-collapse:collapse">
               <tr><td class="border border-outline-variant px-3 py-1 w-24">小　計</td><td class="border border-outline-variant px-3 py-1 w-28 text-right tabular-numbers" id="est-subtotal">¥0</td></tr>

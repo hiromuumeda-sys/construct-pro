@@ -2089,8 +2089,8 @@ function buildDocumentPDF(kind, project, orders, customItems, variant = 'sealed'
 function buildInvoicePDF(project, orders, customItems, variant) {
   return buildDocumentPDF('invoice', project, orders, customItems, variant);
 }
-function buildEstimatePDF(project, orders) {
-  return buildDocumentPDF('estimate', project, orders);
+function buildEstimatePDF(project, orders, customItems) {
+  return buildDocumentPDF('estimate', project, orders, customItems);
 }
 
 function makeTransporter() {
@@ -2215,16 +2215,31 @@ app.get(
   })
 );
 
+// 見積書 PDF（プレビューで手入力編集した内訳を反映）
+app.post(
+  '/api/estimate/project/:projectId/pdf',
+  h(async (req, res) => {
+    const project = await one('SELECT * FROM projects WHERE id=$1', [req.params.projectId]);
+    if (!project) return res.status(404).json({ error: 'プロジェクトが見つかりません' });
+    const orders = await q('SELECT * FROM orders WHERE project_id=$1', [req.params.projectId]);
+    const pdfBuffer = await buildEstimatePDF(project, orders, req.body.items);
+    const disposition = req.query.inline === '1' ? 'inline' : 'attachment';
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `${disposition}; filename="estimate-${project.id}.pdf"`);
+    res.send(pdfBuffer);
+  })
+);
+
 // 見積書 メール送信
 app.post(
   '/api/estimate/send',
   h(async (req, res) => {
-    const { projectId, to, subject, body } = req.body;
+    const { projectId, to, subject, body, items } = req.body;
     if (!projectId || !to || !subject) return res.status(400).json({ error: '必須パラメータが不足しています' });
     const project = await one('SELECT * FROM projects WHERE id=$1', [projectId]);
     if (!project) return res.status(404).json({ error: 'プロジェクトが見つかりません' });
     const orders = await q('SELECT * FROM orders WHERE project_id=$1', [projectId]);
-    const pdfBuffer = await buildEstimatePDF(project, orders);
+    const pdfBuffer = await buildEstimatePDF(project, orders, items);
     await makeTransporter().sendMail({
       from: process.env.MAIL_FROM || 'CONSTRUCT_PRO <noreply@construct-pro.jp>',
       to,
