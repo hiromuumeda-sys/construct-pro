@@ -71,6 +71,8 @@ function ensureAux() {
       await createIfMissing('ALTER TABLE projects ADD COLUMN IF NOT EXISTS delivery_month_changed_at timestamp');
       // 引渡月変更による複製元→複製先の追跡用（議事録決定事項：複製元は「オーダー移行」ステータスで凍結）
       await createIfMissing('ALTER TABLE projects ADD COLUMN IF NOT EXISTS superseded_by integer');
+      // 支払条件の既定値（議事録決定事項：月末締翌月末払いを基本の固定条件とする）
+      await createIfMissing("ALTER TABLE orders ALTER COLUMN payment SET DEFAULT '月末締翌月末払い'");
     })().catch(e => {
       _auxReady = null;
       throw e;
@@ -761,7 +763,7 @@ app.post(
       b.period_start,
       b.period_end,
       b.handover,
-      b.payment,
+      b.payment || '月末締翌月末払い',
       b.paymentStatus || '未払い',
       b.paymentDate || '',
       b.paymentNotes || '',

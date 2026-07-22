@@ -100,7 +100,7 @@ create table orders (
   period_start  text,
   period_end    text,
   handover      text,
-  payment       text,
+  payment       text default '月末締翌月末払い',
   "paymentStatus" text default '未払い',
   "paymentDate"   text,
   "paymentNotes"  text,
