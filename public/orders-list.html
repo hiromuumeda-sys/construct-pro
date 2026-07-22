@@ -311,15 +311,13 @@ CSV出力
 
 <!-- 注文編集モーダル -->
 <!-- Project Selection Modal -->
-<template id="edit-modal-template">
-<tr>
-<td colspan="10" class="p-0">
-<div class="bg-surface-container-lowest border-y-2 border-secondary/40 whitespace-normal">
+<div class="fixed inset-0 z-[100] bg-primary/20 backdrop-blur-md" id="edit-modal" style="display:none" onclick="closeOrderModal()">
+<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl max-h-[90vh] bg-surface-container-lowest rounded-lg custom-shadow border border-outline-variant overflow-hidden flex flex-col" onclick="event.stopPropagation()">
 <div class="px-lg py-md flex justify-between items-center border-b border-outline-variant bg-surface-container-low shrink-0">
 <h3 class="text-label-md font-label-md text-primary">注文詳細の編集</h3>
 <button class="material-symbols-outlined text-on-surface-variant hover:text-primary" onclick="closeOrderModal()">close</button>
 </div>
-<div class="p-lg space-y-md">
+<div class="p-lg space-y-md overflow-y-auto flex-1">
 <input id="edit-id" type="hidden"/>
 <div class="grid grid-cols-2 gap-md">
 <div class="col-span-2">
@@ -399,9 +397,7 @@ CSV出力
 </div>
 </div>
 </div>
-</td>
-</tr>
-</template>
+</div>
 
 <!-- 請書/請求書PDF アップロード用（非表示・共通） -->
 <input type="file" id="doc-file-input" accept="application/pdf,.pdf" style="display:none"/>
@@ -827,31 +823,8 @@ function populateVendorSelect(categoryName, keepValue) {
   if (cur && list.some(v => v.company === cur)) sel.value = cur;
 }
 
-// 工事区分セレクトの選択肢を再構築（編集パネルはクローンで都度生成されるため毎回呼ぶ必要がある）
-function populateCategorySelect() {
-  const sel = document.getElementById('edit-category');
-  const categories = window.appCache.categories || [];
-  sel.innerHTML = '<option value="">選択してください</option>' + categories.map(c => `<option value="${c.name}">${c.name}</option>`).join('');
-  sel.addEventListener('change', e => populateVendorSelect(e.target.value));
-}
-
-// モーダルではなく、対象行の直下にインラインで編集パネルを展開する
-function insertEditRow(afterEl) {
-  closeOrderModal();
-  const tpl = document.getElementById('edit-modal-template');
-  const frag = tpl.content.cloneNode(true);
-  const tr = frag.querySelector('tr');
-  tr.id = 'edit-modal';
-  if (afterEl) afterEl.after(tr);
-  else document.getElementById('orders-table-body').prepend(tr);
-  tr.querySelector('#edit-delete-btn').style.display = afterEl ? '' : 'none';
-  populateCategorySelect();
-  return tr;
-}
-
 function openOrderModal() {
   editingId = null;
-  insertEditRow(null);
   document.getElementById('edit-category').value = '';
   populateVendorSelect('');
   document.getElementById('edit-vendor').value = '';
@@ -868,12 +841,17 @@ function openOrderModal() {
   document.getElementById('edit-payment-notes').value = '';
   document.getElementById('edit-assignee').value = '';
   document.getElementById('edit-id').value = '';
-  document.getElementById('edit-modal').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  document.getElementById('edit-delete-btn').style.display = 'none';
+
+  const modal = document.getElementById('edit-modal');
+  modal.style.display = 'block';
+  document.body.style.overflow = 'hidden';
 }
 
 function closeOrderModal() {
   const modal = document.getElementById('edit-modal');
-  if (modal) modal.remove();
+  modal.style.display = 'none';
+  document.body.style.overflow = '';
   editingId = null;
 }
 
@@ -1163,9 +1141,6 @@ function openOrderDetailModal(id) {
   const order = window.appCache.orders.find(o => o.id === id);
   if (!order) return;
 
-  const rowEl = document.querySelector(`tr[data-order-id="${id}"]`);
-  insertEditRow(rowEl);
-
   document.getElementById('edit-id').value = order.id;
   document.getElementById('edit-category').value = order.category;
   populateVendorSelect(order.category, order.vendor);
@@ -1182,8 +1157,11 @@ function openOrderDetailModal(id) {
   document.getElementById('edit-details').value = order.details || '';
   document.getElementById('edit-payment-notes').value = order.paymentNotes || '';
   document.getElementById('edit-assignee').value = order.assignee || '';
+  document.getElementById('edit-delete-btn').style.display = '';
 
-  document.getElementById('edit-modal').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  const modal = document.getElementById('edit-modal');
+  modal.style.display = 'block';
+  document.body.style.overflow = 'hidden';
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -1284,8 +1262,18 @@ function loadMasterData() {
   // Use global cached data
   const categories = window.appCache.categories;
 
-  // 工事区分（編集パネル）・発注先セレクトは、編集パネルを展開する都度
-  // populateCategorySelect()/populateVendorSelect()で再構築する（クローン生成のため）
+  // Load categories to edit-category
+  const categorySelect = document.getElementById('edit-category');
+  categories.forEach(c => {
+    const option = document.createElement('option');
+    option.value = c.name;
+    option.textContent = c.name;
+    categorySelect.appendChild(option);
+  });
+
+  // 発注先は工事区分に連動して絞り込む（初期は全件）
+  populateVendorSelect('');
+  categorySelect.addEventListener('change', e => populateVendorSelect(e.target.value));
 
   // Load categories to category-filter
   const categoryFilter = document.getElementById('category-filter');
