@@ -150,13 +150,13 @@ CSV出力
 <!-- Data Table -->
 <div class="bg-surface-container-lowest rounded-lg custom-shadow border border-outline-variant overflow-hidden">
 <div class="overflow-x-auto">
-<table class="w-full text-left border-collapse table-fixed">
+<table class="w-full text-left border-separate border-spacing-0 whitespace-nowrap">
 <thead class="bg-surface">
 <tr>
 <th class="w-36 px-lg py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider">案件ID</th>
 <th class="w-64 px-lg py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider">工事名</th>
 <th class="w-24 px-lg py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider">発注元</th>
-<th class="w-[28%] px-lg py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider">備考</th>
+<th class="w-64 px-lg py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider">備考</th>
 <th class="w-28 px-lg py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider">工期</th>
 <th class="w-24 px-lg py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider">引渡月</th>
 <th class="w-28 px-lg py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider text-right">契約金額</th>
@@ -481,11 +481,11 @@ function buildViewRow(p) {
   return `
     <tr class="hover:bg-surface-container-low transition-colors group cursor-pointer" data-project-id="${p.id}" onclick="openEditModal(${p.id})">
       <td class="w-36 px-lg py-2 text-label-md font-label-md text-on-surface-variant tabular-numbers align-top whitespace-nowrap">${p.project_no || '-'}</td>
-      <td class="w-64 px-lg py-2 text-label-md font-label-md text-primary align-top break-words">${p.name}</td>
-      <td class="w-24 px-lg py-2 text-label-md font-label-md text-on-surface-variant align-top break-words">
+      <td class="w-64 px-lg py-2 text-label-md font-label-md text-primary align-top break-words whitespace-normal">${p.name}</td>
+      <td class="w-24 px-lg py-2 text-label-md font-label-md text-on-surface-variant align-top break-words whitespace-normal">
         <span class="inline-flex items-center gap-0.5">${p.client}<button class="material-symbols-outlined text-[14px] text-on-surface-variant/60 hover:text-secondary align-middle" onclick="event.stopPropagation(); showClientInfoPopover(event, ${p.id})" title="クライアント情報を表示">info</button></span>
       </td>
-      <td class="w-[28%] px-lg py-2 text-label-md font-label-md text-on-surface-variant align-top break-words whitespace-normal">${p.notes || '-'}</td>
+      <td class="w-64 px-lg py-2 text-label-md font-label-md text-on-surface-variant align-top break-words whitespace-normal">${p.notes || '-'}</td>
       <td class="w-28 px-lg py-2 text-label-md font-label-md text-on-surface-variant tabular-numbers align-top">${p.startDate || '-'} 〜 ${p.endDate || '-'}</td>
       <td class="w-24 px-lg py-2 text-label-md font-label-md tabular-numbers align-top ${isRecentDeliveryMonthChange(p) ? 'bg-amber-100 text-amber-800 rounded-lg font-bold' : 'text-on-surface-variant'}" title="${isRecentDeliveryMonthChange(p) ? '引き渡し月が最近変更されました' : ''}">${p.deliveryMonth || '-'}</td>
       <td class="w-28 px-lg py-2 text-label-md font-label-md text-primary tabular-numbers text-right align-top">¥${p.amount.toLocaleString()}</td>
@@ -535,7 +535,7 @@ function buildEditRow(p) {
       <td class="w-36 px-lg py-2 text-label-md font-label-md text-on-surface-variant tabular-numbers align-top whitespace-nowrap">${p.project_no || '-'}</td>
       <td class="w-64 px-2 py-2 align-top"><input class="${inputCls}" id="edit-name" type="text" value="${(p.name || '').replace(/"/g, '&quot;')}"/></td>
       <td class="w-24 px-2 py-2 align-top"><select class="${inputCls}" id="edit-customer-select"><option value="">選択...</option>${customerOptions}</select></td>
-      <td class="w-[28%] px-2 py-2 align-top"><input class="${inputCls}" id="edit-notes" type="text" value="${(p.notes || '').replace(/"/g, '&quot;')}"/></td>
+      <td class="w-64 px-2 py-2 align-top"><input class="${inputCls}" id="edit-notes" type="text" value="${(p.notes || '').replace(/"/g, '&quot;')}"/></td>
       <td class="w-28 px-2 py-2 align-top space-y-0.5">
         <input class="${inputCls}" id="edit-period-start" type="date" value="${toIsoDate(p.startDate)}"/>
         <input class="${inputCls}" id="edit-period-end" type="date" value="${toIsoDate(p.endDate)}"/>
