@@ -158,6 +158,7 @@ body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 <th class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant w-24">支払期日</th>
 <th class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant w-28">支払銀行</th>
 <th class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant text-center w-32">支払ステータス</th>
+<th class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant text-center w-24">支払履歴</th>
 </tr>
 </thead>
 <tbody class="divide-y divide-outline-variant/20" id="payment-table-body">
@@ -308,6 +309,31 @@ body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 </div>
 </div>
 
+<!-- 支払履歴モーダル（発注ごとの支払実績。売上・入金管理の消し込み履歴と同様） -->
+<div class="fixed inset-0 z-[110] bg-primary/20 backdrop-blur-md" id="pay-history-modal" style="display:none" onclick="closePayHistoryModal()">
+<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl max-h-[85vh] bg-surface-container-lowest rounded-lg custom-shadow overflow-hidden border border-outline-variant flex flex-col" onclick="event.stopPropagation()">
+<div class="px-lg py-md border-b border-outline-variant flex justify-between items-center bg-surface-container-low shrink-0">
+<h3 class="text-label-md font-label-md text-primary flex items-center gap-1"><span class="material-symbols-outlined text-[18px]">receipt_long</span>支払履歴 <span id="ph-context" class="text-on-surface-variant font-normal"></span></h3>
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary" onclick="closePayHistoryModal()">close</button>
+</div>
+<div class="overflow-y-auto flex-1">
+<table class="w-full text-left border-separate border-spacing-0">
+<thead><tr class="bg-surface-container-low sticky top-0">
+<th class="px-3 py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant w-32">支払日</th>
+<th class="px-3 py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant text-right">支払額</th>
+<th class="px-3 py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant">備考</th>
+<th class="px-3 py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant text-center w-16"></th>
+</tr></thead>
+<tbody class="divide-y divide-outline-variant/20" id="ph-table-body"></tbody>
+</table>
+</div>
+<div class="px-lg py-md border-t border-outline-variant flex justify-between items-center bg-surface-container-low shrink-0">
+<span class="text-label-md font-label-md text-on-surface-variant">合計 <span id="ph-total" class="text-secondary font-bold tabular-numbers">¥0</span></span>
+<button class="px-4 py-1.5 text-label-md font-normal text-on-surface border border-outline-variant rounded-lg hover:bg-surface-container transition-all" onclick="closePayHistoryModal()">閉じる</button>
+</div>
+</div>
+</div>
+
 <!-- 案件外支払 登録/編集モーダル -->
 <div class="fixed inset-0 z-[110] bg-primary/20 backdrop-blur-md items-center justify-center" id="misc-payment-modal" style="display:none" onclick="closeMiscPaymentModal()">
 <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-surface-container-lowest rounded-lg custom-shadow overflow-hidden border border-outline-variant" onclick="event.stopPropagation()">
@@ -435,7 +461,7 @@ function renderPaymentRow(payment) {
   return `
     <tr class="${payment.status === '未払い' ? 'bg-yellow-50 hover:bg-yellow-100' : 'hover:bg-surface-container-low'} transition-colors cursor-pointer group" onclick="openModal(${payment.id})">
       <td class="px-3 py-1.5 text-center whitespace-nowrap" onclick="event.stopPropagation()">
-        ${payment.status === '部分払い' ? `<button onclick="event.stopPropagation(); openPayRegister(${payment.id})" class="material-symbols-outlined text-secondary hover:bg-secondary/10 rounded-full w-8 h-8" title="支払登録">add_circle</button>` : ''}
+        ${payment.status !== '支払済み' ? `<button onclick="event.stopPropagation(); openPayRegister(${payment.id})" class="material-symbols-outlined text-secondary hover:bg-secondary/10 rounded-full w-8 h-8" title="支払登録">add_circle</button>` : ''}
       </td>
       <td class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant tabular-numbers">${String(payment.id).padStart(6, '0')}</td>
       <td class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant tabular-numbers whitespace-nowrap">${payment.projectNo}</td>
@@ -453,6 +479,9 @@ function renderPaymentRow(payment) {
           </select>
           <span class="material-symbols-outlined absolute right-0.5 top-1/2 -translate-y-1/2 text-[16px] pointer-events-none">expand_more</span>
         </div>
+      </td>
+      <td class="px-3 py-1.5 text-center whitespace-nowrap" onclick="event.stopPropagation()">
+        <button class="material-symbols-outlined text-on-surface-variant hover:text-secondary hover:bg-secondary/10 rounded-full w-8 h-8" onclick="openPayHistoryModal(${payment.id})" title="支払履歴">receipt_long</button>
       </td>
     </tr>
   `;
@@ -603,6 +632,44 @@ async function submitPayRegister() {
   }
 }
 
+// ===== 支払履歴モーダル（発注ごとの支払実績。売上・入金管理の消し込み履歴と同様） =====
+let payHistoryOrderId = null;
+function openPayHistoryModal(id) {
+  payHistoryOrderId = id;
+  const p = payments.find(x => x.id === id);
+  document.getElementById('ph-context').textContent = p ? `（${p.projectName} / ${p.vendor}）` : '';
+  renderPayHistory();
+  document.getElementById('pay-history-modal').style.display = 'block';
+  document.body.style.overflow = 'hidden';
+}
+function closePayHistoryModal() {
+  document.getElementById('pay-history-modal').style.display = 'none';
+  document.body.style.overflow = '';
+  payHistoryOrderId = null;
+}
+function renderPayHistory() {
+  if (payHistoryOrderId == null) return;
+  const rows = paymentRecords.filter(r => r.order_id === payHistoryOrderId).sort((a, b) => String(b.paid_date).localeCompare(String(a.paid_date)));
+  const tbody = document.getElementById('ph-table-body');
+  if (rows.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="4" class="px-3 py-8 text-center text-on-surface-variant text-label-md">支払実績がありません</td></tr>';
+  } else {
+    tbody.innerHTML = rows
+      .map(
+        r => `
+      <tr class="hover:bg-surface-container-low transition-colors">
+        <td class="px-3 py-2.5 text-label-md font-label-md text-on-surface-variant tabular-numbers">${r.paid_date || '-'}</td>
+        <td class="px-3 py-2.5 text-label-md font-label-md text-right tabular-numbers text-secondary">¥${(r.amount || 0).toLocaleString()}</td>
+        <td class="px-3 py-2.5 text-label-md font-label-md text-on-surface-variant">${r.note || '-'}</td>
+        <td class="px-3 py-2.5 text-center"><button class="material-symbols-outlined text-error/70 hover:bg-error/10 rounded-full w-8 h-8 text-[20px]" onclick="deletePaymentRecord(${r.id})" title="取消">delete</button></td>
+      </tr>`
+      )
+      .join('');
+  }
+  const total = rows.reduce((a, r) => a + (Number(r.amount) || 0), 0);
+  document.getElementById('ph-total').textContent = '¥' + total.toLocaleString();
+}
+
 // フィルタ機能
 document.addEventListener('DOMContentLoaded', async () => {
   await initializeCache();
@@ -625,6 +692,7 @@ async function loadPaymentRecords() {
     paymentRecords = [];
   }
   renderPaymentRecords();
+  if (payHistoryOrderId != null && document.getElementById('pay-history-modal').style.display === 'block') renderPayHistory();
 }
 function renderPaymentRecords() {
   const tbody = document.getElementById('payrec-table-body');
