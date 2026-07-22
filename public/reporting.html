@@ -107,6 +107,7 @@ body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 <div class="inline-flex gap-xs bg-surface-container-low p-xs rounded-lg">
 <button id="tabbtn-overview" class="px-4 py-1.5 text-label-md font-label-md text-on-secondary bg-secondary rounded-lg shadow-lg hover:scale-[1.02] active:scale-95 transition-all" onclick="switchDashTab('overview')">予実・残高・当月予定</button>
 <button id="tabbtn-analysis" class="px-4 py-1.5 text-label-md font-label-md text-on-surface-variant bg-transparent rounded-lg hover:bg-surface-container transition-all" onclick="switchDashTab('analysis')">レポート分析</button>
+<button id="tabbtn-vendor-concentration" class="px-4 py-1.5 text-label-md font-label-md text-on-surface-variant bg-transparent rounded-lg hover:bg-surface-container transition-all" onclick="switchDashTab('vendor-concentration')">協力会社別発注偏り</button>
 </div>
 </div>
 
@@ -282,14 +283,6 @@ body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 </div>
 </div>
 
-<!-- 協力会社別の発注偏り可視化（議事録論点：協力会社別の発注偏りを可視化） -->
-<div class="bg-surface-container-lowest rounded-lg custom-shadow border border-outline-variant overflow-hidden">
-<div class="px-lg py-2.5 border-b border-outline-variant bg-surface-container-low">
-<h3 class="text-label-md font-label-md text-primary">協力会社別の発注偏り（全案件・決定金額ベース）</h3>
-</div>
-<div class="p-lg space-y-2" id="vendor-concentration-body"></div>
-</div>
-
 <!-- 明細レコードテーブル（サマリの根拠・最大15件スクロール） -->
 <div class="bg-surface-container-lowest rounded-lg custom-shadow border border-outline-variant overflow-hidden">
 <div class="px-lg py-2.5 border-b border-outline-variant bg-surface-container-low flex justify-between items-center">
@@ -314,6 +307,18 @@ body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 
 </div>
 <!-- ===== /Tab: レポート分析 ===== -->
+
+<!-- ===== Tab: 協力会社別発注偏り ===== -->
+<div id="tab-vendor-concentration" class="hidden space-y-md">
+<!-- 協力会社別の発注偏り可視化（議事録論点：協力会社別の発注偏りを可視化） -->
+<div class="bg-surface-container-lowest rounded-lg custom-shadow border border-outline-variant overflow-hidden">
+<div class="px-lg py-2.5 border-b border-outline-variant bg-surface-container-low">
+<h3 class="text-label-md font-label-md text-primary">協力会社別の発注偏り（全案件・決定金額ベース）</h3>
+</div>
+<div class="p-lg space-y-2" id="vendor-concentration-body"></div>
+</div>
+</div>
+<!-- ===== /Tab: 協力会社別発注偏り ===== -->
 
 </div>
 <!-- Footer -->
@@ -890,28 +895,24 @@ async function renderGrowthChart() {
 }
 
 function switchDashTab(tab) {
-  const overview = document.getElementById('tab-overview');
-  const analysis = document.getElementById('tab-analysis');
-  const btnO = document.getElementById('tabbtn-overview');
-  const btnA = document.getElementById('tabbtn-analysis');
+  const panelIds = { overview: 'tab-overview', analysis: 'tab-analysis', 'vendor-concentration': 'tab-vendor-concentration' };
+  const btnIds = { overview: 'tabbtn-overview', analysis: 'tabbtn-analysis', 'vendor-concentration': 'tabbtn-vendor-concentration' };
   const active = ['text-on-secondary', 'bg-secondary', 'shadow-lg'];
   const inactive = ['text-on-surface-variant', 'bg-transparent', 'hover:bg-surface-container'];
-  if (tab === 'overview') {
-    overview.classList.remove('hidden');
-    analysis.classList.add('hidden');
-    btnO.classList.add(...active);
-    btnO.classList.remove(...inactive);
-    btnA.classList.add(...inactive);
-    btnA.classList.remove(...active);
-  } else {
-    overview.classList.add('hidden');
-    analysis.classList.remove('hidden');
-    btnA.classList.add(...active);
-    btnA.classList.remove(...inactive);
-    btnO.classList.add(...inactive);
-    btnO.classList.remove(...active);
-    if (!growthLoaded) renderGrowthChart();
-  }
+  Object.keys(panelIds).forEach(key => {
+    const panel = document.getElementById(panelIds[key]);
+    const btn = document.getElementById(btnIds[key]);
+    if (key === tab) {
+      panel.classList.remove('hidden');
+      btn.classList.add(...active);
+      btn.classList.remove(...inactive);
+    } else {
+      panel.classList.add('hidden');
+      btn.classList.add(...inactive);
+      btn.classList.remove(...active);
+    }
+  });
+  if (tab === 'analysis' && !growthLoaded) renderGrowthChart();
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
