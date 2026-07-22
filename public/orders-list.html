@@ -71,7 +71,7 @@ body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 <button class="md:hidden material-symbols-outlined text-on-surface-variant hover:text-primary mr-3" onclick="toggleSidebar()">menu</button>
 <div class="flex items-center gap-4 bg-surface-container-low px-md py-2 rounded-full w-96">
 <span class="material-symbols-outlined text-on-surface-variant">search</span>
-<input class="bg-transparent border-none focus:ring-0 text-body-md w-full" id="keyword-search" placeholder="Search projects..." type="text"/>
+<input class="bg-transparent border-none focus:ring-0 text-body-md w-full" id="keyword-search" placeholder="Search..." type="text"/>
 </div>
 <div class="flex items-center gap-md">
 <div class="flex items-center gap-4">
@@ -187,7 +187,7 @@ CSV出力
 </div>
 <div class="relative flex-1 max-w-lg">
 <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant text-xl">search</span>
-<input class="w-full bg-surface-container-lowest border border-outline-variant text-sm pl-12 pr-4 py-2.5 rounded-lg focus:ring-2 focus:ring-secondary/20 focus:border-transparent transition-all" id="keyword-search" placeholder="工事名、発注先で検索..." type="text"/>
+<input class="w-full bg-surface-container-lowest border border-outline-variant text-sm pl-12 pr-4 py-2.5 rounded-lg focus:ring-2 focus:ring-secondary/20 focus:border-transparent transition-all" id="order-keyword-search" placeholder="工事名、発注先で検索..." type="text"/>
 </div>
 <div class="relative">
 <button class="flex items-center gap-1.5 px-4 py-2.5 border border-outline-variant text-sm rounded-lg hover:bg-surface-container-low transition-all" onclick="event.stopPropagation(); toggleColumnMenu()">
@@ -1247,7 +1247,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   document.getElementById('category-filter').addEventListener('change', filterTable);
   document.getElementById('status-filter').addEventListener('change', filterTable);
-  document.getElementById('keyword-search').addEventListener('input', filterTable);
+  document.getElementById('order-keyword-search').addEventListener('input', filterTable);
 });
 
 function renderProjectSelectList() {
@@ -1267,8 +1267,9 @@ function renderProjectSelectList() {
 
   const projects = window.appCache.projects.filter(p => {
     const name = p.name.toLowerCase();
-    if (kwInline && !name.includes(kwInline)) return false;
-    if (kwHeader && !name.includes(kwHeader)) return false;
+    const projectNo = (p.project_no || '').toLowerCase();
+    if (kwInline && !name.includes(kwInline) && !projectNo.includes(kwInline)) return false;
+    if (kwHeader && !name.includes(kwHeader) && !projectNo.includes(kwHeader)) return false;
     // 期間で絞り込み：案件の工期が指定範囲に重なるもの
     if (rangeStart || rangeEnd) {
       const st = parseD(p.startDate),
@@ -1341,7 +1342,7 @@ function loadMasterData() {
 function filterTable() {
   const category = document.getElementById('category-filter').value;
   const status = document.getElementById('status-filter').value;
-  const keyword = document.getElementById('keyword-search').value.toLowerCase();
+  const keyword = document.getElementById('order-keyword-search').value.toLowerCase();
 
   const filtered = orders.filter(o => {
     const matchCategory = !category || o.category === category;

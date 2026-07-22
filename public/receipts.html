@@ -71,7 +71,7 @@ body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 <button class="md:hidden material-symbols-outlined text-on-surface-variant hover:text-primary mr-3" onclick="toggleSidebar()">menu</button>
 <div class="flex items-center gap-4 bg-surface-container-low px-4 py-2 rounded-full w-96">
 <span class="material-symbols-outlined text-on-surface-variant">search</span>
-<input class="bg-transparent border-none focus:ring-0 text-body-md w-full" id="header-search" placeholder="Search..." type="text"/>
+<input class="bg-transparent border-none focus:ring-0 text-body-md w-full" id="header-search" placeholder="Search..." type="text" oninput="renderSales()"/>
 </div>
 <div class="flex items-center gap-md">
 <div class="flex items-center gap-4">
@@ -143,7 +143,7 @@ body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 </div>
 
 <!-- Filter Section -->
-<div class="bg-surface-container-lowest p-md rounded-lg custom-shadow border border-outline-variant">
+<div class="bg-surface-container-lowest p-md rounded-lg custom-shadow border border-outline-variant mt-lg">
 <div class="grid grid-cols-1 md:grid-cols-3 gap-md items-end">
 <div>
 <label class="block text-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">入金ステータス</label>
@@ -166,13 +166,12 @@ body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 </div>
 
 <!-- Data Table（最大10件・以降スクロール） -->
-<div class="bg-surface-container-lowest border border-outline-variant rounded-lg overflow-hidden shadow-sm">
+<div class="bg-surface-container-lowest border border-outline-variant rounded-lg overflow-hidden shadow-sm mt-lg">
 <div class="overflow-auto" style="max-height: 600px;">
 <table class="text-left border-separate border-spacing-0 whitespace-nowrap">
 <thead>
 <tr class="bg-surface-container-low sticky top-0 z-10">
 <th class="px-3 py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant text-center w-20">入金登録</th>
-<th class="px-3 py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant text-center w-24">消し込み履歴</th>
 <th class="px-3 py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant">案件ID</th>
 <th class="px-3 py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant">発注者</th>
 <th class="px-3 py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant">工事名</th>
@@ -186,6 +185,7 @@ body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 <th class="px-3 py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant text-right">完成工事未収入金</th>
 <th class="px-3 py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant text-right">未成工事受入金</th>
 <th class="px-3 py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant text-center w-24">ステータス</th>
+<th class="px-3 py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant text-center w-24">消し込み履歴</th>
 </tr>
 </thead>
 <tbody class="divide-y divide-outline-variant/20" id="sales-table-body">
@@ -599,6 +599,7 @@ function renderSales() {
   const fStatus = document.getElementById('filter-pay-status').value;
   const fDueStart = document.getElementById('filter-due-start').value;
   const fDueEnd = document.getElementById('filter-due-end').value;
+  const kw = (document.getElementById('header-search').value || '').toLowerCase();
 
   const filtered = salesData.filter(s => {
     if (fStatus && s.pay_status !== fStatus) return false;
@@ -607,6 +608,7 @@ function renderSales() {
       if (fDueStart && s.due_date < fDueStart) return false;
       if (fDueEnd && s.due_date > fDueEnd) return false;
     }
+    if (kw && !((s.name || '').toLowerCase().includes(kw) || (s.client || '').toLowerCase().includes(kw) || (s.project_no || '').toLowerCase().includes(kw))) return false;
     return true;
   });
 
@@ -620,9 +622,6 @@ function renderSales() {
     <tr class="${s.pay_status === '未入金' ? 'bg-yellow-50 hover:bg-yellow-100' : 'hover:bg-surface-container-low'} transition-colors cursor-pointer" onclick="openSalesDetail(${s.id})">
       <td class="px-3 py-2.5 text-center">
         <button class="material-symbols-outlined text-secondary hover:bg-secondary/10 rounded-full w-8 h-8" onclick="event.stopPropagation(); openReceiptModal(${s.id})" title="入金登録">add_circle</button>
-      </td>
-      <td class="px-3 py-2.5 text-center">
-        <button class="material-symbols-outlined text-on-surface-variant hover:text-secondary hover:bg-secondary/10 rounded-full w-8 h-8" onclick="event.stopPropagation(); openHistoryModal(${s.id})" title="消し込み履歴">receipt_long</button>
       </td>
       <td class="px-3 py-2.5 text-label-md font-label-md text-on-surface-variant tabular-numbers">${s.project_no || '-'}</td>
       <td class="px-3 py-2.5 text-label-md font-label-md text-on-surface-variant">${s.client}</td>
@@ -643,6 +642,9 @@ function renderSales() {
           </select>
           <span class="material-symbols-outlined absolute right-0.5 top-1/2 -translate-y-1/2 text-[16px] pointer-events-none">expand_more</span>
         </div>
+      </td>
+      <td class="px-3 py-2.5 text-center" onclick="event.stopPropagation()">
+        <button class="material-symbols-outlined text-on-surface-variant hover:text-secondary hover:bg-secondary/10 rounded-full w-8 h-8" onclick="openHistoryModal(${s.id})" title="消し込み履歴">receipt_long</button>
       </td>
     </tr>
   `
