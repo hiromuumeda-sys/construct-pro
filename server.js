@@ -354,7 +354,7 @@ app.get(
   })
 );
 
-// 工番 WW-YYYYMM-001 を採番（同一の引渡月内で連番、既存件数+1。議事録決定事項：オーダー番号と同じ「WW-年月-連番」方式に統一）
+// 案件ID WW-YYYYMM-001 を採番（同一の引渡月内で連番、既存件数+1。議事録決定事項：オーダー番号と同じ「WW-年月-連番」方式に統一）
 async function nextProjectNo(deliveryMonth) {
   const ym = deliveryMonth.replace('-', '');
   const prefix = `WW-${ym}-`;
@@ -1077,8 +1077,8 @@ app.delete(
 
 // 入金取込フォーマット（テンプレート）ダウンロード F5-3
 app.get('/api/receipts/template', (req, res) => {
-  const header = '工番,入金日,入金額,対象月度,備考';
-  const sample = ['WW7-0001,2026-06-30,5000000,2026/06,着手金', 'WW7-0003,2026-06-30,3000000,2026/06,中間金'].join('\n');
+  const header = '案件ID,入金日,入金額,対象月度,備考';
+  const sample = ['WW-202603-001,2026-06-30,5000000,2026/06,着手金', 'WW-202512-001,2026-06-30,3000000,2026/06,中間金'].join('\n');
   res.setHeader('Content-Type', 'text/csv; charset=utf-8');
   res.setHeader('Content-Disposition', 'attachment; filename="receipts_template.csv"');
   res.send('﻿' + header + '\n' + sample + '\n');
@@ -1125,12 +1125,12 @@ app.post(
       const [projectNo, date, amountStr, month, memo] = parseLine(dataLines[idx]);
       const rowNum = idx + 2;
       if (!projectNo || !date || !amountStr) {
-        errors.push(`${rowNum}行目: 工番・入金日・入金額は必須です`);
+        errors.push(`${rowNum}行目: 案件ID・入金日・入金額は必須です`);
         continue;
       }
       const project = await one('SELECT * FROM projects WHERE project_no=$1', [projectNo]);
       if (!project) {
-        errors.push(`${rowNum}行目: 工番「${projectNo}」が見つかりません`);
+        errors.push(`${rowNum}行目: 案件ID「${projectNo}」が見つかりません`);
         continue;
       }
       const amount = parseInt(String(amountStr).replace(/[¥,]/g, ''), 10);
@@ -1402,7 +1402,7 @@ app.get(
         rows.push({ project_no: p.project_no, name: p.name, client: p.client, contract: p.amount, received, outstanding: (Number(p.amount) || 0) - received, status: p.status });
       }
       csv = toCSV(rows, [
-        { key: 'project_no', label: '工番' },
+        { key: 'project_no', label: '案件ID' },
         { key: 'name', label: '工事名' },
         { key: 'client', label: '顧客' },
         { key: 'contract', label: '請負金額' },
@@ -1418,7 +1418,7 @@ app.get(
       });
       csv = toCSV(rows, [
         { key: 'received_date', label: '入金日' },
-        { key: 'project_no', label: '工番' },
+        { key: 'project_no', label: '案件ID' },
         { key: 'project_name', label: '工事名' },
         { key: 'amount', label: '入金額' },
         { key: 'month', label: '対象月度' },
@@ -1428,7 +1428,7 @@ app.get(
     } else if (type === 'payments') {
       const rows = await q('SELECT o.*, p.name AS project_name, p.project_no FROM orders o LEFT JOIN projects p ON o.project_id = p.id ORDER BY o.id');
       csv = toCSV(rows, [
-        { key: 'project_no', label: '工番' },
+        { key: 'project_no', label: '案件ID' },
         { key: 'project_name', label: '工事名' },
         { key: 'vendor', label: '支払先' },
         { key: 'category', label: '支払内容' },
