@@ -69,7 +69,7 @@ ${sub}
 </a>`;
   }).join('');
 
-  return `<aside class="fixed left-0 top-0 h-screen w-48 z-50 bg-surface-container-lowest border-r border-outline-variant flex flex-col py-6">
+  return `<aside id="app-sidebar" class="fixed left-0 top-0 h-screen w-48 z-50 bg-surface-container-lowest border-r border-outline-variant flex flex-col py-6 -translate-x-full md:translate-x-0 transition-transform duration-200">
 <div class="px-4 mb-8">
 <img src="/logo.png" alt="WIN WIN" style="height:32px;width:auto;display:block"
   onerror="this.style.display='none';this.nextElementSibling.style.display='block'"/>
@@ -78,6 +78,26 @@ ${sub}
 </div>
 <nav class="flex-1 space-y-0.5">${items}</nav>
 </aside>`;
+}
+
+// モバイル用：サイドバーの開閉トグル＋背景オーバーレイ（md以上では常時表示のため無関係）
+function toggleSidebar(forceClose) {
+  const aside = document.getElementById('app-sidebar');
+  const backdrop = document.getElementById('sidebar-backdrop');
+  if (!aside) return;
+  const willOpen = forceClose === true ? false : aside.classList.contains('-translate-x-full');
+  aside.classList.toggle('-translate-x-full', !willOpen);
+  aside.classList.toggle('translate-x-0', willOpen);
+  if (backdrop) backdrop.classList.toggle('hidden', !willOpen);
+}
+
+function ensureSidebarBackdrop() {
+  if (document.getElementById('sidebar-backdrop')) return;
+  const backdrop = document.createElement('div');
+  backdrop.id = 'sidebar-backdrop';
+  backdrop.className = 'hidden md:hidden fixed inset-0 bg-inverse-surface/40 z-40';
+  backdrop.onclick = () => toggleSidebar(true);
+  document.body.appendChild(backdrop);
 }
 
 // サイドバーのサイズをCSSで強制（DOM置換の成否やTailwindの適用状況に依存しない保険）。
@@ -113,4 +133,7 @@ main select.appearance-none.rounded-full { text-align: center !important; text-a
 document.addEventListener('DOMContentLoaded', () => {
   const existing = document.querySelector('aside');
   if (existing) existing.outerHTML = buildSidebar();
+  ensureSidebarBackdrop();
+  // ページ遷移（リンククリック）でモバイル表示のサイドバーを閉じておく
+  document.querySelectorAll('#app-sidebar a').forEach(a => a.addEventListener('click', () => toggleSidebar(true)));
 });

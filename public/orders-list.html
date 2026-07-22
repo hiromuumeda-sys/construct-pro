@@ -6,11 +6,11 @@
 <title>工事計画 - WIN WIN様デモ</title>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
-<link rel="stylesheet" href="/styles.css?v=66"/>
-<script src="/sidebar.js?v=66"></script>
-<script src="/auth.js?v=66"></script>
-<script src="/header.js?v=66"></script>
-<script src="/status-utils.js?v=66"></script>
+<link rel="stylesheet" href="/styles.css?v=69"/>
+<script src="/sidebar.js?v=69"></script>
+<script src="/auth.js?v=69"></script>
+<script src="/header.js?v=69"></script>
+<script src="/status-utils.js?v=69"></script>
 <style>
 body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
@@ -65,9 +65,10 @@ body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 </nav>
 </aside>
 <!-- Main Content Canvas -->
-<main class="ml-48 min-h-screen">
+<main class="ml-0 md:ml-48 min-h-screen">
 <!-- Top App Bar -->
 <header class="sticky top-0 z-40 flex justify-between items-center h-16 px-margin-desktop bg-surface/80 backdrop-blur-md shadow-sm">
+<button class="md:hidden material-symbols-outlined text-on-surface-variant hover:text-primary mr-3" onclick="toggleSidebar()">menu</button>
 <div class="flex items-center gap-4 bg-surface-container-low px-md py-2 rounded-full w-96">
 <span class="material-symbols-outlined text-on-surface-variant">search</span>
 <input class="bg-transparent border-none focus:ring-0 text-body-md w-full" id="keyword-search" placeholder="Search projects..." type="text"/>
@@ -192,7 +193,8 @@ CSV出力
 
 <!-- Data Table -->
 <div class="bg-surface-container-lowest border border-outline-variant rounded-2xl overflow-hidden shadow-sm">
-<table class="w-full text-left border-separate border-spacing-0">
+<div class="overflow-x-auto">
+<table class="w-full text-left border-separate border-spacing-0 whitespace-nowrap">
 <thead>
 <tr class="bg-surface-container-low">
 <th class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant w-[12%]">工事区分</th>
@@ -211,6 +213,7 @@ CSV出力
 <!-- データが JavaScript で挿入される -->
 </tbody>
 </table>
+</div>
 </div>
 
 <!-- Summary Section (与実の管理) -->
@@ -292,7 +295,7 @@ CSV出力
 <template id="edit-modal-template">
 <tr>
 <td colspan="10" class="p-0">
-<div class="bg-surface-container-lowest border-y-2 border-secondary/40">
+<div class="bg-surface-container-lowest border-y-2 border-secondary/40 whitespace-normal">
 <div class="px-lg py-md flex justify-between items-center border-b border-outline-variant bg-surface-container-low shrink-0">
 <h3 class="text-label-md font-label-md text-primary">注文詳細の編集</h3>
 <button class="material-symbols-outlined text-on-surface-variant hover:text-primary" onclick="closeOrderModal()">close</button>
@@ -1243,6 +1246,6 @@ function filterTable() {
   tbody.innerHTML = filtered.map(buildOrderRow).join('');
 }
 </script>
-<script src="/notify.js?v=66"></script>
+<script src="/notify.js?v=69"></script>
 </body>
 </html>
