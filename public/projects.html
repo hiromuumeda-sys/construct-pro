@@ -6,11 +6,11 @@
 <title>受注一覧 - WIN WIN様デモ</title>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
-<link rel="stylesheet" href="/styles.css?v=73"/>
-<script src="/sidebar.js?v=73"></script>
-<script src="/auth.js?v=73"></script>
-<script src="/header.js?v=73"></script>
-<script src="/status-utils.js?v=73"></script>
+<link rel="stylesheet" href="/styles.css?v=74"/>
+<script src="/sidebar.js?v=74"></script>
+<script src="/auth.js?v=74"></script>
+<script src="/header.js?v=74"></script>
+<script src="/status-utils.js?v=74"></script>
 <style>
 body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
@@ -153,7 +153,7 @@ CSV出力
 <table class="w-full text-left border-collapse table-fixed">
 <thead class="bg-surface">
 <tr>
-<th class="w-12 px-lg py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider">No.</th>
+<th class="w-36 px-lg py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider">案件ID</th>
 <th class="w-64 px-lg py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider">工事名</th>
 <th class="w-24 px-lg py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider">発注元</th>
 <th class="w-[28%] px-lg py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider">備考</th>
@@ -480,7 +480,7 @@ function renderTable(projects) {
 function buildViewRow(p) {
   return `
     <tr class="hover:bg-surface-container-low transition-colors group cursor-pointer" data-project-id="${p.id}" onclick="openEditModal(${p.id})">
-      <td class="w-12 px-lg py-2 text-label-md font-label-md text-on-surface-variant tabular-numbers align-top">${String(p.id).padStart(5, '0')}</td>
+      <td class="w-36 px-lg py-2 text-label-md font-label-md text-on-surface-variant tabular-numbers align-top whitespace-nowrap">${p.project_no || '-'}</td>
       <td class="w-64 px-lg py-2 text-label-md font-label-md text-primary align-top break-words">${p.name}</td>
       <td class="w-24 px-lg py-2 text-label-md font-label-md text-on-surface-variant align-top break-words">
         <span class="inline-flex items-center gap-0.5">${p.client}<button class="material-symbols-outlined text-[14px] text-on-surface-variant/60 hover:text-secondary align-middle" onclick="event.stopPropagation(); showClientInfoPopover(event, ${p.id})" title="クライアント情報を表示">info</button></span>
@@ -532,7 +532,7 @@ function buildEditRow(p) {
     .join('');
   return `
     <tr class="bg-secondary-container/10 ring-1 ring-inset ring-secondary/30" data-project-id="${p.id}">
-      <td class="w-12 px-lg py-2 text-label-md font-label-md text-on-surface-variant tabular-numbers align-top">${String(p.id).padStart(5, '0')}</td>
+      <td class="w-36 px-lg py-2 text-label-md font-label-md text-on-surface-variant tabular-numbers align-top whitespace-nowrap">${p.project_no || '-'}</td>
       <td class="w-64 px-2 py-2 align-top"><input class="${inputCls}" id="edit-name" type="text" value="${(p.name || '').replace(/"/g, '&quot;')}"/></td>
       <td class="w-24 px-2 py-2 align-top"><select class="${inputCls}" id="edit-customer-select"><option value="">選択...</option>${customerOptions}</select></td>
       <td class="w-[28%] px-2 py-2 align-top"><input class="${inputCls}" id="edit-notes" type="text" value="${(p.notes || '').replace(/"/g, '&quot;')}"/></td>
@@ -1463,6 +1463,6 @@ async function sendEstimateEmail() {
   </div>
 </div>
 
-<script src="/notify.js?v=73"></script>
+<script src="/notify.js?v=74"></script>
 </body>
 </html>
