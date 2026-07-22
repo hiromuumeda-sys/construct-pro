@@ -6,11 +6,11 @@
 <title>受注一覧 - WIN WIN様デモ</title>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
-<link rel="stylesheet" href="/styles.css?v=72"/>
-<script src="/sidebar.js?v=72"></script>
-<script src="/auth.js?v=72"></script>
-<script src="/header.js?v=72"></script>
-<script src="/status-utils.js?v=72"></script>
+<link rel="stylesheet" href="/styles.css?v=73"/>
+<script src="/sidebar.js?v=73"></script>
+<script src="/auth.js?v=73"></script>
+<script src="/header.js?v=73"></script>
+<script src="/status-utils.js?v=73"></script>
 <style>
 body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
@@ -217,79 +217,6 @@ CSV出力
 </div>
 </div>
 
-<!-- Edit Modal -->
-<template id="edit-modal-template">
-<tr>
-<td colspan="10" class="p-0">
-<div class="bg-surface-container-lowest border-y-2 border-secondary/40">
-<div class="px-lg py-md flex justify-between items-center border-b border-outline-variant bg-surface-container-low">
-<h3 class="text-label-md font-label-md text-primary">案件詳細の編集</h3>
-<button class="material-symbols-outlined text-label-md text-on-surface-variant hover:text-primary" onclick="closeEditModal()">close</button>
-</div>
-<div class="p-lg space-y-md">
-<input id="edit-id" type="hidden"/>
-<div class="grid grid-cols-2 gap-md">
-<div class="col-span-2">
-<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">工事名 <span class="text-error">*</span></label>
-<input class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent" id="edit-name" type="text"/>
-</div>
-<div class="col-span-2">
-<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">顧客（発注元） <span class="text-error">*</span></label>
-<select class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent" id="edit-customer-select" onchange="onEditCustomerSelected()">
-<option value="">顧客マスタから選択...</option>
-</select>
-</div>
-<div>
-<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">ステータス</label>
-<select class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent" id="edit-status">
-<option>未対応</option>
-<option>提案中</option>
-<option>見積確認中</option>
-<option>受注</option>
-<option>失注</option>
-</select>
-</div>
-<div>
-<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">契約金額</label>
-<input class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent tabular-numbers" id="edit-amount" type="text"/>
-</div>
-<div>
-<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">工期開始</label>
-<input class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent" id="edit-period-start" type="date"/>
-</div>
-<div>
-<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">工期終了</label>
-<input class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent" id="edit-period-end" type="date"/>
-</div>
-<div>
-<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">引渡月</label>
-<input type="hidden" id="edit-delivery-month"/>
-<button type="button" class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent flex justify-between items-center" onclick="openMonthPicker(event, 'edit-delivery-month')">
-<span id="edit-delivery-month-label" class="text-on-surface-variant">未設定</span>
-<span class="material-symbols-outlined text-[18px] text-on-surface-variant">calendar_month</span>
-</button>
-</div>
-<div class="col-span-2">
-<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">備考</label>
-<textarea class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent" id="edit-notes" rows="3"></textarea>
-</div>
-</div>
-</div>
-<div class="px-lg py-md bg-surface-container-low border-t border-outline-variant flex justify-between items-center">
-<button class="text-error font-normal text-label-md flex items-center gap-2 hover:bg-error/5 px-4 py-1.5 rounded-lg transition-all" id="delete-btn" onclick="deleteProject()">
-<span class="material-symbols-outlined text-label-md">delete</span>
-削除
-</button>
-<div class="flex items-center gap-md">
-<button class="px-4 py-1.5 text-label-md font-label-md font-normal text-on-surface-variant hover:bg-surface-container rounded-lg transition-all" onclick="closeEditModal()">キャンセル</button>
-<button class="bg-secondary text-on-secondary px-4 py-1.5 text-label-md font-label-md font-normal rounded-lg shadow-lg hover:scale-[1.02] transition-all" onclick="saveEdit()">保存</button>
-</div>
-</div>
-</div>
-</td>
-</tr>
-</template>
-
 <!-- Register Modal -->
 <div class="fixed inset-0 z-[100] bg-primary/20 backdrop-blur-md" id="register-modal" style="display:none" onclick="closeModal('register-modal')">
 <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl max-h-[90vh] bg-surface-container-lowest rounded-lg custom-shadow border border-outline-variant overflow-hidden" onclick="event.stopPropagation()">
@@ -448,21 +375,10 @@ function closeModal(id) {
   if (el) el.style.display = 'none';
 }
 
-// モーダルではなく、対象行の直下にインラインで編集パネルを展開する
-function insertEditRow(afterEl) {
-  closeEditModal();
-  const tpl = document.getElementById('edit-modal-template');
-  const frag = tpl.content.cloneNode(true);
-  const tr = frag.querySelector('tr');
-  tr.id = 'edit-modal';
-  if (afterEl) afterEl.after(tr);
-  else document.getElementById('project-table-body').prepend(tr);
-  return tr;
-}
-
+// アコーディオン展開はせず、対象行自体をテーブル内でインライン編集に切り替える
 function closeEditModal() {
-  const modal = document.getElementById('edit-modal');
-  if (modal) modal.remove();
+  editingId = null;
+  applyProjectFilters();
 }
 
 if (!window.appCache) {
@@ -544,20 +460,6 @@ function onRegisterCustomerSelected() {
   }
 }
 
-function onEditCustomerSelected() {
-  const select = document.getElementById('edit-customer-select');
-  const customerId = select.value;
-  if (!customerId) {
-    document.getElementById('edit-client').value = '';
-    return;
-  }
-
-  const customer = window.appCache.customers.find(c => c.id == customerId);
-  if (customer) {
-    document.getElementById('edit-client').value = customer.company;
-  }
-}
-
 function loadProjects() {
   renderTable(window.appCache.projects);
 }
@@ -572,9 +474,11 @@ function isRecentDeliveryMonthChange(p) {
 
 function renderTable(projects) {
   const tbody = document.getElementById('project-table-body');
-  tbody.innerHTML = projects
-    .map(
-      (p, i) => `
+  tbody.innerHTML = projects.map(p => (p.id === editingId ? buildEditRow(p) : buildViewRow(p))).join('');
+}
+
+function buildViewRow(p) {
+  return `
     <tr class="hover:bg-surface-container-low transition-colors group cursor-pointer" data-project-id="${p.id}" onclick="openEditModal(${p.id})">
       <td class="w-12 px-lg py-2 text-label-md font-label-md text-on-surface-variant tabular-numbers align-top">${String(p.id).padStart(5, '0')}</td>
       <td class="w-64 px-lg py-2 text-label-md font-label-md text-primary align-top break-words">${p.name}</td>
@@ -617,9 +521,59 @@ function renderTable(projects) {
         </div>
       </td>
     </tr>
-  `
-    )
+  `;
+}
+
+// アコーディオン展開はせず、行自体のセルを入力欄に差し替えてテーブル内でインライン編集する
+function buildEditRow(p) {
+  const inputCls = 'w-full bg-surface-container-lowest border border-outline-variant rounded text-[11px] px-1.5 py-1 focus:ring-1 focus:ring-secondary/40 focus:border-transparent';
+  const customerOptions = (window.appCache.customers || [])
+    .map(c => `<option value="${c.id}" ${c.company === p.clientCompany ? 'selected' : ''}>${c.company}</option>`)
     .join('');
+  return `
+    <tr class="bg-secondary-container/10 ring-1 ring-inset ring-secondary/30" data-project-id="${p.id}">
+      <td class="w-12 px-lg py-2 text-label-md font-label-md text-on-surface-variant tabular-numbers align-top">${String(p.id).padStart(5, '0')}</td>
+      <td class="w-64 px-2 py-2 align-top"><input class="${inputCls}" id="edit-name" type="text" value="${(p.name || '').replace(/"/g, '&quot;')}"/></td>
+      <td class="w-24 px-2 py-2 align-top"><select class="${inputCls}" id="edit-customer-select"><option value="">選択...</option>${customerOptions}</select></td>
+      <td class="w-[28%] px-2 py-2 align-top"><input class="${inputCls}" id="edit-notes" type="text" value="${(p.notes || '').replace(/"/g, '&quot;')}"/></td>
+      <td class="w-28 px-2 py-2 align-top space-y-0.5">
+        <input class="${inputCls}" id="edit-period-start" type="date" value="${toIsoDate(p.startDate)}"/>
+        <input class="${inputCls}" id="edit-period-end" type="date" value="${toIsoDate(p.endDate)}"/>
+      </td>
+      <td class="w-24 px-2 py-2 align-top">
+        <input type="hidden" id="edit-delivery-month"/>
+        <button type="button" class="w-full bg-surface-container-lowest border border-outline-variant rounded text-[11px] px-1.5 py-1 flex justify-between items-center gap-0.5" onclick="openMonthPicker(event, 'edit-delivery-month')">
+          <span id="edit-delivery-month-label" class="text-on-surface-variant truncate">未設定</span>
+          <span class="material-symbols-outlined text-[14px] text-on-surface-variant shrink-0">calendar_month</span>
+        </button>
+      </td>
+      <td class="w-28 px-2 py-2 align-top"><input class="${inputCls} text-right tabular-numbers" id="edit-amount" type="number" value="${p.amount}"/></td>
+      <td class="w-28 px-lg py-2 align-top" onclick="event.stopPropagation()">
+        <div class="relative inline-block">
+          <select onchange="updateProjectStatus(${p.id}, this.value)" class="appearance-none text-[11px] font-medium rounded-full pl-5 pr-5 py-1 text-center border border-transparent ring-1 ring-inset ring-black/5 cursor-pointer hover:opacity-90 focus:ring-2 focus:ring-secondary/40 shadow-sm transition-all ${getStatusClass(p.status)}">
+            ${['未対応', '提案中', '見積確認中', '受注', '失注'].map(s => `<option value="${s}" ${s === p.status ? 'selected' : ''}>${s}</option>`).join('')}
+          </select>
+          <span class="material-symbols-outlined absolute right-0.5 top-1/2 -translate-y-1/2 text-[16px] pointer-events-none">expand_more</span>
+        </div>
+      </td>
+      <td class="w-28 px-lg py-2 text-center align-top text-on-surface-variant/40">
+        <span class="material-symbols-outlined text-[15px]">receipt_long</span>
+      </td>
+      <td class="w-44 px-lg py-2 text-center align-top">
+        <div class="flex gap-1 justify-center flex-wrap">
+          <button class="inline-flex items-center gap-0.5 px-2 py-1 rounded-lg bg-secondary text-on-secondary text-[11px] font-bold hover:opacity-90 transition-opacity whitespace-nowrap" onclick="saveEdit()" title="保存">
+            <span class="material-symbols-outlined text-[15px]">check</span>保存
+          </button>
+          <button class="inline-flex items-center gap-0.5 px-2 py-1 rounded-lg bg-surface-container text-on-surface-variant text-[11px] hover:bg-surface-container-high transition-colors whitespace-nowrap" onclick="closeEditModal()" title="キャンセル">
+            <span class="material-symbols-outlined text-[15px]">close</span>
+          </button>
+          <button class="inline-flex items-center gap-0.5 px-2 py-1 rounded-lg bg-error-container text-on-error-container text-[11px] hover:opacity-80 transition-opacity whitespace-nowrap" onclick="deleteProject()" title="削除">
+            <span class="material-symbols-outlined text-[15px]">delete</span>
+          </button>
+        </div>
+      </td>
+    </tr>
+  `;
 }
 
 function getStatusClass(status) {
@@ -776,24 +730,8 @@ function openEditModal(id) {
   editingId = id;
   const p = window.appCache.projects.find(x => x.id === id);
   if (!p) return;
-
-  const rowEl = document.querySelector(`tr[data-project-id="${id}"]`);
-  insertEditRow(rowEl);
-  populateCustomerDropdown();
-
-  document.getElementById('edit-id').value = id;
-  document.getElementById('edit-name').value = p.name;
-  document.getElementById('edit-amount').value = p.amount;
-  document.getElementById('edit-status').value = p.status;
-  document.getElementById('edit-period-start').value = toIsoDate(p.startDate);
-  document.getElementById('edit-period-end').value = toIsoDate(p.endDate);
+  applyProjectFilters();
   setMonthValue('edit-delivery-month', p.deliveryMonth);
-  document.getElementById('edit-notes').value = p.notes || '';
-
-  const customer = window.appCache.customers.find(c => c.company === p.clientCompany);
-  document.getElementById('edit-customer-select').value = customer ? customer.id : '';
-
-  document.getElementById('edit-modal').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
 function openRegisterModal() {
@@ -814,9 +752,9 @@ async function deleteProject() {
   if (!editingId || !confirm('この案件を削除してもよろしいですか？')) return;
   try {
     await fetch(`/api/projects/${editingId}`, { method: 'DELETE' });
+    editingId = null;
     await initializeGlobalCache();
     loadProjects();
-    closeEditModal();
   } catch (e) {
     alert('削除に失敗しました');
   }
@@ -851,25 +789,27 @@ async function saveRegister() {
 
 async function saveEdit() {
   if (!editingId) return;
+  const p = window.appCache.projects.find(x => x.id === editingId);
   const name = document.getElementById('edit-name').value;
   const customer = window.appCache.customers.find(c => c.id == document.getElementById('edit-customer-select').value);
-  const client = customer ? customer.company : '';
+  const client = customer ? customer.company : p?.client || '';
   const amount = parseInt(document.getElementById('edit-amount').value) || 0;
-  const status = document.getElementById('edit-status').value;
   const startDate = toSlashDate(document.getElementById('edit-period-start').value);
   const endDate = toSlashDate(document.getElementById('edit-period-end').value);
   const deliveryMonth = document.getElementById('edit-delivery-month').value;
   const notes = document.getElementById('edit-notes').value;
 
+  if (!name || !client) return alert('必須項目を入力してください');
+
   try {
     await fetch(`/api/projects/${editingId}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, client, clientCompany: client, amount, status, startDate, endDate, deliveryMonth, notes }),
+      body: JSON.stringify({ name, client, clientCompany: client, amount, startDate, endDate, deliveryMonth, notes }),
     });
+    editingId = null;
     await initializeGlobalCache();
     loadProjects();
-    closeEditModal();
   } catch (e) {
     alert('更新に失敗しました');
   }
@@ -1470,6 +1410,6 @@ async function sendEstimateEmail() {
   </div>
 </div>
 
-<script src="/notify.js?v=72"></script>
+<script src="/notify.js?v=73"></script>
 </body>
 </html>
