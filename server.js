@@ -1893,9 +1893,10 @@ function drawDummySeal(doc, cx, cy) {
   doc.fillColor('#000');
 }
 
-function buildDocumentPDF(kind, project, orders, customItems, variant = 'sealed', showBreakdown = false) {
+function buildDocumentPDF(kind, project, orders, customItems, variant = 'sealed') {
   const isInvoice = kind === 'invoice';
   const amt = isInvoice ? o => Number(o.decided) || 0 : o => Number(o.estimate) || Number(o.planned) || Number(o.decided) || 0;
+  // 工事の品目別内訳は出さず、品名＝案件名・金額＝総額の1行のみを表示する（議事録決定事項）
   const items =
     Array.isArray(customItems) && customItems.length
       ? customItems.map(it => {
@@ -1903,10 +1904,10 @@ function buildDocumentPDF(kind, project, orders, customItems, variant = 'sealed'
           const price = Number(it.price) || 0;
           return { name: it.name || '', qty, unit: it.unit || '', price, amount: qty * price, note: it.note || '' };
         })
-      : orders.map(o => {
-          const a = amt(o);
-          return { name: o.category || '一式', qty: 1, unit: '式', price: a, amount: a, note: '' };
-        });
+      : (() => {
+          const total = orders.reduce((s, o) => s + amt(o), 0);
+          return [{ name: project.name || '一式', qty: 1, unit: '式', price: total, amount: total, note: '' }];
+        })();
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument({ margin: 40, size: 'A4', bufferPages: true });
     const chunks = [];
@@ -2009,55 +2010,52 @@ function buildDocumentPDF(kind, project, orders, customItems, variant = 'sealed'
       y += 14;
     } else y += 4;
 
-    // 明細（工事内訳）テーブル：議事録決定事項により、原則は合計金額のみを表示し、
-    // 工事の内訳（品目ごとの行）は例外的にshowBreakdown=trueの場合のみ表示する。
-    if (showBreakdown) {
-      const cols = [
-        { k: 'name', label: '品　　名', w: 180, align: 'left' },
-        { k: 'qty', label: '数量', w: 40, align: 'right' },
-        { k: 'unit', label: '単位', w: 35, align: 'center' },
-        { k: 'price', label: '単価', w: 80, align: 'right' },
-        { k: 'amount', label: '金　額', w: 85, align: 'right' },
-        { k: 'note', label: '摘要', w: W - 420, align: 'left' },
-      ];
-      const rowH = 22;
-      const drawRow = (vals, opts = {}) => {
-        let cx = L;
-        const isH = opts.headerBg;
-        cols.forEach(c => {
-          if (isH) doc.fillColor(accent).rect(cx, y, c.w, rowH).fill();
+    // 明細テーブル：工事の品目別内訳は出さず、品名＝案件名・金額＝総額の1行のみを表示する（議事録決定事項）
+    const cols = [
+      { k: 'name', label: '品　　名', w: 180, align: 'left' },
+      { k: 'qty', label: '数量', w: 40, align: 'right' },
+      { k: 'unit', label: '単位', w: 35, align: 'center' },
+      { k: 'price', label: '単価', w: 80, align: 'right' },
+      { k: 'amount', label: '金　額', w: 85, align: 'right' },
+      { k: 'note', label: '摘要', w: W - 420, align: 'left' },
+    ];
+    const rowH = 22;
+    const drawRow = (vals, opts = {}) => {
+      let cx = L;
+      const isH = opts.headerBg;
+      cols.forEach(c => {
+        if (isH) doc.fillColor(accent).rect(cx, y, c.w, rowH).fill();
+        doc
+          .lineWidth(0.6)
+          .strokeColor(isH ? accent : '#999')
+          .rect(cx, y, c.w, rowH)
+          .stroke();
+        const v = vals[c.k];
+        if (v !== undefined && v !== '')
           doc
-            .lineWidth(0.6)
-            .strokeColor(isH ? accent : '#999')
-            .rect(cx, y, c.w, rowH)
-            .stroke();
-          const v = vals[c.k];
-          if (v !== undefined && v !== '')
-            doc
-              .fillColor(isH ? '#fff' : '#000')
-              .fontSize(9)
-              .text(String(v), cx + 4, y + 6, { width: c.w - 8, align: c.align });
-          cx += c.w;
-        });
-        y += rowH;
-      };
-      drawRow(
-        cols.reduce((a, c) => ((a[c.k] = c.label), a), {}),
-        { headerBg: true }
-      );
-      const minRows = 6;
-      const rowsN = Math.max(items.length, minRows);
-      for (let i = 0; i < rowsN; i++) {
-        if (y > 700) {
-          doc.addPage();
-          y = 50;
-        }
-        const it = items[i];
-        if (it) {
-          drawRow({ name: it.name, qty: it.qty, unit: it.unit, price: '¥' + it.price.toLocaleString(), amount: '¥' + it.amount.toLocaleString(), note: it.note });
-        } else {
-          drawRow({});
-        }
+            .fillColor(isH ? '#fff' : '#000')
+            .fontSize(9)
+            .text(String(v), cx + 4, y + 6, { width: c.w - 8, align: c.align });
+        cx += c.w;
+      });
+      y += rowH;
+    };
+    drawRow(
+      cols.reduce((a, c) => ((a[c.k] = c.label), a), {}),
+      { headerBg: true }
+    );
+    const minRows = 1;
+    const rowsN = Math.max(items.length, minRows);
+    for (let i = 0; i < rowsN; i++) {
+      if (y > 700) {
+        doc.addPage();
+        y = 50;
+      }
+      const it = items[i];
+      if (it) {
+        drawRow({ name: it.name, qty: it.qty, unit: it.unit, price: '¥' + it.price.toLocaleString(), amount: '¥' + it.amount.toLocaleString(), note: it.note });
+      } else {
+        drawRow({});
       }
     }
     // 合計ブロック（右寄せ）
@@ -2088,11 +2086,11 @@ function buildDocumentPDF(kind, project, orders, customItems, variant = 'sealed'
     doc.end();
   });
 }
-function buildInvoicePDF(project, orders, customItems, variant, showBreakdown) {
-  return buildDocumentPDF('invoice', project, orders, customItems, variant, showBreakdown);
+function buildInvoicePDF(project, orders, customItems, variant) {
+  return buildDocumentPDF('invoice', project, orders, customItems, variant);
 }
-function buildEstimatePDF(project, orders, showBreakdown) {
-  return buildDocumentPDF('estimate', project, orders, null, 'sealed', showBreakdown);
+function buildEstimatePDF(project, orders) {
+  return buildDocumentPDF('estimate', project, orders);
 }
 
 function makeTransporter() {
@@ -2156,7 +2154,7 @@ app.get(
     if (!project) return res.status(404).json({ error: 'プロジェクトが見つかりません' });
     const orders = await q('SELECT * FROM orders WHERE project_id=$1', [req.params.projectId]);
     const variant = normalizeVariant(req.query.variant);
-    const pdfBuffer = await buildInvoicePDF(project, orders, null, variant, req.query.showBreakdown === '1');
+    const pdfBuffer = await buildInvoicePDF(project, orders, null, variant);
     const disposition = req.query.inline === '1' ? 'inline' : 'attachment';
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `${disposition}; filename="invoice-${project.id}.pdf"`);
@@ -2172,7 +2170,7 @@ app.post(
     if (!project) return res.status(404).json({ error: 'プロジェクトが見つかりません' });
     const orders = await q('SELECT * FROM orders WHERE project_id=$1', [req.params.projectId]);
     const variant = normalizeVariant(req.body.variant);
-    const pdfBuffer = await buildInvoicePDF(project, orders, req.body.items, variant, !!req.body.showBreakdown);
+    const pdfBuffer = await buildInvoicePDF(project, orders, req.body.items, variant);
     const disposition = req.query.inline === '1' ? 'inline' : 'attachment';
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `${disposition}; filename="invoice-${project.id}.pdf"`);
@@ -2184,12 +2182,12 @@ app.post(
 app.post(
   '/api/invoice/send',
   h(async (req, res) => {
-    const { projectId, to, subject, body, items, showBreakdown } = req.body;
+    const { projectId, to, subject, body, items } = req.body;
     if (!projectId || !to || !subject) return res.status(400).json({ error: '必須パラメータが不足しています' });
     const project = await one('SELECT * FROM projects WHERE id=$1', [projectId]);
     if (!project) return res.status(404).json({ error: 'プロジェクトが見つかりません' });
     const orders = await q('SELECT * FROM orders WHERE project_id=$1', [projectId]);
-    const pdfBuffer = await buildInvoicePDF(project, orders, items, 'sealed', !!showBreakdown);
+    const pdfBuffer = await buildInvoicePDF(project, orders, items, 'sealed');
     await makeTransporter().sendMail({
       from: process.env.MAIL_FROM || 'CONSTRUCT_PRO <noreply@construct-pro.jp>',
       to,
@@ -2209,7 +2207,7 @@ app.get(
     const project = await one('SELECT * FROM projects WHERE id=$1', [req.params.projectId]);
     if (!project) return res.status(404).json({ error: 'プロジェクトが見つかりません' });
     const orders = await q('SELECT * FROM orders WHERE project_id=$1', [req.params.projectId]);
-    const pdfBuffer = await buildEstimatePDF(project, orders, req.query.showBreakdown === '1');
+    const pdfBuffer = await buildEstimatePDF(project, orders);
     const disposition = req.query.inline === '1' ? 'inline' : 'attachment';
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `${disposition}; filename="estimate-${project.id}.pdf"`);
@@ -2221,12 +2219,12 @@ app.get(
 app.post(
   '/api/estimate/send',
   h(async (req, res) => {
-    const { projectId, to, subject, body, showBreakdown } = req.body;
+    const { projectId, to, subject, body } = req.body;
     if (!projectId || !to || !subject) return res.status(400).json({ error: '必須パラメータが不足しています' });
     const project = await one('SELECT * FROM projects WHERE id=$1', [projectId]);
     if (!project) return res.status(404).json({ error: 'プロジェクトが見つかりません' });
     const orders = await q('SELECT * FROM orders WHERE project_id=$1', [projectId]);
-    const pdfBuffer = await buildEstimatePDF(project, orders, !!showBreakdown);
+    const pdfBuffer = await buildEstimatePDF(project, orders);
     await makeTransporter().sendMail({
       from: process.env.MAIL_FROM || 'CONSTRUCT_PRO <noreply@construct-pro.jp>',
       to,

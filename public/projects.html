@@ -883,7 +883,9 @@ function generateInvoice(projectId) {
   document.getElementById('inv-date').textContent = now.toLocaleDateString('ja-JP');
   document.getElementById('inv-due').textContent = due.toLocaleDateString('ja-JP');
 
-  invoiceItems = orders.length ? orders.map(o => ({ name: o.category || '一式', qty: 1, unit: '式', price: o.decided || 0, note: '' })) : [];
+  // 品目別の工事内訳は出さず、品名＝案件名・金額＝総額の1行のみを表示する（議事録決定事項）
+  const invoiceTotal = orders.reduce((s, o) => s + (o.decided || 0), 0);
+  invoiceItems = [{ name: project.name, qty: 1, unit: '式', price: invoiceTotal, note: '' }];
   renderInvoiceItems();
 
   // Pre-fill email fields
@@ -892,17 +894,8 @@ function generateInvoice(projectId) {
   document.getElementById('invoice-email-body').value =
     `${project.clientCompany || project.client} ご担当者様\n\n平素より大変お世話になっております。\n株式会社WIN WINでございます。\n\n「${project.name}」につきまして、請求書を添付のとおりお送りいたします。\nお手数ですが、ご査収のほどよろしくお願い申し上げます。\n\nお振込みは、請求書記載の期日までにお願いいたします。\n今後とも変わらぬお引き立てを賜りますよう、お願い申し上げます。\n\n──────────────────\n株式会社WIN WIN\n〒604-0924 京都市中京区一之船入町537-20 FIS御池ビル505号\nTEL：075-777-1236\n──────────────────`;
 
-  // 内訳表示は原則不要（合計金額のみ）。開くたびに非表示へリセットする
-  document.getElementById('inv-show-breakdown').checked = false;
-  document.getElementById('inv-breakdown-section').style.display = 'none';
-
   document.getElementById('invoice-modal').style.display = 'block';
   document.body.style.overflow = 'hidden';
-}
-
-function toggleInvoiceBreakdown() {
-  const show = document.getElementById('inv-show-breakdown').checked;
-  document.getElementById('inv-breakdown-section').style.display = show ? '' : 'none';
 }
 
 // 内訳（品名・数量・単位・単価・摘要）を請求書プレビュー上で編集可能に描画
@@ -1002,11 +995,10 @@ async function downloadInvoice(variant = 'sealed') {
   if (!currentInvoiceProjectId) return;
   document.getElementById('invoice-download-menu').classList.add('hidden');
   try {
-    const showBreakdown = document.getElementById('inv-show-breakdown').checked;
     const res = await fetch(`/api/invoice/project/${currentInvoiceProjectId}/pdf`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ items: invoiceItems, variant, showBreakdown }),
+      body: JSON.stringify({ items: invoiceItems, variant }),
     });
     if (!res.ok) throw new Error('Failed');
     const blob = await res.blob();
@@ -1041,11 +1033,10 @@ async function sendInvoiceEmail() {
   btn.innerHTML = '<span class="material-symbols-outlined text-[18px]">hourglass_empty</span>送信中...';
 
   try {
-    const showBreakdown = document.getElementById('inv-show-breakdown').checked;
     const res = await fetch('/api/invoice/send', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ projectId: currentInvoiceProjectId, to, subject, body, items: invoiceItems, showBreakdown }),
+      body: JSON.stringify({ projectId: currentInvoiceProjectId, to, subject, body, items: invoiceItems }),
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || '送信失敗');
@@ -1095,32 +1086,17 @@ function generateEstimate(projectId) {
   document.getElementById('est-tax').textContent = '¥' + tax.toLocaleString();
   document.getElementById('est-grand').textContent = '¥' + grand.toLocaleString();
 
+  // 品目別の工事内訳は出さず、品名＝案件名・金額＝総額の1行のみを表示する（議事録決定事項）
   const tbody = document.getElementById('est-order-rows');
-  tbody.innerHTML = orders.length
-    ? orders
-        .map(o => {
-          const a = amt(o);
-          return `<tr><td class="border border-outline-variant p-1.5">${o.category || '一式'}</td><td class="border border-outline-variant p-1.5 text-right">1</td><td class="border border-outline-variant p-1.5 text-center">式</td><td class="border border-outline-variant p-1.5 text-right tabular-numbers">¥${a.toLocaleString()}</td><td class="border border-outline-variant p-1.5 text-right tabular-numbers">¥${a.toLocaleString()}</td><td class="border border-outline-variant p-1.5"></td></tr>`;
-        })
-        .join('')
-    : '<tr><td colspan="6" class="border border-outline-variant p-4 text-center text-on-surface-variant">注文データがありません</td></tr>';
+  tbody.innerHTML = `<tr><td class="border border-outline-variant p-1.5">${project.name}</td><td class="border border-outline-variant p-1.5 text-right">1</td><td class="border border-outline-variant p-1.5 text-center">式</td><td class="border border-outline-variant p-1.5 text-right tabular-numbers">¥${subtotal.toLocaleString()}</td><td class="border border-outline-variant p-1.5 text-right tabular-numbers">¥${subtotal.toLocaleString()}</td><td class="border border-outline-variant p-1.5"></td></tr>`;
 
   document.getElementById('estimate-email-to').value = project.clientEmail || '';
   document.getElementById('estimate-email-subject').value = `【お見積書送付】${project.name}`;
   document.getElementById('estimate-email-body').value =
     `${project.clientCompany || project.client} ご担当者様\n\n平素より格別のお引き立てを賜り、厚く御礼申し上げます。\n株式会社WIN WINでございます。\n\nご依頼いただきました「${project.name}」につきまして、お見積書を添付のとおりお送りいたします。\nご多用のところ恐れ入りますが、ご検討のほどよろしくお願い申し上げます。\n\nご不明な点やご要望がございましたら、何なりとお申し付けください。\n\n──────────────────\n株式会社WIN WIN\n〒604-0924 京都市中京区一之船入町537-20 FIS御池ビル505号\nTEL：075-777-1236\n──────────────────`;
 
-  // 内訳表示は原則不要（合計金額のみ）。開くたびに非表示へリセットする
-  document.getElementById('est-show-breakdown').checked = false;
-  document.getElementById('est-breakdown-section').style.display = 'none';
-
   document.getElementById('estimate-modal').style.display = 'block';
   document.body.style.overflow = 'hidden';
-}
-
-function toggleEstimateBreakdown() {
-  const show = document.getElementById('est-show-breakdown').checked;
-  document.getElementById('est-breakdown-section').style.display = show ? '' : 'none';
 }
 
 function closeEstimatePreview() {
@@ -1141,8 +1117,7 @@ function closeEstimateEmailForm() {
 async function downloadEstimate() {
   if (!currentEstimateProjectId) return;
   try {
-    const showBreakdown = document.getElementById('est-show-breakdown').checked;
-    const res = await fetch(`/api/estimate/project/${currentEstimateProjectId}?showBreakdown=${showBreakdown ? '1' : '0'}`);
+    const res = await fetch(`/api/estimate/project/${currentEstimateProjectId}`);
     if (!res.ok) throw new Error('Failed');
     const blob = await res.blob();
     const url = URL.createObjectURL(blob);
@@ -1173,11 +1148,10 @@ async function sendEstimateEmail() {
   btn.disabled = true;
   btn.innerHTML = '<span class="material-symbols-outlined text-[18px]">hourglass_empty</span>送信中...';
   try {
-    const showBreakdown = document.getElementById('est-show-breakdown').checked;
     const res = await fetch('/api/estimate/send', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ projectId: currentEstimateProjectId, to, subject, body, showBreakdown }),
+      body: JSON.stringify({ projectId: currentEstimateProjectId, to, subject, body }),
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || '送信失敗');
@@ -1256,29 +1230,23 @@ async function sendEstimateEmail() {
           </div>
           <p class="text-[11px] mb-0.5">[振込先]　〇〇銀行 京都支店　／　口座番号　(普)0777777　／　口座名義　カ）ウィン</p>
           <p class="text-[10px] text-on-surface-variant mb-2">※振込手数料は振込人様にてご負担ください。</p>
-          <label class="flex items-center gap-1.5 text-[11px] text-on-surface-variant mb-2 cursor-pointer select-none" onclick="event.stopPropagation()">
-            <input type="checkbox" id="inv-show-breakdown" onchange="toggleInvoiceBreakdown()"/>
-            工事の内訳を表示する（原則は合計金額のみ・例外的な場合のみチェック）
-          </label>
-          <div id="inv-breakdown-section" style="display:none">
-            <table class="w-full text-xs mb-1" style="border-collapse:collapse">
-              <thead>
-                <tr class="text-white" style="background:#7030A0">
-                  <th class="border border-[#7030A0] p-1.5 text-left">品　名</th>
-                  <th class="border border-[#7030A0] p-1.5 w-12">数量</th>
-                  <th class="border border-[#7030A0] p-1.5 w-12">単位</th>
-                  <th class="border border-[#7030A0] p-1.5 w-24 text-right">単価</th>
-                  <th class="border border-[#7030A0] p-1.5 w-24 text-right">金額</th>
-                  <th class="border border-[#7030A0] p-1.5 w-20">摘要</th>
-                  <th class="border border-[#7030A0] p-1.5 w-8"></th>
-                </tr>
-              </thead>
-              <tbody id="inv-order-rows"></tbody>
-            </table>
-            <button onclick="addInvoiceItem()" class="mb-4 inline-flex items-center gap-1 text-[11px] text-primary hover:opacity-70 transition-opacity">
-              <span class="material-symbols-outlined text-[15px]">add</span>行を追加
-            </button>
-          </div>
+          <table class="w-full text-xs mb-1" style="border-collapse:collapse">
+            <thead>
+              <tr class="text-white" style="background:#7030A0">
+                <th class="border border-[#7030A0] p-1.5 text-left">品　名</th>
+                <th class="border border-[#7030A0] p-1.5 w-12">数量</th>
+                <th class="border border-[#7030A0] p-1.5 w-12">単位</th>
+                <th class="border border-[#7030A0] p-1.5 w-24 text-right">単価</th>
+                <th class="border border-[#7030A0] p-1.5 w-24 text-right">金額</th>
+                <th class="border border-[#7030A0] p-1.5 w-20">摘要</th>
+                <th class="border border-[#7030A0] p-1.5 w-8"></th>
+              </tr>
+            </thead>
+            <tbody id="inv-order-rows"></tbody>
+          </table>
+          <button onclick="addInvoiceItem()" class="mb-4 inline-flex items-center gap-1 text-[11px] text-primary hover:opacity-70 transition-opacity">
+            <span class="material-symbols-outlined text-[15px]">add</span>行を追加
+          </button>
           <div class="flex justify-end">
             <table class="text-xs" style="border-collapse:collapse">
               <tr><td class="border border-outline-variant px-3 py-1 w-24">小　計</td><td class="border border-outline-variant px-3 py-1 w-28 text-right tabular-numbers" id="inv-subtotal">¥0</td></tr>
@@ -1377,25 +1345,19 @@ async function sendEstimateEmail() {
               <div>有効期限：<span id="est-valid">---</span></div>
             </div>
           </div>
-          <label class="flex items-center gap-1.5 text-[11px] text-on-surface-variant mb-2 cursor-pointer select-none" onclick="event.stopPropagation()">
-            <input type="checkbox" id="est-show-breakdown" onchange="toggleEstimateBreakdown()"/>
-            工事の内訳を表示する（原則は合計金額のみ・例外的な場合のみチェック）
-          </label>
-          <div id="est-breakdown-section" style="display:none">
-            <table class="w-full text-xs mb-4" style="border-collapse:collapse">
-              <thead>
-                <tr class="text-white" style="background:#7030A0">
-                  <th class="border border-[#7030A0] p-1.5 text-left">品　名</th>
-                  <th class="border border-[#7030A0] p-1.5 w-12">数量</th>
-                  <th class="border border-[#7030A0] p-1.5 w-12">単位</th>
-                  <th class="border border-[#7030A0] p-1.5 w-24 text-right">単価</th>
-                  <th class="border border-[#7030A0] p-1.5 w-24 text-right">金額</th>
-                  <th class="border border-[#7030A0] p-1.5 w-20">摘要</th>
-                </tr>
-              </thead>
-              <tbody id="est-order-rows"></tbody>
-            </table>
-          </div>
+          <table class="w-full text-xs mb-4" style="border-collapse:collapse">
+            <thead>
+              <tr class="text-white" style="background:#7030A0">
+                <th class="border border-[#7030A0] p-1.5 text-left">品　名</th>
+                <th class="border border-[#7030A0] p-1.5 w-12">数量</th>
+                <th class="border border-[#7030A0] p-1.5 w-12">単位</th>
+                <th class="border border-[#7030A0] p-1.5 w-24 text-right">単価</th>
+                <th class="border border-[#7030A0] p-1.5 w-24 text-right">金額</th>
+                <th class="border border-[#7030A0] p-1.5 w-20">摘要</th>
+              </tr>
+            </thead>
+            <tbody id="est-order-rows"></tbody>
+          </table>
           <div class="flex justify-end">
             <table class="text-xs" style="border-collapse:collapse">
               <tr><td class="border border-outline-variant px-3 py-1 w-24">小　計</td><td class="border border-outline-variant px-3 py-1 w-28 text-right tabular-numbers" id="est-subtotal">¥0</td></tr>
