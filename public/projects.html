@@ -263,7 +263,11 @@ CSV出力
 </div>
 <div>
 <label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">引渡月</label>
-<input class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent" id="edit-delivery-month" type="date" title="カレンダーから日付を選択（その月が引渡月になります）"/>
+<input type="hidden" id="edit-delivery-month"/>
+<button type="button" class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent flex justify-between items-center" onclick="openMonthPicker(event, 'edit-delivery-month')">
+<span id="edit-delivery-month-label" class="text-on-surface-variant">未設定</span>
+<span class="material-symbols-outlined text-[18px] text-on-surface-variant">calendar_month</span>
+</button>
 </div>
 <div class="col-span-2">
 <label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">備考</label>
@@ -329,7 +333,11 @@ CSV出力
 </div>
 <div>
 <label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">引渡月</label>
-<input class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent" id="reg-delivery-month" type="date" title="カレンダーから日付を選択（その月が引渡月になります）"/>
+<input type="hidden" id="reg-delivery-month"/>
+<button type="button" class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent flex justify-between items-center" onclick="openMonthPicker(event, 'reg-delivery-month')">
+<span id="reg-delivery-month-label" class="text-on-surface-variant">未設定</span>
+<span class="material-symbols-outlined text-[18px] text-on-surface-variant">calendar_month</span>
+</button>
 </div>
 <div class="col-span-2">
 <label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">備考</label>
@@ -358,11 +366,76 @@ function toSlashDate(iso) {
 }
 // 引渡月はSafari等でtype="month"のカレンダーUIが機能しないため、type="date"で日付を選ばせて月だけを使う
 // （receipts.htmlの「対象月度」と同じ方式）
-function monthToDateInput(ym) {
-  return ym ? `${ym}-01` : '';
+// 引渡月ピッカー（年月のみ。type="month"はSafari等でカレンダーUIにならないため自前実装）
+function monthLabel(ym) {
+  if (!ym) return '未設定';
+  const [y, m] = ym.split('-');
+  return `${y}年${Number(m)}月`;
 }
-function dateInputToMonth(iso) {
-  return iso ? iso.slice(0, 7) : '';
+function setMonthValue(inputId, ym) {
+  document.getElementById(inputId).value = ym || '';
+  document.getElementById(`${inputId}-label`).textContent = monthLabel(ym);
+}
+let _monthPickerYear = null;
+function closeMonthPicker() {
+  document.getElementById('month-picker-popover')?.remove();
+  document.removeEventListener('click', closeMonthPicker);
+}
+function openMonthPicker(event, inputId) {
+  event.stopPropagation();
+  closeMonthPicker();
+  const current = document.getElementById(inputId).value;
+  const [cy, cm] = current ? current.split('-') : [String(new Date().getFullYear()), ''];
+  _monthPickerYear = Number(cy);
+  const rect = event.currentTarget.getBoundingClientRect();
+  const pop = document.createElement('div');
+  pop.id = 'month-picker-popover';
+  pop.className = 'fixed z-[200] bg-surface-container-lowest border border-outline-variant rounded-lg custom-shadow p-3';
+  pop.style.top = `${rect.bottom + 4}px`;
+  pop.style.left = `${rect.left}px`;
+  pop.onclick = e => e.stopPropagation();
+  pop.dataset.inputId = inputId;
+  pop.dataset.selMonth = cm;
+  renderMonthPickerBody(pop);
+  document.body.appendChild(pop);
+  setTimeout(() => document.addEventListener('click', closeMonthPicker), 0);
+}
+function renderMonthPickerBody(pop) {
+  const months = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'];
+  pop.innerHTML = `
+    <div class="flex justify-between items-center mb-2 gap-3">
+      <button type="button" class="material-symbols-outlined text-on-surface-variant hover:text-primary" onclick="changeMonthPickerYear(-1)">chevron_left</button>
+      <span class="text-label-md font-bold text-primary">${_monthPickerYear}年</span>
+      <button type="button" class="material-symbols-outlined text-on-surface-variant hover:text-primary" onclick="changeMonthPickerYear(1)">chevron_right</button>
+    </div>
+    <div class="grid grid-cols-3 gap-1 w-48">
+      ${months
+        .map((m, i) => {
+          const mm = String(i + 1).padStart(2, '0');
+          const isSel = pop.dataset.selMonth === mm;
+          return `<button type="button" class="px-2 py-1.5 rounded-lg text-label-md ${isSel ? 'bg-secondary text-on-secondary font-bold' : 'hover:bg-surface-container-low text-on-surface'}" onclick="selectMonthPickerMonth('${mm}')">${m}</button>`;
+        })
+        .join('')}
+    </div>
+    <div class="mt-2 pt-2 border-t border-outline-variant flex justify-between">
+      <button type="button" class="text-label-sm text-error hover:underline" onclick="clearMonthPicker()">クリア</button>
+      <button type="button" class="text-label-sm text-on-surface-variant hover:underline" onclick="closeMonthPicker()">閉じる</button>
+    </div>
+  `;
+}
+function changeMonthPickerYear(delta) {
+  _monthPickerYear += delta;
+  renderMonthPickerBody(document.getElementById('month-picker-popover'));
+}
+function selectMonthPickerMonth(mm) {
+  const pop = document.getElementById('month-picker-popover');
+  setMonthValue(pop.dataset.inputId, `${_monthPickerYear}-${mm}`);
+  closeMonthPicker();
+}
+function clearMonthPicker() {
+  const pop = document.getElementById('month-picker-popover');
+  setMonthValue(pop.dataset.inputId, '');
+  closeMonthPicker();
 }
 
 function openModal(id) {
@@ -663,8 +736,8 @@ function showClientInfoPopover(event, projectId) {
   const pop = document.createElement('div');
   pop.id = 'client-info-popover';
   pop.className = 'fixed z-[200] w-64 bg-surface-container-lowest border border-outline-variant rounded-lg custom-shadow p-3 text-label-md';
-  pop.style.top = `${rect.bottom + window.scrollY + 4}px`;
-  pop.style.left = `${Math.max(8, rect.left + window.scrollX - 200)}px`;
+  pop.style.top = `${rect.bottom + 4}px`;
+  pop.style.left = `${Math.max(8, rect.left - 200)}px`;
   pop.onclick = e => e.stopPropagation();
   if (!customer) {
     pop.innerHTML = `<p class="text-on-surface-variant">「${p.client}」の顧客マスタ登録がありません</p>`;
@@ -714,7 +787,7 @@ function openEditModal(id) {
   document.getElementById('edit-status').value = p.status;
   document.getElementById('edit-period-start').value = toIsoDate(p.startDate);
   document.getElementById('edit-period-end').value = toIsoDate(p.endDate);
-  document.getElementById('edit-delivery-month').value = monthToDateInput(p.deliveryMonth);
+  setMonthValue('edit-delivery-month', p.deliveryMonth);
   document.getElementById('edit-notes').value = p.notes || '';
 
   const customer = window.appCache.customers.find(c => c.company === p.clientCompany);
@@ -732,7 +805,7 @@ function openRegisterModal() {
   document.getElementById('reg-status').value = '未対応';
   document.getElementById('reg-period-start').value = '';
   document.getElementById('reg-period-end').value = '';
-  document.getElementById('reg-delivery-month').value = '';
+  setMonthValue('reg-delivery-month', '');
   document.getElementById('reg-notes').value = '';
   openModal('register-modal');
 }
@@ -757,7 +830,7 @@ async function saveRegister() {
   const status = document.getElementById('reg-status').value;
   const startDate = toSlashDate(document.getElementById('reg-period-start').value);
   const endDate = toSlashDate(document.getElementById('reg-period-end').value);
-  const deliveryMonth = dateInputToMonth(document.getElementById('reg-delivery-month').value);
+  const deliveryMonth = document.getElementById('reg-delivery-month').value;
   const notes = document.getElementById('reg-notes').value;
 
   if (!name || !client) return alert('必須項目を入力してください');
@@ -785,7 +858,7 @@ async function saveEdit() {
   const status = document.getElementById('edit-status').value;
   const startDate = toSlashDate(document.getElementById('edit-period-start').value);
   const endDate = toSlashDate(document.getElementById('edit-period-end').value);
-  const deliveryMonth = dateInputToMonth(document.getElementById('edit-delivery-month').value);
+  const deliveryMonth = document.getElementById('edit-delivery-month').value;
   const notes = document.getElementById('edit-notes').value;
 
   try {
