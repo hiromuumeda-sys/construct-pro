@@ -71,7 +71,7 @@ body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 <button class="md:hidden material-symbols-outlined text-on-surface-variant hover:text-primary mr-3" onclick="toggleSidebar()">menu</button>
 <div class="flex items-center gap-4 bg-surface-container-low px-4 py-2 rounded-full w-96">
 <span class="material-symbols-outlined text-on-surface-variant">search</span>
-<input class="bg-transparent border-none focus:ring-0 text-body-md w-full" id="keyword-search" placeholder="案件名、発注先で検索..." type="text"/>
+<input class="bg-transparent border-none focus:ring-0 text-body-md w-full" id="keyword-search" placeholder="案件ID、案件名、発注先で検索..." type="text"/>
 </div>
 <div class="flex items-center gap-md">
 <div class="flex items-center gap-4">
@@ -147,7 +147,9 @@ body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 <table class="w-full text-left border-separate border-spacing-0 whitespace-nowrap">
 <thead>
 <tr class="bg-surface-container-low sticky top-0 z-10">
+<th class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant text-center w-24">支払登録</th>
 <th class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant w-16">#</th>
+<th class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant w-32">案件ID</th>
 <th class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant w-56">工事名</th>
 <th class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant w-[10%]">工事区分</th>
 <th class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant w-[12%]">発注先</th>
@@ -156,7 +158,6 @@ body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 <th class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant w-24">支払期日</th>
 <th class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant w-28">支払銀行</th>
 <th class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant text-center w-32">支払ステータス</th>
-<th class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant text-center w-24">支払登録</th>
 </tr>
 </thead>
 <tbody class="divide-y divide-outline-variant/20" id="payment-table-body">
@@ -396,6 +397,7 @@ async function loadPayments() {
     const vendor = vendors.find(v => v.company === order.vendor);
     return {
       id: order.id,
+      projectNo: project?.project_no || '-',
       projectName: project?.name || '未設定',
       category: order.category || '-',
       vendor: order.vendor || '-',
@@ -432,7 +434,11 @@ function renderPaymentRow(payment) {
   const dueTitle = urgency === 'overdue' ? '支払期日を超過しています' : urgency === 'soon' ? '支払期日が近づいています' : '';
   return `
     <tr class="${payment.status === '未払い' ? 'bg-yellow-50 hover:bg-yellow-100' : 'hover:bg-surface-container-low'} transition-colors cursor-pointer group" onclick="openModal(${payment.id})">
+      <td class="px-3 py-1.5 text-center whitespace-nowrap" onclick="event.stopPropagation()">
+        ${payment.status === '部分払い' ? `<button onclick="event.stopPropagation(); openPayRegister(${payment.id})" class="material-symbols-outlined text-secondary hover:bg-secondary/10 rounded-full w-8 h-8" title="支払登録">add_circle</button>` : ''}
+      </td>
       <td class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant tabular-numbers">${String(payment.id).padStart(6, '0')}</td>
+      <td class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant tabular-numbers whitespace-nowrap">${payment.projectNo}</td>
       <td class="px-3 py-1.5 text-label-md font-label-md text-on-surface group-hover:text-primary transition-colors">${payment.projectName}</td>
       <td class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant">${payment.category}</td>
       <td class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant">${payment.vendor}</td>
@@ -447,9 +453,6 @@ function renderPaymentRow(payment) {
           </select>
           <span class="material-symbols-outlined absolute right-0.5 top-1/2 -translate-y-1/2 text-[16px] pointer-events-none">expand_more</span>
         </div>
-      </td>
-      <td class="px-3 py-1.5 text-center whitespace-nowrap" onclick="event.stopPropagation()">
-        ${payment.status === '部分払い' ? `<button onclick="event.stopPropagation(); openPayRegister(${payment.id})" class="material-symbols-outlined text-secondary hover:bg-secondary/10 rounded-full w-8 h-8" title="支払登録">add_circle</button>` : ''}
       </td>
     </tr>
   `;
@@ -794,7 +797,7 @@ function filterTable() {
   const filtered = payments.filter(p => {
     const matchStatus = !status || p.status === status;
     const matchDue = matchDueBucket(p.paymentDate, due);
-    const matchKeyword = !keyword || p.projectName.toLowerCase().includes(keyword) || p.vendor.toLowerCase().includes(keyword);
+    const matchKeyword = !keyword || p.projectName.toLowerCase().includes(keyword) || p.vendor.toLowerCase().includes(keyword) || String(p.projectNo || '').toLowerCase().includes(keyword);
     return matchStatus && matchDue && matchKeyword;
   });
 
