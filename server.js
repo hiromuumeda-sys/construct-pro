@@ -345,9 +345,8 @@ app.get(
     res.json(
       projects.map(p => ({
         ...p,
-        // delivery_month/process_infoはDBカラム名がsnake_caseのため、フロント側の慣習(camelCase)に合わせて別名を付与
+        // delivery_monthはDBカラム名がsnake_caseのため、フロント側の慣習(camelCase)に合わせて別名を付与
         deliveryMonth: p.delivery_month,
-        processInfo: p.process_info,
         contract_has_file: fmap.has(key(p.id, 'contract')),
         contract_filename: fmap.get(key(p.id, 'contract')) || null,
       }))
@@ -358,11 +357,11 @@ app.get(
 app.post(
   '/api/projects',
   h(async (req, res) => {
-    const { name, client, clientCompany, clientPhone, clientEmail, clientAddress, amount, startDate, endDate, status, notes, deliveryMonth, processInfo } = req.body;
+    const { name, client, clientCompany, clientPhone, clientEmail, clientAddress, amount, startDate, endDate, status, notes, deliveryMonth } = req.body;
     const row = await one(
-      `INSERT INTO projects (name, client, "clientCompany", "clientPhone", "clientEmail", "clientAddress", amount, "startDate", "endDate", status, notes, delivery_month, process_info, project_no)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13, '') RETURNING id`,
-      [name, client, clientCompany, clientPhone, clientEmail, clientAddress, amount, startDate, endDate, status, notes, deliveryMonth || null, processInfo || null]
+      `INSERT INTO projects (name, client, "clientCompany", "clientPhone", "clientEmail", "clientAddress", amount, "startDate", "endDate", status, notes, delivery_month, project_no)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12, '') RETURNING id`,
+      [name, client, clientCompany, clientPhone, clientEmail, clientAddress, amount, startDate, endDate, status, notes, deliveryMonth || null]
     );
     await q('UPDATE projects SET project_no=$1 WHERE id=$2', [`WW7-${String(row.id).padStart(4, '0')}`, row.id]);
     await logAuditReq(req, 'CREATE', 'projects', row.id, { name, changes: [`新規登録（顧客: ${client || '-'} / ステータス: ${status || '-'}）`] });
@@ -381,7 +380,7 @@ app.put(
     const deliveryMonthChanged = b.deliveryMonth !== undefined && b.deliveryMonth !== before?.delivery_month;
     // 呼び出し元によって送られてくる項目が一部だけの場合があるため、未送信の項目は既存値を維持する
     await q(
-      `UPDATE projects SET name=$1, client=$2, "clientCompany"=$3, "clientPhone"=$4, "clientEmail"=$5, "clientAddress"=$6, amount=$7, "startDate"=$8, "endDate"=$9, status=$10, notes=$11, delivery_month=$12, process_info=$13, delivery_month_changed_at=$14 WHERE id=$15`,
+      `UPDATE projects SET name=$1, client=$2, "clientCompany"=$3, "clientPhone"=$4, "clientEmail"=$5, "clientAddress"=$6, amount=$7, "startDate"=$8, "endDate"=$9, status=$10, notes=$11, delivery_month=$12, delivery_month_changed_at=$13 WHERE id=$14`,
       [
         b.name ?? before?.name,
         b.client ?? before?.client,
@@ -395,7 +394,6 @@ app.put(
         b.status ?? before?.status,
         b.notes ?? before?.notes,
         newDeliveryMonth,
-        b.processInfo ?? before?.process_info,
         deliveryMonthChanged ? new Date().toISOString() : before?.delivery_month_changed_at,
         req.params.id,
       ]
@@ -1731,9 +1729,8 @@ app.get(
     const pfmap = new Map(projectFiles.map(f => [fkey(f.project_id, f.kind), f.filename]));
     const projectsWithFiles = projects.map(p => ({
       ...p,
-      // delivery_month/process_infoはDBカラム名がsnake_caseのため、フロント側の慣習(camelCase)に合わせて別名を付与
+      // delivery_monthはDBカラム名がsnake_caseのため、フロント側の慣習(camelCase)に合わせて別名を付与
       deliveryMonth: p.delivery_month,
-      processInfo: p.process_info,
       contract_has_file: pfmap.has(fkey(p.id, 'contract')),
       contract_filename: pfmap.get(fkey(p.id, 'contract')) || null,
     }));

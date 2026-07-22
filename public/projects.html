@@ -158,8 +158,7 @@ CSV出力
 <th class="w-24 px-lg py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider">発注元</th>
 <th class="w-[28%] px-lg py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider">備考</th>
 <th class="w-28 px-lg py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider">工期</th>
-<th class="w-20 px-lg py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider">引渡月</th>
-<th class="w-32 px-lg py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider">工程情報</th>
+<th class="w-24 px-lg py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider">引渡月</th>
 <th class="w-28 px-lg py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider text-right">契約金額</th>
 <th class="w-28 px-lg py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider">状態</th>
 <th class="w-28 px-lg py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider text-center">工事計画</th>
@@ -221,7 +220,7 @@ CSV出力
 <!-- Edit Modal -->
 <template id="edit-modal-template">
 <tr>
-<td colspan="11" class="p-0">
+<td colspan="10" class="p-0">
 <div class="bg-surface-container-lowest border-y-2 border-secondary/40">
 <div class="px-lg py-md flex justify-between items-center border-b border-outline-variant bg-surface-container-low">
 <h3 class="text-label-md font-label-md text-primary">案件詳細の編集</h3>
@@ -264,11 +263,7 @@ CSV出力
 </div>
 <div>
 <label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">引渡月</label>
-<input class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent" id="edit-delivery-month" type="month"/>
-</div>
-<div class="col-span-2">
-<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">工程情報</label>
-<textarea class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent" id="edit-process-info" placeholder="工程の進捗・マイルストーン等" rows="2"></textarea>
+<input class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent" id="edit-delivery-month" type="date" title="カレンダーから日付を選択（その月が引渡月になります）"/>
 </div>
 <div class="col-span-2">
 <label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">備考</label>
@@ -334,11 +329,7 @@ CSV出力
 </div>
 <div>
 <label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">引渡月</label>
-<input class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent" id="reg-delivery-month" type="month"/>
-</div>
-<div class="col-span-2">
-<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">工程情報</label>
-<textarea class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent" id="reg-process-info" placeholder="工程の進捗・マイルストーン等" rows="2"></textarea>
+<input class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent" id="reg-delivery-month" type="date" title="カレンダーから日付を選択（その月が引渡月になります）"/>
 </div>
 <div class="col-span-2">
 <label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">備考</label>
@@ -364,6 +355,14 @@ function toIsoDate(s) {
 }
 function toSlashDate(iso) {
   return iso ? iso.replace(/-/g, '/') : '';
+}
+// 引渡月はSafari等でtype="month"のカレンダーUIが機能しないため、type="date"で日付を選ばせて月だけを使う
+// （receipts.htmlの「対象月度」と同じ方式）
+function monthToDateInput(ym) {
+  return ym ? `${ym}-01` : '';
+}
+function dateInputToMonth(iso) {
+  return iso ? iso.slice(0, 7) : '';
 }
 
 function openModal(id) {
@@ -511,8 +510,7 @@ function renderTable(projects) {
       </td>
       <td class="w-[28%] px-lg py-2 text-label-md font-label-md text-on-surface-variant align-top break-words whitespace-normal">${p.notes || '-'}</td>
       <td class="w-28 px-lg py-2 text-label-md font-label-md text-on-surface-variant tabular-numbers align-top">${p.startDate || '-'} 〜 ${p.endDate || '-'}</td>
-      <td class="w-20 px-lg py-2 text-label-md font-label-md tabular-numbers align-top ${isRecentDeliveryMonthChange(p) ? 'bg-amber-100 text-amber-800 rounded-lg font-bold' : 'text-on-surface-variant'}" title="${isRecentDeliveryMonthChange(p) ? '引き渡し月が最近変更されました' : ''}">${p.deliveryMonth || '-'}</td>
-      <td class="w-32 px-lg py-2 text-label-md font-label-md text-on-surface-variant align-top truncate" title="${(p.processInfo || '').replace(/"/g, '&quot;')}">${p.processInfo || '-'}</td>
+      <td class="w-24 px-lg py-2 text-label-md font-label-md tabular-numbers align-top ${isRecentDeliveryMonthChange(p) ? 'bg-amber-100 text-amber-800 rounded-lg font-bold' : 'text-on-surface-variant'}" title="${isRecentDeliveryMonthChange(p) ? '引き渡し月が最近変更されました' : ''}">${p.deliveryMonth || '-'}</td>
       <td class="w-28 px-lg py-2 text-label-md font-label-md text-primary tabular-numbers text-right align-top">¥${p.amount.toLocaleString()}</td>
       <td class="w-28 px-lg py-2 align-top" onclick="event.stopPropagation()">
         <div class="relative inline-block">
@@ -690,7 +688,7 @@ async function updateProjectStatus(id, status) {
     await fetch(`/api/projects/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: p.name, client: p.client, clientCompany: p.clientCompany, clientPhone: p.clientPhone, clientEmail: p.clientEmail, clientAddress: p.clientAddress, amount: p.amount, startDate: p.startDate, endDate: p.endDate, status, notes: p.notes, deliveryMonth: p.deliveryMonth, processInfo: p.processInfo }),
+      body: JSON.stringify({ name: p.name, client: p.client, clientCompany: p.clientCompany, clientPhone: p.clientPhone, clientEmail: p.clientEmail, clientAddress: p.clientAddress, amount: p.amount, startDate: p.startDate, endDate: p.endDate, status, notes: p.notes, deliveryMonth: p.deliveryMonth }),
     });
     p.status = status;
     applyProjectFilters();
@@ -716,8 +714,7 @@ function openEditModal(id) {
   document.getElementById('edit-status').value = p.status;
   document.getElementById('edit-period-start').value = toIsoDate(p.startDate);
   document.getElementById('edit-period-end').value = toIsoDate(p.endDate);
-  document.getElementById('edit-delivery-month').value = p.deliveryMonth || '';
-  document.getElementById('edit-process-info').value = p.processInfo || '';
+  document.getElementById('edit-delivery-month').value = monthToDateInput(p.deliveryMonth);
   document.getElementById('edit-notes').value = p.notes || '';
 
   const customer = window.appCache.customers.find(c => c.company === p.clientCompany);
@@ -736,7 +733,6 @@ function openRegisterModal() {
   document.getElementById('reg-period-start').value = '';
   document.getElementById('reg-period-end').value = '';
   document.getElementById('reg-delivery-month').value = '';
-  document.getElementById('reg-process-info').value = '';
   document.getElementById('reg-notes').value = '';
   openModal('register-modal');
 }
@@ -761,8 +757,7 @@ async function saveRegister() {
   const status = document.getElementById('reg-status').value;
   const startDate = toSlashDate(document.getElementById('reg-period-start').value);
   const endDate = toSlashDate(document.getElementById('reg-period-end').value);
-  const deliveryMonth = document.getElementById('reg-delivery-month').value;
-  const processInfo = document.getElementById('reg-process-info').value;
+  const deliveryMonth = dateInputToMonth(document.getElementById('reg-delivery-month').value);
   const notes = document.getElementById('reg-notes').value;
 
   if (!name || !client) return alert('必須項目を入力してください');
@@ -771,7 +766,7 @@ async function saveRegister() {
     const res = await fetch('/api/projects', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, client, clientCompany: client, amount, status, startDate, endDate, deliveryMonth, processInfo, notes }),
+      body: JSON.stringify({ name, client, clientCompany: client, amount, status, startDate, endDate, deliveryMonth, notes }),
     });
     await initializeGlobalCache();
     loadProjects();
@@ -790,15 +785,14 @@ async function saveEdit() {
   const status = document.getElementById('edit-status').value;
   const startDate = toSlashDate(document.getElementById('edit-period-start').value);
   const endDate = toSlashDate(document.getElementById('edit-period-end').value);
-  const deliveryMonth = document.getElementById('edit-delivery-month').value;
-  const processInfo = document.getElementById('edit-process-info').value;
+  const deliveryMonth = dateInputToMonth(document.getElementById('edit-delivery-month').value);
   const notes = document.getElementById('edit-notes').value;
 
   try {
     await fetch(`/api/projects/${editingId}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, client, clientCompany: client, amount, status, startDate, endDate, deliveryMonth, processInfo, notes }),
+      body: JSON.stringify({ name, client, clientCompany: client, amount, status, startDate, endDate, deliveryMonth, notes }),
     });
     await initializeGlobalCache();
     loadProjects();
