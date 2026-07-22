@@ -478,24 +478,31 @@ function renderTable(projects) {
 }
 
 function buildViewRow(p) {
+  const locked = p.status === 'オーダー移行'; // 引渡月変更で複製された旧案件ID：編集不可＆グレー表示
+  const rowCls = locked
+    ? 'bg-surface-container-low/60 text-on-surface-variant/70 transition-colors group'
+    : 'hover:bg-surface-container-low transition-colors group cursor-pointer';
+  const statusCell = locked
+    ? `<span class="inline-flex items-center text-[11px] font-medium rounded-full pl-5 pr-5 py-1 ${getStatusClass(p.status)} opacity-70" title="新しい案件IDに移行済みのため編集できません">${p.status}</span>`
+    : `<div class="relative inline-block">
+          <select onchange="updateProjectStatus(${p.id}, this.value)" class="appearance-none text-[11px] font-medium rounded-full pl-5 pr-5 py-1 text-center border border-transparent ring-1 ring-inset ring-black/5 cursor-pointer hover:opacity-90 focus:ring-2 focus:ring-secondary/40 shadow-sm transition-all ${getStatusClass(p.status)}">
+            ${['未対応', '提案中', '見積確認中', '受注', '失注'].map(s => `<option value="${s}" ${s === p.status ? 'selected' : ''}>${s}</option>`).join('')}
+          </select>
+          <span class="material-symbols-outlined absolute right-0.5 top-1/2 -translate-y-1/2 text-[16px] pointer-events-none">expand_more</span>
+        </div>`;
   return `
-    <tr class="hover:bg-surface-container-low transition-colors group cursor-pointer" data-project-id="${p.id}" onclick="openEditModal(${p.id})">
+    <tr class="${rowCls}" data-project-id="${p.id}" onclick="openEditModal(${p.id})">
       <td class="w-36 px-lg py-2 text-label-md font-label-md text-on-surface-variant tabular-numbers align-top whitespace-nowrap">${p.project_no || '-'}</td>
-      <td class="w-64 px-lg py-2 text-label-md font-label-md text-primary align-top"><div class="truncate w-[210px]" title="${(p.name || '').replace(/"/g, '&quot;')}">${p.name}</div></td>
+      <td class="w-64 px-lg py-2 text-label-md font-label-md ${locked ? '' : 'text-primary'} align-top"><div class="truncate w-[210px]" title="${(p.name || '').replace(/"/g, '&quot;')}">${p.name}</div></td>
       <td class="w-32 px-lg py-2 text-label-md font-label-md text-on-surface-variant align-top">
         <span class="inline-flex items-center gap-0.5 w-[100px]"><span class="truncate w-[80px]" title="${(p.client || '').replace(/"/g, '&quot;')}">${p.client}</span><button class="material-symbols-outlined text-[14px] text-on-surface-variant/60 hover:text-secondary align-middle shrink-0" onclick="event.stopPropagation(); showClientInfoPopover(event, ${p.id})" title="クライアント情報を表示">info</button></span>
       </td>
       <td class="w-64 px-lg py-2 text-label-md font-label-md text-on-surface-variant align-top"><div class="line-clamp-2 whitespace-normal w-[210px]" title="${(p.notes || '').replace(/"/g, '&quot;')}">${p.notes || '-'}</div></td>
       <td class="w-28 px-lg py-2 text-label-md font-label-md text-on-surface-variant tabular-numbers align-top">${p.startDate || '-'} 〜 ${p.endDate || '-'}</td>
       <td class="w-24 px-lg py-2 text-label-md font-label-md tabular-numbers align-top ${isRecentDeliveryMonthChange(p) ? 'bg-amber-100 text-amber-800 rounded-lg font-bold' : 'text-on-surface-variant'}" title="${isRecentDeliveryMonthChange(p) ? '引き渡し月が最近変更されました' : ''}">${p.deliveryMonth || '-'}</td>
-      <td class="w-28 px-lg py-2 text-label-md font-label-md text-primary tabular-numbers text-right align-top">¥${p.amount.toLocaleString()}</td>
+      <td class="w-28 px-lg py-2 text-label-md font-label-md ${locked ? '' : 'text-primary'} tabular-numbers text-right align-top">¥${p.amount.toLocaleString()}</td>
       <td class="w-28 px-lg py-2 align-top" onclick="event.stopPropagation()">
-        <div class="relative inline-block">
-          <select onchange="updateProjectStatus(${p.id}, this.value)" class="appearance-none text-[11px] font-medium rounded-full pl-5 pr-5 py-1 text-center border border-transparent ring-1 ring-inset ring-black/5 cursor-pointer hover:opacity-90 focus:ring-2 focus:ring-secondary/40 shadow-sm transition-all ${getStatusClass(p.status)}">
-            ${['未対応', '提案中', '見積確認中', '受注', '失注'].map(s => `<option value="${s}" ${s === p.status ? 'selected' : ''}>${s}</option>`).join('')}
-          </select>
-          <span class="material-symbols-outlined absolute right-0.5 top-1/2 -translate-y-1/2 text-[16px] pointer-events-none">expand_more</span>
-        </div>
+        ${statusCell}
       </td>
       <td class="w-28 px-lg py-2 text-center align-top">
         <a href="/orders-list.html?projectId=${p.id}" onclick="event.stopPropagation()" class="inline-flex items-center gap-0.5 text-secondary text-[11px] font-bold font-label-md hover:text-secondary/80 whitespace-nowrap underline underline-offset-2 decoration-secondary/60 cursor-pointer" title="この案件の工事計画ページへ移動">
@@ -505,18 +512,24 @@ function buildViewRow(p) {
       </td>
       <td class="w-44 px-lg py-2 text-center align-top">
         <div class="flex gap-1 justify-center flex-wrap">
-          <button class="inline-flex items-center gap-0.5 px-1.5 py-1 rounded-lg bg-primary/10 text-primary text-[11px] font-label-md hover:bg-primary/20 transition-colors whitespace-nowrap" onclick="event.stopPropagation(); generateEstimate(${p.id})" title="見積書を発行">
+          ${
+            locked
+              ? ''
+              : `<button class="inline-flex items-center gap-0.5 px-1.5 py-1 rounded-lg bg-primary/10 text-primary text-[11px] font-label-md hover:bg-primary/20 transition-colors whitespace-nowrap" onclick="event.stopPropagation(); generateEstimate(${p.id})" title="見積書を発行">
             <span class="material-symbols-outlined text-[15px]">request_quote</span>
             見積書
           </button>
           <button class="inline-flex items-center gap-0.5 px-1.5 py-1 rounded-lg bg-primary/10 text-primary text-[11px] font-label-md hover:bg-primary/20 transition-colors whitespace-nowrap" onclick="event.stopPropagation(); generateInvoice(${p.id})" title="請求書を発行">
             <span class="material-symbols-outlined text-[15px]">description</span>
             請求書
-          </button>
+          </button>`
+          }
           ${
             p.contract_has_file
               ? `<button class="inline-flex items-center gap-0.5 px-1.5 py-1 rounded-lg bg-secondary-container text-on-secondary-container text-[11px] font-bold hover:opacity-80 transition-opacity whitespace-nowrap" onclick="event.stopPropagation(); openContractModal(${p.id})" title="契約書PDFを表示"><span class="material-symbols-outlined text-[15px]">picture_as_pdf</span>契約書</button>`
-              : `<button class="inline-flex items-center gap-0.5 px-1.5 py-1 rounded-lg bg-error-container text-on-error-container text-[11px] font-bold hover:opacity-80 transition-opacity whitespace-nowrap" onclick="event.stopPropagation(); requestContractUpload(${p.id})" title="契約書が未締結です（未アップロード）"><span class="material-symbols-outlined text-[15px]">upload_file</span>契約書未締結</button>`
+              : locked
+                ? ''
+                : `<button class="inline-flex items-center gap-0.5 px-1.5 py-1 rounded-lg bg-error-container text-on-error-container text-[11px] font-bold hover:opacity-80 transition-opacity whitespace-nowrap" onclick="event.stopPropagation(); requestContractUpload(${p.id})" title="契約書が未締結です（未アップロード）"><span class="material-symbols-outlined text-[15px]">upload_file</span>契約書未締結</button>`
           }
         </div>
       </td>
@@ -583,6 +596,8 @@ function getStatusClass(status) {
     見積確認中: 'border border-outline-variant bg-surface-container-lowest text-on-surface-variant',
     受注: 'bg-secondary text-on-secondary',
     失注: 'bg-error-container text-on-error-container',
+    // 引渡月変更に伴う複製元（旧案件ID）。手動選択はさせず、複製処理からのみ付与される
+    オーダー移行: 'bg-surface-container-high text-on-surface-variant',
   };
   return statusClass(map, status);
 }
@@ -727,9 +742,10 @@ async function updateProjectStatus(id, status) {
 let editingId = null;
 
 function openEditModal(id) {
-  editingId = id;
   const p = window.appCache.projects.find(x => x.id === id);
   if (!p) return;
+  if (p.status === 'オーダー移行') return; // 新しい案件IDへ移行済みのため編集不可
+  editingId = id;
   applyProjectFilters();
   setMonthValue('edit-delivery-month', p.deliveryMonth);
 }
@@ -791,7 +807,8 @@ async function saveRegister() {
 
 async function saveEdit() {
   if (!editingId) return;
-  const p = window.appCache.projects.find(x => x.id === editingId);
+  const id = editingId;
+  const p = window.appCache.projects.find(x => x.id === id);
   const name = document.getElementById('edit-name').value;
   const customer = window.appCache.customers.find(c => c.id == document.getElementById('edit-customer-select').value);
   const client = customer ? customer.company : p?.client || '';
@@ -803,8 +820,36 @@ async function saveEdit() {
 
   if (!name || !client) return alert('必須項目を入力してください');
 
+  // 引渡月は案件IDの採番基準（議事録決定事項）のため、その場での書き換えはせず新しい案件IDで複製する。
+  // 複製元は「オーダー移行」ステータスに固定され、以後編集できなくなる。
+  const deliveryMonthChanged = deliveryMonth !== (p?.deliveryMonth || '');
+  if (deliveryMonthChanged) {
+    const ok = confirm(
+      '引渡月を変更すると、この案件は新しい案件IDのレコードとして複製されます。\n' +
+        '複製元の案件IDは「オーダー移行」ステータスとなり、以後編集できなくなります。\n' +
+        '続行しますか？'
+    );
+    if (!ok) return;
+    try {
+      const res = await fetch(`/api/projects/${id}/change-delivery-month`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, client, clientCompany: client, amount, startDate, endDate, deliveryMonth, notes }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || '複製に失敗しました');
+      editingId = null;
+      await initializeGlobalCache();
+      loadProjects();
+      alert(`新しい案件ID「${data.project_no}」として複製しました。`);
+    } catch (e) {
+      alert(e.message || '複製に失敗しました');
+    }
+    return;
+  }
+
   try {
-    await fetch(`/api/projects/${editingId}`, {
+    await fetch(`/api/projects/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name, client, clientCompany: client, amount, startDate, endDate, deliveryMonth, notes }),

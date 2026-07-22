@@ -69,6 +69,8 @@ function ensureAux() {
       await createIfMissing('ALTER TABLE customers ADD COLUMN IF NOT EXISTS website text');
       // 引き渡し月の変更検知用（変更のたびに更新し、直近変更を一覧でハイライトする）
       await createIfMissing('ALTER TABLE projects ADD COLUMN IF NOT EXISTS delivery_month_changed_at timestamp');
+      // 引渡月変更による複製元→複製先の追跡用（議事録決定事項：複製元は「オーダー移行」ステータスで凍結）
+      await createIfMissing('ALTER TABLE projects ADD COLUMN IF NOT EXISTS superseded_by integer');
     })().catch(e => {
       _auxReady = null;
       throw e;
@@ -385,9 +387,13 @@ app.put(
     await ensureAux();
     const b = req.body;
     const before = await one('SELECT * FROM projects WHERE id=$1', [req.params.id]);
-    const newDeliveryMonth = b.deliveryMonth ?? before?.delivery_month;
-    // 引き渡し月が変更された場合はタイムスタンプを更新（一覧での直近変更ハイライトに使用。議事録決定事項）
-    const deliveryMonthChanged = b.deliveryMonth !== undefined && b.deliveryMonth !== before?.delivery_month;
+    if (before?.status === 'オーダー移行') return res.status(400).json({ error: 'この案件は新しい案件IDに移行済みのため編集できません' });
+    // 引渡月は案件IDの採番基準のため、通常のPUTでは変更させない（POST /change-delivery-month で複製する）
+    if (b.deliveryMonth !== undefined && b.deliveryMonth !== before?.delivery_month) {
+      return res.status(400).json({ error: '引渡月の変更は複製処理（change-delivery-month）経由で行ってください' });
+    }
+    const newDeliveryMonth = before?.delivery_month;
+    const deliveryMonthChanged = false;
     // 呼び出し元によって送られてくる項目が一部だけの場合があるため、未送信の項目は既存値を維持する
     await q(
       `UPDATE projects SET name=$1, client=$2, "clientCompany"=$3, "clientPhone"=$4, "clientEmail"=$5, "clientAddress"=$6, amount=$7, "startDate"=$8, "endDate"=$9, status=$10, notes=$11, delivery_month=$12, delivery_month_changed_at=$13 WHERE id=$14`,
@@ -410,6 +416,57 @@ app.put(
     );
     await logAuditReq(req, 'UPDATE', 'projects', parseInt(req.params.id), { name: before?.name || name, changes: diffChanges('projects', before, req.body) });
     res.json({ id: req.params.id, ...req.body });
+  })
+);
+
+// 引渡月の変更＝案件IDの再採番が必要になるため、その場での書き換えではなく新しい案件IDで複製する（議事録決定事項）。
+// 複製元（旧案件ID）は「オーダー移行」ステータスに固定して編集不可にし、紐づく工事計画(orders)・入金(receipts)は
+// 新しい案件IDへ付け替える。
+app.post(
+  '/api/projects/:id/change-delivery-month',
+  h(async (req, res) => {
+    await ensureAux();
+    const oldId = parseInt(req.params.id, 10);
+    const before = await one('SELECT * FROM projects WHERE id=$1', [oldId]);
+    if (!before) return res.status(404).json({ error: '案件が見つかりません' });
+    if (before.status === 'オーダー移行') return res.status(400).json({ error: 'この案件は既に新しい案件IDへ移行済みです' });
+    const b = req.body;
+    const deliveryMonth = b.deliveryMonth;
+    if (!deliveryMonth) return res.status(400).json({ error: '引渡月は必須です' });
+
+    const name = b.name ?? before.name;
+    const client = b.client ?? before.client;
+    const clientCompany = b.clientCompany ?? before.clientCompany;
+    const amount = b.amount ?? before.amount;
+    const startDate = b.startDate ?? before.startDate;
+    const endDate = b.endDate ?? before.endDate;
+    const notes = b.notes ?? before.notes;
+
+    const newRow = await one(
+      `INSERT INTO projects (name, client, "clientCompany", "clientPhone", "clientEmail", "clientAddress", amount, "startDate", "endDate", status, notes, delivery_month, project_no)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,'') RETURNING id`,
+      [name, client, clientCompany, before.clientPhone, before.clientEmail, before.clientAddress, amount, startDate, endDate, before.status, notes, deliveryMonth]
+    );
+    const project_no = await nextProjectNo(deliveryMonth);
+    await q('UPDATE projects SET project_no=$1 WHERE id=$2', [project_no, newRow.id]);
+
+    // 複製元は「オーダー移行」ステータスに固定し編集不可にする
+    await q(`UPDATE projects SET status='オーダー移行', superseded_by=$1 WHERE id=$2`, [newRow.id, oldId]);
+
+    // 紐づく工事計画（orders。支払いはordersに従属するため自動的に付け替わる）・入金（receipts）を新しい案件IDへ付け替え
+    await q('UPDATE orders SET project_id=$1 WHERE project_id=$2', [newRow.id, oldId]);
+    await q('UPDATE receipts SET project_id=$1 WHERE project_id=$2', [newRow.id, oldId]);
+
+    await logAuditReq(req, 'CREATE', 'projects', newRow.id, {
+      name,
+      changes: [`引渡月変更に伴う複製（複製元案件ID: ${before.project_no || '#' + oldId}）`],
+    });
+    await logAuditReq(req, 'UPDATE', 'projects', oldId, {
+      name: before.name,
+      changes: [`引渡月変更のため新しい案件ID「${project_no}」に移行し、オーダー移行ステータスに変更（編集不可）`],
+    });
+
+    res.json({ oldId, newId: newRow.id, project_no });
   })
 );
 
