@@ -539,7 +539,10 @@ function buildViewRow(p) {
 
 // アコーディオン展開はせず、行自体のセルを入力欄に差し替えてテーブル内でインライン編集する
 function buildEditRow(p) {
-  const inputCls = 'w-full bg-surface-container-lowest border border-outline-variant rounded text-[11px] px-1.5 py-1 focus:ring-1 focus:ring-secondary/40 focus:border-transparent';
+  // block: inputはデフォルトinline-blockのため、テーブルのwhitespace-nowrap下では
+  // 隣接要素と横並びになり折り返されない（工期セルの開始日/終了日が2行に積み上がらず、
+  // 隣の引渡月セルへはみ出して重なって見えるバグの原因）。blockで強制的に別行にする。
+  const inputCls = 'block w-full bg-surface-container-lowest border border-outline-variant rounded text-[11px] px-1.5 py-1 focus:ring-1 focus:ring-secondary/40 focus:border-transparent';
   const customerOptions = (window.appCache.customers || [])
     .map(c => `<option value="${c.id}" ${c.company === p.clientCompany ? 'selected' : ''}>${c.company}</option>`)
     .join('');
