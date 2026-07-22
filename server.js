@@ -354,18 +354,28 @@ app.get(
   })
 );
 
+// 工番 WW-YYYYMM-001 を採番（同一の引渡月内で連番、既存件数+1。議事録決定事項：オーダー番号と同じ「WW-年月-連番」方式に統一）
+async function nextProjectNo(deliveryMonth) {
+  const ym = deliveryMonth.replace('-', '');
+  const prefix = `WW-${ym}-`;
+  const r = await one('SELECT COUNT(*) AS cnt FROM projects WHERE project_no LIKE $1', [prefix + '%']);
+  return prefix + String(Number(r.cnt) + 1).padStart(3, '0');
+}
+
 app.post(
   '/api/projects',
   h(async (req, res) => {
     const { name, client, clientCompany, clientPhone, clientEmail, clientAddress, amount, startDate, endDate, status, notes, deliveryMonth } = req.body;
+    if (!deliveryMonth) return res.status(400).json({ error: '引渡月は必須です' });
     const row = await one(
       `INSERT INTO projects (name, client, "clientCompany", "clientPhone", "clientEmail", "clientAddress", amount, "startDate", "endDate", status, notes, delivery_month, project_no)
      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12, '') RETURNING id`,
-      [name, client, clientCompany, clientPhone, clientEmail, clientAddress, amount, startDate, endDate, status, notes, deliveryMonth || null]
+      [name, client, clientCompany, clientPhone, clientEmail, clientAddress, amount, startDate, endDate, status, notes, deliveryMonth]
     );
-    await q('UPDATE projects SET project_no=$1 WHERE id=$2', [`WW7-${String(row.id).padStart(4, '0')}`, row.id]);
+    const project_no = await nextProjectNo(deliveryMonth);
+    await q('UPDATE projects SET project_no=$1 WHERE id=$2', [project_no, row.id]);
     await logAuditReq(req, 'CREATE', 'projects', row.id, { name, changes: [`新規登録（顧客: ${client || '-'} / ステータス: ${status || '-'}）`] });
-    res.json({ id: row.id, ...req.body });
+    res.json({ id: row.id, ...req.body, project_no });
   })
 );
 

@@ -259,7 +259,7 @@ CSV出力
 <input class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent" id="reg-period-end" type="date"/>
 </div>
 <div>
-<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">引渡月</label>
+<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">引渡月 <span class="text-error">*</span></label>
 <input type="hidden" id="reg-delivery-month"/>
 <button type="button" class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent flex justify-between items-center" onclick="openMonthPicker(event, 'reg-delivery-month')">
 <span id="reg-delivery-month-label" class="text-on-surface-variant">未設定</span>
@@ -771,7 +771,7 @@ async function saveRegister() {
   const deliveryMonth = document.getElementById('reg-delivery-month').value;
   const notes = document.getElementById('reg-notes').value;
 
-  if (!name || !client) return alert('必須項目を入力してください');
+  if (!name || !client || !deliveryMonth) return alert('必須項目（工事名・顧客・引渡月）を入力してください');
 
   try {
     const res = await fetch('/api/projects', {
@@ -779,11 +779,13 @@ async function saveRegister() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name, client, clientCompany: client, amount, status, startDate, endDate, deliveryMonth, notes }),
     });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || '保存に失敗しました');
     await initializeGlobalCache();
     loadProjects();
     closeModal('register-modal');
   } catch (e) {
-    alert('保存に失敗しました');
+    alert(e.message || '保存に失敗しました');
   }
 }
 
