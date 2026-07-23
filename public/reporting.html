@@ -107,7 +107,7 @@ body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 <div class="inline-flex gap-xs bg-surface-container-low p-xs rounded-lg">
 <button id="tabbtn-overview" class="px-4 py-1.5 text-label-md font-label-md text-on-secondary bg-secondary rounded-lg shadow-lg hover:scale-[1.02] active:scale-95 transition-all" onclick="switchDashTab('overview')">予実・残高・当月予定</button>
 <button id="tabbtn-analysis" class="px-4 py-1.5 text-label-md font-label-md text-on-surface-variant bg-transparent rounded-lg hover:bg-surface-container transition-all" onclick="switchDashTab('analysis')">レポート分析</button>
-<button id="tabbtn-vendor-concentration" class="px-4 py-1.5 text-label-md font-label-md text-on-surface-variant bg-transparent rounded-lg hover:bg-surface-container transition-all" onclick="switchDashTab('vendor-concentration')">協力会社別発注偏り</button>
+<button id="tabbtn-vendor-concentration" class="px-4 py-1.5 text-label-md font-label-md text-on-surface-variant bg-transparent rounded-lg hover:bg-surface-container transition-all" onclick="switchDashTab('vendor-concentration')">協力会社別発注金額</button>
 </div>
 </div>
 
@@ -308,17 +308,30 @@ body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 </div>
 <!-- ===== /Tab: レポート分析 ===== -->
 
-<!-- ===== Tab: 協力会社別発注偏り ===== -->
+<!-- ===== Tab: 協力会社別発注金額 ===== -->
 <div id="tab-vendor-concentration" class="hidden space-y-md">
-<!-- 協力会社別の発注偏り可視化（議事録論点：協力会社別の発注偏りを可視化） -->
+<!-- 協力会社別の発注金額（議事録論点：協力会社別の発注偏りを可視化） -->
+<div class="bg-surface-container-lowest p-4 rounded-lg border border-outline-variant custom-shadow">
+<div class="flex flex-wrap items-end gap-x-lg gap-y-3">
+<div>
+<label class="block text-label-sm text-on-surface-variant mb-1">期間開始（工事開始日）</label>
+<input type="date" id="vc-date-start" class="bg-surface-container-low border border-outline-variant rounded-lg px-3 py-1.5 text-label-md focus:ring-2 focus:ring-secondary/20" onchange="renderVendorConcentration()"/>
+</div>
+<div>
+<label class="block text-label-sm text-on-surface-variant mb-1">期間終了（工事開始日）</label>
+<input type="date" id="vc-date-end" class="bg-surface-container-low border border-outline-variant rounded-lg px-3 py-1.5 text-label-md focus:ring-2 focus:ring-secondary/20" onchange="renderVendorConcentration()"/>
+</div>
+<button class="px-4 py-1.5 border border-outline text-primary font-label-md rounded-lg hover:bg-surface-container transition-colors" onclick="document.getElementById('vc-date-start').value='';document.getElementById('vc-date-end').value='';renderVendorConcentration()">クリア</button>
+</div>
+</div>
 <div class="bg-surface-container-lowest rounded-lg custom-shadow border border-outline-variant overflow-hidden">
 <div class="px-lg py-2.5 border-b border-outline-variant bg-surface-container-low">
-<h3 class="text-label-md font-label-md text-primary">協力会社別の発注偏り（全案件・決定金額ベース）</h3>
+<h3 class="text-label-md font-label-md text-primary">協力会社別発注金額（決定金額ベース）</h3>
 </div>
 <div class="p-lg space-y-2" id="vendor-concentration-body"></div>
 </div>
 </div>
-<!-- ===== /Tab: 協力会社別発注偏り ===== -->
+<!-- ===== /Tab: 協力会社別発注金額 ===== -->
 
 </div>
 <!-- Footer -->
@@ -543,11 +556,22 @@ function updateReports() {
   renderVendorConcentration();
 }
 
-// 協力会社別の発注偏り可視化（議事録論点）。フィルタに関わらず全案件の決定金額で集計する。
+// 協力会社別発注金額（議事録論点：協力会社別の発注偏りを可視化）。期間（工事開始日）で絞り込み可能。
 function renderVendorConcentration() {
   const el = document.getElementById('vendor-concentration-body');
   if (!el) return;
-  const orders = window.appCache.orders || [];
+  const dateStart = document.getElementById('vc-date-start')?.value || '';
+  const dateEnd = document.getElementById('vc-date-end')?.value || '';
+  let orders = window.appCache.orders || [];
+  if (dateStart || dateEnd) {
+    orders = orders.filter(o => {
+      const date = o.period_start || '';
+      if (!date) return true; // 工事開始日が未設定の注文は絞り込み対象外（除外しない）
+      if (dateStart && date < dateStart) return false;
+      if (dateEnd && date > dateEnd) return false;
+      return true;
+    });
+  }
   const totals = {};
   let grandTotal = 0;
   orders.forEach(o => {
