@@ -106,13 +106,6 @@ body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 <p class="text-body-sm text-on-surface-variant mt-1">案件ごとの請負金額・入金累計・未収金を管理します</p>
 </div>
 <div class="flex items-center gap-3">
-<button class="px-4 py-1.5 border border-outline text-primary font-label-md rounded-lg hover:bg-surface-container transition-colors flex items-center gap-2" onclick="downloadTemplate()">
-<span class="material-symbols-outlined text-[18px]">description</span>フォーマット
-</button>
-<button class="px-4 py-1.5 border border-outline text-primary font-label-md rounded-lg hover:bg-surface-container transition-colors flex items-center gap-2" onclick="document.getElementById('csv-upload-input').click()">
-<span class="material-symbols-outlined text-[18px]">upload_file</span>CSV取込（消込）
-</button>
-<input type="file" id="csv-upload-input" accept=".csv,text/csv" style="display:none" onchange="importCSV(event)"/>
 <button class="px-4 py-1.5 border border-outline text-primary font-label-md rounded-lg hover:bg-surface-container transition-colors flex items-center gap-2" onclick="exportCSV()">
 <span class="material-symbols-outlined text-[18px]">download</span>CSV出力
 </button>
@@ -800,36 +793,6 @@ async function deleteReceipt(id) {
 
 function exportCSV() {
   window.location.href = '/api/export/sales';
-}
-
-function downloadTemplate() {
-  window.location.href = '/api/receipts/template';
-}
-
-async function importCSV(event) {
-  const file = event.target.files[0];
-  if (!file) return;
-  const text = await file.text();
-  try {
-    const res = await fetch('/api/receipts/import', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ csv: text }),
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || '取込失敗');
-    let msg = `${data.imported}件の入金を取り込みました（全${data.total}行）`;
-    if (data.errors && data.errors.length) {
-      msg += `\n\n■スキップ ${data.errors.length}件:\n` + data.errors.slice(0, 10).join('\n');
-      if (data.errors.length > 10) msg += `\n...他${data.errors.length - 10}件`;
-    }
-    alert(msg);
-    loadAll();
-  } catch (err) {
-    alert('CSV取込に失敗しました: ' + err.message);
-  } finally {
-    event.target.value = '';
-  }
 }
 
 loadAll();
