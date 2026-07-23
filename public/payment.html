@@ -129,14 +129,12 @@ body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 </select>
 </div>
 <div>
-<label class="block text-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">支払期日</label>
-<select id="due-filter" class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-body-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent">
-<option value="">すべての支払期日</option>
-<option value="overdue">期限超過</option>
-<option value="this-month">今月</option>
-<option value="next-month">翌月</option>
-<option value="later">それ以降</option>
-</select>
+<label class="block text-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">支払期日（以降）</label>
+<input type="date" id="due-filter-start" class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-body-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent"/>
+</div>
+<div>
+<label class="block text-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">支払期日（以前）</label>
+<input type="date" id="due-filter-end" class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-body-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent"/>
 </div>
 </div>
 </div>
@@ -678,7 +676,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   await loadMiscPayments();
 
   document.getElementById('status-filter').addEventListener('change', filterTable);
-  document.getElementById('due-filter').addEventListener('change', filterTable);
+  document.getElementById('due-filter-start').addEventListener('change', filterTable);
+  document.getElementById('due-filter-end').addEventListener('change', filterTable);
   document.getElementById('keyword-search').addEventListener('input', filterTable);
 });
 
@@ -839,32 +838,25 @@ async function deleteMiscPayment(id) {
   }
 }
 
-// 支払期日が指定バケットに合致するか判定
-function matchDueBucket(dateStr, bucket) {
-  if (!bucket) return true;
+// 支払期日が指定期間内かどうか判定
+function matchDueRange(dateStr, start, end) {
+  if (!start && !end) return true;
   if (!dateStr) return false;
-  const d = new Date(String(dateStr).replace(/\//g, '-'));
-  if (isNaN(d)) return false;
-  const now = new Date();
-  const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-  const thisMonthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
-  const nextMonthStart = new Date(now.getFullYear(), now.getMonth() + 1, 1);
-  const nextMonthEnd = new Date(now.getFullYear(), now.getMonth() + 2, 0, 23, 59, 59);
-  if (bucket === 'overdue') return d < thisMonthStart && d < now;
-  if (bucket === 'this-month') return d >= thisMonthStart && d <= thisMonthEnd;
-  if (bucket === 'next-month') return d >= nextMonthStart && d <= nextMonthEnd;
-  if (bucket === 'later') return d > nextMonthEnd;
+  const d = String(dateStr).replace(/\//g, '-');
+  if (start && d < start) return false;
+  if (end && d > end) return false;
   return true;
 }
 
 function filterTable() {
   const status = document.getElementById('status-filter').value;
-  const due = document.getElementById('due-filter').value;
+  const dueStart = document.getElementById('due-filter-start').value;
+  const dueEnd = document.getElementById('due-filter-end').value;
   const keyword = document.getElementById('keyword-search').value.toLowerCase();
 
   const filtered = payments.filter(p => {
     const matchStatus = !status || p.status === status;
-    const matchDue = matchDueBucket(p.paymentDate, due);
+    const matchDue = matchDueRange(p.paymentDate, dueStart, dueEnd);
     const matchKeyword = !keyword || p.projectName.toLowerCase().includes(keyword) || p.vendor.toLowerCase().includes(keyword) || String(p.projectNo || '').toLowerCase().includes(keyword);
     return matchStatus && matchDue && matchKeyword;
   });
