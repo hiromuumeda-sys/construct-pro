@@ -612,7 +612,7 @@ function renderSales() {
     tbody.innerHTML = filtered
       .map(
         s => `
-    <tr class="${s.pay_status === '未入金' ? 'bg-yellow-50 hover:bg-yellow-100' : 'hover:bg-surface-container-low'} transition-colors cursor-pointer" onclick="openSalesDetail(${s.id})">
+    <tr class="${['未入金', '一部入金'].includes(s.pay_status) ? 'bg-yellow-50 hover:bg-yellow-100' : 'hover:bg-surface-container-low'} transition-colors cursor-pointer" onclick="openSalesDetail(${s.id})">
       <td class="px-3 py-2.5 text-center">
         <button class="material-symbols-outlined text-secondary hover:bg-secondary/10 rounded-full w-8 h-8" onclick="event.stopPropagation(); openReceiptModal(${s.id})" title="入金登録">add_circle</button>
       </td>
