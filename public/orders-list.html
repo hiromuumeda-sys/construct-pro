@@ -865,7 +865,7 @@ async function showPoPreview(orderId) {
   currentPoOrderId = orderId;
   const project = window.appCache.projects.find(p => p.id === order.project_id);
 
-  // 注文書を実際に発行する（プレビューする）時点で注文番号を確定し、ダウンロード結果と一致させる
+  // 注文書を実際に発行する（プレビューする）時点で工事IDを確定し、ダウンロード結果と一致させる
   if (!order.order_no) {
     try {
       const res = await fetch(`/api/orders/${orderId}/ensure-order-no`, { method: 'POST' });
@@ -940,7 +940,7 @@ function showPoModal(order, project) {
   const inputCls = 'w-full bg-surface-container-low border border-outline-variant rounded px-1.5 py-1 text-xs focus:ring-1 focus:ring-secondary/40 focus:border-transparent';
   const staticRow = (l, v) => `<tr><td class="border border-outline-variant p-2 align-top w-[34%] bg-surface-container-low/50">□ ${l}</td><td class="border border-outline-variant p-2 align-top">${v}</td></tr>`;
   const poRows = [
-    staticRow('注文番号', order.order_no || '---'),
+    staticRow('工事ID', order.order_no || '---'),
     staticRow('担当者', order.assignee || '---'),
     staticRow('工事名', project ? project.name : order.details || '---'),
     staticRow('工事内容', order.category || order.details || '---'),

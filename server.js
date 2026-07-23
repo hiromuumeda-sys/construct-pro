@@ -358,7 +358,7 @@ app.get(
   })
 );
 
-// 案件ID WW-YYYYMM-001 を採番（同一の引渡月内で連番、既存件数+1。議事録決定事項：オーダー番号と同じ「WW-年月-連番」方式に統一）
+// 案件ID WW-YYYYMM-001 を採番（同一の引渡月内で連番、既存件数+1。議事録決定事項）
 async function nextProjectNo(deliveryMonth) {
   const ym = deliveryMonth.replace('-', '');
   const prefix = `WW-${ym}-`;
@@ -586,20 +586,17 @@ app.delete(
 
 // ============ Orders API ============
 const ORDER_COLS = 'project_id, category, vendor, estimate, planned, decided, status, details, site, period_start, period_end, handover, payment, "paymentStatus", "paymentDate", "paymentNotes", assignee';
-const ORDERED_STATUSES = ['発注完了', '支払済み']; // 注文（発注）が確定した状態。この状態になって初めて注文番号を採番する
+const ORDERED_STATUSES = ['発注完了', '支払済み']; // 注文（発注）が確定した状態。この状態になって初めて工事IDを採番する
 
-// 注文番号 WW-YYYYMM-001 を採番（同一年月内で連番、既存件数+1）
-async function nextOrderNo(date = new Date()) {
-  const ym = `${date.getFullYear()}${String(date.getMonth() + 1).padStart(2, '0')}`;
-  const prefix = `WW-${ym}-`;
-  const r = await one('SELECT COUNT(*) AS cnt FROM orders WHERE order_no LIKE $1', [prefix + '%']);
-  return prefix + String(Number(r.cnt) + 1).padStart(3, '0');
+// 工事ID：注文自身の内部ID（重複の心配がない）をそのまま6桁ゼロ埋めした連番
+function workId(orderId) {
+  return String(orderId).padStart(6, '0');
 }
 
-// 注文番号が未採番なら、この時点（注文書の発行）で確定・採番する。採番済みならそのまま返す
+// 工事IDが未採番なら、この時点（注文書の発行）で確定・採番する。採番済みならそのまま返す
 async function ensureOrderNo(order) {
   if (order.order_no) return order.order_no;
-  const order_no = await nextOrderNo();
+  const order_no = workId(order.id);
   await q('UPDATE orders SET order_no=$1 WHERE id=$2', [order_no, order.id]);
   order.order_no = order_no;
   return order_no;
@@ -771,10 +768,10 @@ app.post(
     ]);
     // 残金の初期値＝費用（決定金額）
     await q('UPDATE orders SET remaining = $1 WHERE id = $2', [b.remaining != null ? b.remaining : b.decided || 0, ins.id]);
-    // 作成時点で既に発注確定状態なら注文番号を採番
+    // 作成時点で既に発注確定状態なら工事IDを採番
     let order_no = null;
     if (ORDERED_STATUSES.includes(b.status)) {
-      order_no = await nextOrderNo();
+      order_no = workId(ins.id);
       await q('UPDATE orders SET order_no=$1 WHERE id=$2', [order_no, ins.id]);
     }
     await logAuditReq(req, 'CREATE', 'orders', ins.id, { name: `${b.category || ''}（${b.vendor || ''}）`, changes: [`新規登録（工事区分: ${b.category || '-'} / 発注先: ${b.vendor || '-'}）`] });
@@ -788,8 +785,8 @@ app.put(
     const b = req.body;
     const before = await one('SELECT * FROM orders WHERE id=$1', [req.params.id]);
     const newStatus = b.status ?? before?.status;
-    // 発注が確定した状態に遷移した時点で初めて注文番号を採番（未処理/見積待ち等の段階では発注実体が無いため採番しない）
-    const order_no = !before?.order_no && ORDERED_STATUSES.includes(newStatus) ? await nextOrderNo() : before?.order_no;
+    // 発注が確定した状態に遷移した時点で初めて工事IDを採番（未処理/見積待ち等の段階では発注実体が無いため採番しない）
+    const order_no = !before?.order_no && ORDERED_STATUSES.includes(newStatus) ? workId(req.params.id) : before?.order_no;
     // 呼び出し元によって送られてくる項目が一部だけの場合があるため、未送信の項目は既存値を維持する
     // (例: 工事詳細編集モーダルは支払状況/支払期日/支払備考を送らないため、これが無いと保存のたびに消えてしまう)
     await q(`UPDATE orders SET project_id=$1, category=$2, vendor=$3, estimate=$4, planned=$5, decided=$6, status=$7, details=$8, site=$9, period_start=$10, period_end=$11, handover=$12, payment=$13, "paymentStatus"=$14, "paymentDate"=$15, "paymentNotes"=$16, order_no=$17, assignee=$18 WHERE id=$19`, [
@@ -861,7 +858,7 @@ app.put(
   })
 );
 
-// 注文番号を（未採番なら）確定する。注文書プレビュー表示時にダウンロード結果と番号を一致させるために使用
+// 工事IDを（未採番なら）確定する。注文書プレビュー表示時にダウンロード結果と番号を一致させるために使用
 app.post(
   '/api/orders/:id/ensure-order-no',
   h(async (req, res) => {
@@ -1932,7 +1929,7 @@ function buildPurchaseOrderPDF(order, project, vendor) {
     const vendorAddr = (vendor && vendor.address) || '';
     const period = order.period_start || order.period_end ? `着手予定　${order.period_start || '-'}　～　完成予定　${order.period_end || '-'}` : '-';
     const fields = [
-      ['注文番号', order.order_no || '-'],
+      ['工事ID', order.order_no || '-'],
       ['担当者', order.assignee || '-'],
       ['工事名', project ? project.name : order.details || '-'],
       ['工事内容', order.category || order.details || '-'],
