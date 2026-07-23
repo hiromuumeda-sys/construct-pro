@@ -464,12 +464,14 @@ function loadProjects() {
   renderTable(window.appCache.projects);
 }
 
-// 引き渡し月の変更から7日以内ならハイライト対象（議事録決定事項：引き渡し月の変更でレコードの色が変わる）
-function isRecentDeliveryMonthChange(p) {
-  if (!p.delivery_month_changed_at) return false;
-  const changed = new Date(p.delivery_month_changed_at);
-  if (isNaN(changed)) return false;
-  return Date.now() - changed.getTime() < 7 * 24 * 60 * 60 * 1000;
+// 着工日（工期開始）を過ぎているのに契約書が未締結（未アップロード）かどうか
+function isOverdueUnsigned(p) {
+  if (p.contract_has_file) return false;
+  if (!p.startDate) return false;
+  const start = new Date(String(p.startDate).replace(/\//g, '-'));
+  if (isNaN(start)) return false;
+  const today = new Date(new Date().toDateString());
+  return start < today;
 }
 
 function renderTable(projects) {
@@ -479,9 +481,12 @@ function renderTable(projects) {
 
 function buildViewRow(p) {
   const locked = p.status === 'オーダー移行'; // 引渡月変更で複製された旧案件ID：編集不可＆グレー表示
+  const overdueUnsigned = !locked && isOverdueUnsigned(p); // 着工日超過×契約書未締結：行全体を黄色で警告
   const rowCls = locked
     ? 'bg-surface-container-low/60 text-on-surface-variant/70 transition-colors group'
-    : 'hover:bg-surface-container-low transition-colors group cursor-pointer';
+    : overdueUnsigned
+      ? 'bg-yellow-50 hover:bg-yellow-100 transition-colors group cursor-pointer'
+      : 'hover:bg-surface-container-low transition-colors group cursor-pointer';
   const statusCell = locked
     ? `<span class="inline-flex items-center text-[11px] font-medium rounded-full pl-5 pr-5 py-1 ${getStatusClass(p.status)} opacity-70" title="新しい案件IDに移行済みのため編集できません">${p.status}</span>`
     : `<div class="relative inline-block">
@@ -499,7 +504,7 @@ function buildViewRow(p) {
       </td>
       <td class="w-64 px-lg py-2 text-label-md font-label-md text-on-surface-variant align-top"><div class="line-clamp-2 whitespace-normal w-[210px]" title="${(p.notes || '').replace(/"/g, '&quot;')}">${p.notes || '-'}</div></td>
       <td class="w-28 px-lg py-2 text-label-md font-label-md text-on-surface-variant tabular-numbers align-top">${p.startDate || '-'} 〜 ${p.endDate || '-'}</td>
-      <td class="w-24 px-lg py-2 text-label-md font-label-md tabular-numbers align-top ${isRecentDeliveryMonthChange(p) ? 'bg-amber-100 text-amber-800 rounded-lg font-bold' : 'text-on-surface-variant'}" title="${isRecentDeliveryMonthChange(p) ? '引き渡し月が最近変更されました' : ''}">${p.deliveryMonth || '-'}</td>
+      <td class="w-24 px-lg py-2 text-label-md font-label-md tabular-numbers align-top text-on-surface-variant">${p.deliveryMonth || '-'}</td>
       <td class="w-28 px-lg py-2 text-label-md font-label-md ${locked ? '' : 'text-primary'} tabular-numbers text-right align-top">¥${p.amount.toLocaleString()}</td>
       <td class="w-28 px-lg py-2 align-top" onclick="event.stopPropagation()">
         ${statusCell}

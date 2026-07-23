@@ -107,7 +107,7 @@ body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 </div>
 </div>
 <div class="bg-surface-container-lowest border border-outline-variant rounded-lg p-md">
-<div class="grid grid-cols-1 md:grid-cols-3 gap-md mb-md">
+<div class="grid grid-cols-1 md:grid-cols-2 gap-md mb-md">
 <div>
 <label class="block text-label-sm text-on-surface-variant uppercase tracking-wider font-bold mb-1.5">工期開始（以降）</label>
 <input type="date" id="project-date-start" class="w-full bg-surface-container-low border border-outline-variant text-sm px-4 py-2.5 rounded-lg focus:ring-2 focus:ring-secondary/20 focus:border-transparent" onchange="renderProjectSelectList()"/>
@@ -115,13 +115,6 @@ body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 <div>
 <label class="block text-label-sm text-on-surface-variant uppercase tracking-wider font-bold mb-1.5">工期終了（以前）</label>
 <input type="date" id="project-date-end" class="w-full bg-surface-container-low border border-outline-variant text-sm px-4 py-2.5 rounded-lg focus:ring-2 focus:ring-secondary/20 focus:border-transparent" onchange="renderProjectSelectList()"/>
-</div>
-<div>
-<label class="block text-label-sm text-on-surface-variant uppercase tracking-wider font-bold mb-1.5">検索</label>
-<div class="relative">
-<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-xl">search</span>
-<input class="w-full bg-surface-container-low border border-outline-variant text-sm pl-11 pr-4 py-2.5 rounded-lg focus:ring-2 focus:ring-secondary/20 focus:border-transparent" id="project-search" placeholder="案件名で検索..." type="text" oninput="renderProjectSelectList()"/>
-</div>
 </div>
 </div>
 <div class="border border-outline-variant rounded-lg overflow-hidden">
@@ -1251,8 +1244,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 function renderProjectSelectList() {
-  // 画面内検索とヘッダー検索の両方を反映
-  const kwInline = (document.getElementById('project-search').value || '').toLowerCase();
   const kwHeader = (document.getElementById('keyword-search')?.value || '').toLowerCase();
   const dateStart = document.getElementById('project-date-start').value;
   const dateEnd = document.getElementById('project-date-end').value;
@@ -1268,7 +1259,6 @@ function renderProjectSelectList() {
   const projects = window.appCache.projects.filter(p => {
     const name = p.name.toLowerCase();
     const projectNo = (p.project_no || '').toLowerCase();
-    if (kwInline && !name.includes(kwInline) && !projectNo.includes(kwInline)) return false;
     if (kwHeader && !name.includes(kwHeader) && !projectNo.includes(kwHeader)) return false;
     // 期間で絞り込み：案件の工期が指定範囲に重なるもの
     if (rangeStart || rangeEnd) {
