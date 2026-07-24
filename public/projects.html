@@ -737,12 +737,22 @@ async function updateProjectStatus(id, status) {
   const p = window.appCache.projects.find(x => x.id === id);
   if (!p || p.status === status) return;
   try {
-    await fetch(`/api/projects/${id}`, {
+    const res = await fetch(`/api/projects/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: p.name, client: p.client, clientCompany: p.clientCompany, clientPhone: p.clientPhone, clientEmail: p.clientEmail, clientAddress: p.clientAddress, amount: p.amount, startDate: p.startDate, endDate: p.endDate, status, notes: p.notes, deliveryMonth: p.deliveryMonth }),
+      body: JSON.stringify({ name: p.name, client: p.client, clientCompany: p.clientCompany, clientPhone: p.clientPhone, clientEmail: p.clientEmail, clientAddress: p.clientAddress, amount: p.amount, startDate: p.startDate, endDate: p.endDate, status, notes: p.notes, deliveryMonth: p.deliveryMonth, version: p.version }),
     });
+    if (res.status === 409) {
+      const data = await res.json().catch(() => ({}));
+      alert(data.error || '他の人がこの案件を更新しました。再読み込みしてください');
+      await initializeGlobalCache();
+      applyProjectFilters();
+      return;
+    }
+    if (!res.ok) throw new Error('failed');
+    const data = await res.json();
     p.status = status;
+    if (data.version != null) p.version = data.version;
     applyProjectFilters();
   } catch (e) {
     alert('ステータス更新に失敗しました');
@@ -859,11 +869,20 @@ async function saveEdit() {
   }
 
   try {
-    await fetch(`/api/projects/${id}`, {
+    const res = await fetch(`/api/projects/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, client, clientCompany: client, amount, startDate, endDate, deliveryMonth, notes }),
+      body: JSON.stringify({ name, client, clientCompany: client, amount, startDate, endDate, deliveryMonth, notes, version: p?.version }),
     });
+    if (res.status === 409) {
+      const data = await res.json().catch(() => ({}));
+      alert(data.error || '他の人がこの案件を更新しました。再読み込みしてください');
+      editingId = null;
+      await initializeGlobalCache();
+      loadProjects();
+      return;
+    }
+    if (!res.ok) throw new Error('更新に失敗しました');
     editingId = null;
     await initializeGlobalCache();
     loadProjects();

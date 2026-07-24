@@ -9,7 +9,7 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const pino = require('pino');
-const { q, one } = require('./db');
+const { q, one, exec, withTransaction } = require('./db');
 
 const logger = pino();
 
@@ -109,6 +109,12 @@ function ensureAux() {
       await createIfMissing('CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(status)');
       await createIfMissing('CREATE INDEX IF NOT EXISTS idx_projects_status ON projects(status)');
       await createIfMissing('CREATE INDEX IF NOT EXISTS idx_projects_start_date ON projects("startDate")');
+      // project_noの重複登録を防ぐUNIQUE制約（レース条件対策とセットで導入。空文字/NULLは対象外）
+      await createIfMissing("CREATE UNIQUE INDEX IF NOT EXISTS idx_projects_project_no_unique ON projects(project_no) WHERE project_no IS NOT NULL AND project_no != ''");
+      // 楽観的ロック用のバージョン列（決定金額・支払/入金ステータス等、複数人が同時に触り得る
+      // フィールドで、後勝ちによる無言の上書きを検知するため）
+      await createIfMissing('ALTER TABLE orders ADD COLUMN IF NOT EXISTS version integer DEFAULT 1');
+      await createIfMissing('ALTER TABLE projects ADD COLUMN IF NOT EXISTS version integer DEFAULT 1');
     })().catch(e => {
       _auxReady = null;
       throw e;
@@ -503,11 +509,14 @@ app.get(
 );
 
 // 案件ID WW-YYYYMM-001 を採番（同一の引渡月内で連番、既存件数+1。議事録決定事項）
-async function nextProjectNo(deliveryMonth) {
+// 引渡月ごとに pg_advisory_xact_lock で排他し、COUNT→採番の間に他リクエストが割り込めないようにする。
+// 呼び出し元は withTransaction() 内で client を渡すこと（ロックはトランザクション終了まで有効）。
+async function nextProjectNoTx(client, deliveryMonth) {
   const ym = deliveryMonth.replace('-', '');
   const prefix = `WW-${ym}-`;
-  const r = await one('SELECT COUNT(*) AS cnt FROM projects WHERE project_no LIKE $1', [prefix + '%']);
-  return prefix + String(Number(r.cnt) + 1).padStart(3, '0');
+  await client.query('SELECT pg_advisory_xact_lock(hashtext($1))', [prefix]);
+  const r = await client.query('SELECT COUNT(*) AS cnt FROM projects WHERE project_no LIKE $1', [prefix + '%']);
+  return prefix + String(Number(r.rows[0].cnt) + 1).padStart(3, '0');
 }
 
 app.post(
@@ -517,15 +526,19 @@ app.post(
     const { name, client, clientCompany, clientPhone, clientEmail, clientAddress, amount, startDate, endDate, status, notes, deliveryMonth } = req.body;
     if (!deliveryMonth) return res.status(400).json({ error: '引渡月は必須です' });
     if (rejectNegativeAmount(res, req.body, ['amount'])) return;
-    const row = await one(
-      `INSERT INTO projects (name, client, "clientCompany", "clientPhone", "clientEmail", "clientAddress", amount, "startDate", "endDate", status, notes, delivery_month, project_no)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12, '') RETURNING id`,
-      [name, client, clientCompany, clientPhone, clientEmail, clientAddress, amount, startDate, endDate, status, notes, deliveryMonth]
-    );
-    const project_no = await nextProjectNo(deliveryMonth);
-    await q('UPDATE projects SET project_no=$1 WHERE id=$2', [project_no, row.id]);
-    await logAuditReq(req, 'CREATE', 'projects', row.id, { name, changes: [`新規登録（顧客: ${client || '-'} / ステータス: ${status || '-'}）`] });
-    res.json({ id: row.id, ...req.body, project_no });
+    // 引渡月ごとの排他ロック内で採番とINSERTを同一トランザクションで行い、
+    // 同じ引渡月への同時登録で案件IDが重複するレース条件を防ぐ
+    const { id, project_no } = await withTransaction(async tx => {
+      const project_no = await nextProjectNoTx(tx, deliveryMonth);
+      const ins = await tx.query(
+        `INSERT INTO projects (name, client, "clientCompany", "clientPhone", "clientEmail", "clientAddress", amount, "startDate", "endDate", status, notes, delivery_month, project_no)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13) RETURNING id`,
+        [name, client, clientCompany, clientPhone, clientEmail, clientAddress, amount, startDate, endDate, status, notes, deliveryMonth, project_no]
+      );
+      return { id: ins.rows[0].id, project_no };
+    });
+    await logAuditReq(req, 'CREATE', 'projects', id, { name, changes: [`新規登録（顧客: ${client || '-'} / ステータス: ${status || '-'}）`] });
+    res.json({ id, ...req.body, project_no });
   })
 );
 
@@ -536,6 +549,7 @@ app.put(
     await ensureAux();
     const b = req.body;
     const before = await one('SELECT * FROM projects WHERE id=$1', [req.params.id]);
+    if (!before) return res.status(404).json({ error: '案件が見つかりません' });
     if (before?.status === 'オーダー移行') return res.status(400).json({ error: 'この案件は新しい案件IDに移行済みのため編集できません' });
     // 引渡月は案件IDの採番基準のため、通常のPUTでは変更させない（POST /change-delivery-month で複製する）
     if (b.deliveryMonth !== undefined && b.deliveryMonth !== before?.delivery_month) {
@@ -545,27 +559,35 @@ app.put(
     const newDeliveryMonth = before?.delivery_month;
     const deliveryMonthChanged = false;
     // 呼び出し元によって送られてくる項目が一部だけの場合があるため、未送信の項目は既存値を維持する
-    await q(
-      `UPDATE projects SET name=$1, client=$2, "clientCompany"=$3, "clientPhone"=$4, "clientEmail"=$5, "clientAddress"=$6, amount=$7, "startDate"=$8, "endDate"=$9, status=$10, notes=$11, delivery_month=$12, delivery_month_changed_at=$13 WHERE id=$14`,
-      [
-        b.name ?? before?.name,
-        b.client ?? before?.client,
-        b.clientCompany ?? before?.clientCompany,
-        b.clientPhone ?? before?.clientPhone,
-        b.clientEmail ?? before?.clientEmail,
-        b.clientAddress ?? before?.clientAddress,
-        b.amount ?? before?.amount,
-        b.startDate ?? before?.startDate,
-        b.endDate ?? before?.endDate,
-        b.status ?? before?.status,
-        b.notes ?? before?.notes,
-        newDeliveryMonth,
-        deliveryMonthChanged ? new Date().toISOString() : before?.delivery_month_changed_at,
-        req.params.id,
-      ]
+    // 楽観的ロック：bodyにversionがあれば一致する行のみ更新し、0件なら他者の更新と衝突したとみなし409を返す。
+    const hasVersion = b.version !== undefined && b.version !== null;
+    const versionClause = hasVersion ? ' AND version=$15' : '';
+    const params = [
+      b.name ?? before?.name,
+      b.client ?? before?.client,
+      b.clientCompany ?? before?.clientCompany,
+      b.clientPhone ?? before?.clientPhone,
+      b.clientEmail ?? before?.clientEmail,
+      b.clientAddress ?? before?.clientAddress,
+      b.amount ?? before?.amount,
+      b.startDate ?? before?.startDate,
+      b.endDate ?? before?.endDate,
+      b.status ?? before?.status,
+      b.notes ?? before?.notes,
+      newDeliveryMonth,
+      deliveryMonthChanged ? new Date().toISOString() : before?.delivery_month_changed_at,
+      req.params.id,
+    ];
+    if (hasVersion) params.push(b.version);
+    const result = await exec(
+      `UPDATE projects SET name=$1, client=$2, "clientCompany"=$3, "clientPhone"=$4, "clientEmail"=$5, "clientAddress"=$6, amount=$7, "startDate"=$8, "endDate"=$9, status=$10, notes=$11, delivery_month=$12, delivery_month_changed_at=$13, version=version+1 WHERE id=$14${versionClause}`,
+      params
     );
-    await logAuditReq(req, 'UPDATE', 'projects', parseInt(req.params.id), { name: before?.name || name, changes: diffChanges('projects', before, req.body) });
-    res.json({ id: req.params.id, ...req.body });
+    if (result.rowCount === 0) {
+      return res.status(409).json({ error: '他の人がこの案件を更新しました。再読み込みしてください' });
+    }
+    await logAuditReq(req, 'UPDATE', 'projects', parseInt(req.params.id), { name: before?.name || b.name, changes: diffChanges('projects', before, req.body) });
+    res.json({ id: req.params.id, ...req.body, version: (before?.version ?? 1) + 1 });
   })
 );
 
@@ -593,22 +615,29 @@ app.post(
     const endDate = b.endDate ?? before.endDate;
     const notes = b.notes ?? before.notes;
 
-    const newRow = await one(
-      `INSERT INTO projects (name, client, "clientCompany", "clientPhone", "clientEmail", "clientAddress", amount, "startDate", "endDate", status, notes, delivery_month, project_no)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,'') RETURNING id`,
-      [name, client, clientCompany, before.clientPhone, before.clientEmail, before.clientAddress, amount, startDate, endDate, before.status, notes, deliveryMonth]
-    );
-    const project_no = await nextProjectNo(deliveryMonth);
-    await q('UPDATE projects SET project_no=$1 WHERE id=$2', [project_no, newRow.id]);
+    // 新案件の作成・採番・複製元の凍結・工事計画/入金の付け替えという5段階の更新を
+    // 1つのトランザクションで保護する（途中で失敗した場合に一部だけ反映される状態を防ぐ）
+    const created = await withTransaction(async tx => {
+      const project_no = await nextProjectNoTx(tx, deliveryMonth);
+      const ins = await tx.query(
+        `INSERT INTO projects (name, client, "clientCompany", "clientPhone", "clientEmail", "clientAddress", amount, "startDate", "endDate", status, notes, delivery_month, project_no)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13) RETURNING id`,
+        [name, client, clientCompany, before.clientPhone, before.clientEmail, before.clientAddress, amount, startDate, endDate, before.status, notes, deliveryMonth, project_no]
+      );
+      const newRowId = ins.rows[0].id;
 
-    // 複製元は「オーダー移行」ステータスに固定し編集不可にする
-    await q(`UPDATE projects SET status='オーダー移行', superseded_by=$1 WHERE id=$2`, [newRow.id, oldId]);
+      // 複製元は「オーダー移行」ステータスに固定し編集不可にする
+      await tx.query(`UPDATE projects SET status='オーダー移行', superseded_by=$1 WHERE id=$2`, [newRowId, oldId]);
 
-    // 紐づく工事計画（orders。支払いはordersに従属するため自動的に付け替わる）・入金（receipts）を新しい案件IDへ付け替え
-    await q('UPDATE orders SET project_id=$1 WHERE project_id=$2', [newRow.id, oldId]);
-    await q('UPDATE receipts SET project_id=$1 WHERE project_id=$2', [newRow.id, oldId]);
+      // 紐づく工事計画（orders。支払いはordersに従属するため自動的に付け替わる）・入金（receipts）を新しい案件IDへ付け替え
+      await tx.query('UPDATE orders SET project_id=$1 WHERE project_id=$2', [newRowId, oldId]);
+      await tx.query('UPDATE receipts SET project_id=$1 WHERE project_id=$2', [newRowId, oldId]);
 
-    await logAuditReq(req, 'CREATE', 'projects', newRow.id, {
+      return { id: newRowId, project_no };
+    });
+    const { id: newProjectId, project_no } = created;
+
+    await logAuditReq(req, 'CREATE', 'projects', newProjectId, {
       name,
       changes: [`引渡月変更に伴う複製（複製元案件ID: ${before.project_no || '#' + oldId}）`],
     });
@@ -617,7 +646,7 @@ app.post(
       changes: [`引渡月変更のため新しい案件ID「${project_no}」に移行し、オーダー移行ステータスに変更（編集不可）`],
     });
 
-    res.json({ oldId, newId: newRow.id, project_no });
+    res.json({ oldId, newId: newProjectId, project_no });
   })
 );
 
@@ -761,7 +790,7 @@ app.delete(
 );
 
 // ============ Orders API ============
-const ORDER_COLS = 'project_id, category, vendor, estimate, planned, decided, status, details, site, period_start, period_end, handover, payment, "paymentStatus", "paymentDate", "paymentNotes", assignee';
+const ORDER_COLS = 'project_id, category, vendor, estimate, planned, decided, status, details, site, period_start, period_end, handover, payment, "paymentStatus", "paymentDate", "paymentNotes", assignee, remaining';
 const ORDERED_STATUSES = ['発注完了', '支払済み']; // 注文（発注）が確定した状態。この状態になって初めて工事IDを採番する
 
 // 工事ID：注文自身の内部ID（重複の心配がない）をそのまま6桁ゼロ埋めした連番
@@ -932,35 +961,40 @@ app.post(
     await ensureAux();
     const b = req.body;
     if (rejectNegativeAmount(res, b, ['estimate', 'planned', 'decided'])) return;
-    const ins = await one(`INSERT INTO orders (${ORDER_COLS}) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17) RETURNING id`, [
-      b.project_id,
-      b.category,
-      b.vendor,
-      b.estimate,
-      b.planned,
-      b.decided,
-      b.status,
-      b.details,
-      b.site,
-      b.period_start,
-      b.period_end,
-      b.handover,
-      b.payment || '月末締翌月末払い',
-      b.paymentStatus || '未払い',
-      b.paymentDate || '',
-      b.paymentNotes || '',
-      b.assignee || '',
-    ]);
-    // 残金の初期値＝費用（決定金額）
-    await q('UPDATE orders SET remaining = $1 WHERE id = $2', [b.remaining != null ? b.remaining : b.decided || 0, ins.id]);
-    // 作成時点で既に発注確定状態なら工事IDを採番
-    let order_no = null;
-    if (ORDERED_STATUSES.includes(b.status)) {
-      order_no = workId(ins.id);
-      await q('UPDATE orders SET order_no=$1 WHERE id=$2', [order_no, ins.id]);
-    }
-    await logAuditReq(req, 'CREATE', 'orders', ins.id, { name: `${b.category || ''}（${b.vendor || ''}）`, changes: [`新規登録（工事区分: ${b.category || '-'} / 発注先: ${b.vendor || '-'}）`] });
-    res.json({ id: ins.id, ...b, order_no });
+    // INSERT自体に残金の初期値を含め、工事ID採番の追加UPDATEのみをトランザクションで保護する
+    // （途中失敗で残金が未設定のまま残る不整合を防ぐ）
+    const { id: insId, order_no } = await withTransaction(async tx => {
+      const ins = await tx.query(`INSERT INTO orders (${ORDER_COLS}) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18) RETURNING id`, [
+        b.project_id,
+        b.category,
+        b.vendor,
+        b.estimate,
+        b.planned,
+        b.decided,
+        b.status,
+        b.details,
+        b.site,
+        b.period_start,
+        b.period_end,
+        b.handover,
+        b.payment || '月末締翌月末払い',
+        b.paymentStatus || '未払い',
+        b.paymentDate || '',
+        b.paymentNotes || '',
+        b.assignee || '',
+        b.remaining != null ? b.remaining : b.decided || 0,
+      ]);
+      const insId = ins.rows[0].id;
+      // 作成時点で既に発注確定状態なら工事IDを採番
+      let order_no = null;
+      if (ORDERED_STATUSES.includes(b.status)) {
+        order_no = workId(insId);
+        await tx.query('UPDATE orders SET order_no=$1 WHERE id=$2', [order_no, insId]);
+      }
+      return { id: insId, order_no };
+    });
+    await logAuditReq(req, 'CREATE', 'orders', insId, { name: `${b.category || ''}（${b.vendor || ''}）`, changes: [`新規登録（工事区分: ${b.category || '-'} / 発注先: ${b.vendor || '-'}）`] });
+    res.json({ id: insId, ...b, order_no });
   })
 );
 
@@ -971,12 +1005,17 @@ app.put(
     const b = req.body;
     if (rejectNegativeAmount(res, b, ['estimate', 'planned', 'decided'])) return;
     const before = await one('SELECT * FROM orders WHERE id=$1', [req.params.id]);
+    if (!before) return res.status(404).json({ error: '発注明細が見つかりません' });
     const newStatus = b.status ?? before?.status;
     // 発注が確定した状態に遷移した時点で初めて工事IDを採番（未処理/見積待ち等の段階では発注実体が無いため採番しない）
     const order_no = !before?.order_no && ORDERED_STATUSES.includes(newStatus) ? workId(req.params.id) : before?.order_no;
     // 呼び出し元によって送られてくる項目が一部だけの場合があるため、未送信の項目は既存値を維持する
     // (例: 工事詳細編集モーダルは支払状況/支払期日/支払備考を送らないため、これが無いと保存のたびに消えてしまう)
-    await q(`UPDATE orders SET project_id=$1, category=$2, vendor=$3, estimate=$4, planned=$5, decided=$6, status=$7, details=$8, site=$9, period_start=$10, period_end=$11, handover=$12, payment=$13, "paymentStatus"=$14, "paymentDate"=$15, "paymentNotes"=$16, order_no=$17, assignee=$18 WHERE id=$19`, [
+    // 楽観的ロック：bodyにversionがあれば一致する行のみ更新し、0件なら他者の更新と衝突したとみなし409を返す。
+    // versionが無い呼び出し元（未対応のフロント）には従来通り無条件更新でフォールバックする。
+    const hasVersion = b.version !== undefined && b.version !== null;
+    const versionClause = hasVersion ? ' AND version=$20' : '';
+    const params = [
       b.project_id ?? before?.project_id,
       b.category ?? before?.category,
       b.vendor ?? before?.vendor,
@@ -996,9 +1035,17 @@ app.put(
       order_no,
       b.assignee ?? before?.assignee,
       req.params.id,
-    ]);
+    ];
+    if (hasVersion) params.push(b.version);
+    const result = await exec(
+      `UPDATE orders SET project_id=$1, category=$2, vendor=$3, estimate=$4, planned=$5, decided=$6, status=$7, details=$8, site=$9, period_start=$10, period_end=$11, handover=$12, payment=$13, "paymentStatus"=$14, "paymentDate"=$15, "paymentNotes"=$16, order_no=$17, assignee=$18, version=version+1 WHERE id=$19${versionClause}`,
+      params
+    );
+    if (result.rowCount === 0) {
+      return res.status(409).json({ error: '他の人がこの発注を更新しました。再読み込みしてください' });
+    }
     await logAuditReq(req, 'UPDATE', 'orders', parseInt(req.params.id), { name: `${before?.category || b.category || ''}（${before?.vendor || b.vendor || ''}）`, changes: diffChanges('orders', before, b) });
-    res.json({ id: req.params.id, ...b, order_no });
+    res.json({ id: req.params.id, ...b, order_no, version: (before?.version ?? 1) + 1 });
   })
 );
 
@@ -1095,8 +1142,13 @@ app.post(
     let status = order.paymentStatus;
     if (newRemaining <= 0) status = '支払済み';
     else if (newRemaining < (order.decided || 0)) status = '部分払い';
-    await q('UPDATE orders SET remaining=$1, "paymentStatus"=$2 WHERE id=$3', [newRemaining, status, order_id]);
-    const rec = await one('INSERT INTO payment_records (order_id, paid_date, amount, note) VALUES ($1,$2,$3,$4) RETURNING id', [order_id, paid_date, amount, note || '']);
+    // 残金更新と支払登録明細の作成を1トランザクションで保護する
+    // （途中で失敗すると残金だけ減って明細が残らない不整合が起き得るため）
+    const rec = await withTransaction(async tx => {
+      await tx.query('UPDATE orders SET remaining=$1, "paymentStatus"=$2 WHERE id=$3', [newRemaining, status, order_id]);
+      const ins = await tx.query('INSERT INTO payment_records (order_id, paid_date, amount, note) VALUES ($1,$2,$3,$4) RETURNING id', [order_id, paid_date, amount, note || '']);
+      return { id: ins.rows[0].id };
+    });
     await logAudit(getUserId(req), 'CREATE', 'orders', parseInt(order_id), {
       name: `${order.category || ''}（${order.vendor || ''}）`,
       changes: [`支払登録 ¥${amount.toLocaleString()}（残金 ${fmtVal(cur)} → ${fmtVal(newRemaining)}）`],
@@ -1114,16 +1166,20 @@ app.delete(
     await ensureAux();
     const rec = await one('SELECT * FROM payment_records WHERE id=$1', [req.params.id]);
     if (rec) {
-      const order = await one('SELECT * FROM orders WHERE id=$1', [rec.order_id]);
-      if (order) {
-        const cur = order.remaining != null ? order.remaining : order.decided || 0;
-        const restored = Math.min(order.decided || cur + rec.amount, cur + (rec.amount || 0));
-        let status = order.paymentStatus;
-        if (restored >= (order.decided || 0)) status = '未払い';
-        else if (restored > 0) status = '部分払い';
-        await q('UPDATE orders SET remaining=$1, "paymentStatus"=$2 WHERE id=$3', [restored, status, rec.order_id]);
-      }
-      await q('DELETE FROM payment_records WHERE id=$1', [req.params.id]);
+      // 残金の巻き戻しと明細削除を1トランザクションで保護する（途中失敗による不整合防止）
+      await withTransaction(async tx => {
+        const orderRes = await tx.query('SELECT * FROM orders WHERE id=$1', [rec.order_id]);
+        const order = orderRes.rows[0];
+        if (order) {
+          const cur = order.remaining != null ? order.remaining : order.decided || 0;
+          const restored = Math.min(order.decided || cur + rec.amount, cur + (rec.amount || 0));
+          let status = order.paymentStatus;
+          if (restored >= (order.decided || 0)) status = '未払い';
+          else if (restored > 0) status = '部分払い';
+          await tx.query('UPDATE orders SET remaining=$1, "paymentStatus"=$2 WHERE id=$3', [restored, status, rec.order_id]);
+        }
+        await tx.query('DELETE FROM payment_records WHERE id=$1', [req.params.id]);
+      });
       await logAudit(getUserId(req), 'DELETE', 'orders', rec.order_id, { name: `#${rec.order_id}`, changes: [`支払登録を取消（¥${(rec.amount || 0).toLocaleString()}）`] });
     }
     res.json({ success: true });
@@ -2692,10 +2748,15 @@ app.post(
     if (dup) return res.status(409).json({ error: 'このメールアドレスは既に登録済みです' });
 
     const hash = await bcrypt.hash(password, 10);
-    const user = await one('INSERT INTO users (email, password_hash, name, role) VALUES ($1,$2,$3,$4) RETURNING id,email,name,role', [inv.email, hash, inv.name || '', inv.role]);
-    await q('UPDATE invitations SET accepted_at=current_timestamp WHERE id=$1', [inv.id]);
+    // ユーザー作成と招待の使用済みマークを1トランザクションで保護する
+    // （途中失敗すると招待が使用済みにならず再受諾できてしまう不整合を防ぐ）
+    const user = await withTransaction(async tx => {
+      const ins = await tx.query('INSERT INTO users (email, password_hash, name, role) VALUES ($1,$2,$3,$4) RETURNING id,email,name,role,token_version', [inv.email, hash, inv.name || '', inv.role]);
+      await tx.query('UPDATE invitations SET accepted_at=current_timestamp WHERE id=$1', [inv.id]);
+      return ins.rows[0];
+    });
     await logAudit(user.id, 'CREATE', 'users', user.id, { name: user.email, changes: [`招待からアカウント登録（権限: ${INVITE_ROLES[inv.role] || inv.role}）`] });
-    const jwtToken = jwt.sign({ id: user.id, email: user.email }, JWT_SECRET, { expiresIn: '7d' });
+    const jwtToken = jwt.sign({ id: user.id, email: user.email, tv: user.token_version ?? 1 }, JWT_SECRET, { expiresIn: '7d' });
     res.json({ token: jwtToken, user });
   })
 );

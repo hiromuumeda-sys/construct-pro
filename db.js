@@ -40,4 +40,29 @@ async function one(sql, params = []) {
   return rows[0];
 }
 
-module.exports = { pool, q, one };
+// rowCount等、行配列以外の情報（楽観的ロックの更新件数チェック等）が必要な場合に使う。
+async function exec(sql, params = []) {
+  return pool.query(sql, params);
+}
+
+// 複数テーブルにまたがる更新をトランザクションで保護する。
+// fn(client) 内では client.query(...) を使う（pool.query/q/oneは別コネクションに
+// 割り当てられ得るため使わないこと）。エラー時は自動でROLLBACKする。
+// pgbouncerのtransaction modeでも、1回のcheckout内でBEGIN〜COMMITを完結させる
+// this使い方なら問題なく動作する（pg_advisory_xact_lockも同様にトランザクション内でのみ有効）。
+async function withTransaction(fn) {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const result = await fn(client);
+    await client.query('COMMIT');
+    return result;
+  } catch (e) {
+    await client.query('ROLLBACK').catch(() => {});
+    throw e;
+  } finally {
+    client.release();
+  }
+}
+
+module.exports = { pool, q, one, exec, withTransaction };

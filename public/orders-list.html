@@ -531,6 +531,26 @@ function renderTable() {
   applyColumnVisibility();
 }
 
+// 楽観的ロック付きでPUT /api/orders/:idを呼ぶ共通ヘルパー。
+// 409（他の人が同時に更新した場合）はアラートで知らせて呼び出し元にfalseを返す。
+async function putOrderWithVersionCheck(id, body) {
+  const order = window.appCache.orders.find(o => o.id === id);
+  const res = await fetch(`/api/orders/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ...body, version: order?.version }),
+  });
+  if (res.status === 409) {
+    const data = await res.json().catch(() => ({}));
+    alert(data.error || '他の人がこの発注を更新しました。再読み込みしてください');
+    return { ok: false, conflict: true };
+  }
+  if (!res.ok) return { ok: false, conflict: false };
+  const data = await res.json();
+  if (order && data.version != null) order.version = data.version;
+  return { ok: true, data };
+}
+
 function getStatusColor(status) {
   const colors = {
     未処理: 'bg-surface-container text-on-surface-variant',
@@ -744,9 +764,13 @@ async function updateOrderStatus(id, status) {
     assignee: o.assignee,
   };
   try {
-    const res = await fetch(`/api/orders/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(b) });
-    if (!res.ok) throw new Error('failed');
-    const data = await res.json();
+    const result = await putOrderWithVersionCheck(id, b);
+    if (!result.ok) {
+      if (!result.conflict) alert('ステータス更新に失敗しました');
+      renderTable();
+      return;
+    }
+    const data = result.data;
     o.status = status;
     o.order_no = data.order_no;
     const inView = orders.find(x => x.id === id);
@@ -902,12 +926,12 @@ async function confirmAndSavePo() {
   const btn = document.getElementById('po-confirm-btn');
   btn.disabled = true;
   try {
-    const res = await fetch(`/api/orders/${id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    });
-    if (!res.ok) throw new Error('保存に失敗しました');
+    const result = await putOrderWithVersionCheck(id, body);
+    if (!result.ok) {
+      if (!result.conflict) alert('保存に失敗しました');
+      btn.disabled = false;
+      return;
+    }
     Object.assign(order, body);
     btn.innerHTML = '<span class="material-symbols-outlined text-[16px]">check</span>確定しました';
     setTimeout(() => {
@@ -1152,11 +1176,15 @@ async function saveOrder() {
   };
 
   if (id) {
-    await fetch(`/api/orders/${id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
-    });
+    const result = await putOrderWithVersionCheck(parseInt(id, 10), data);
+    if (!result.ok) {
+      if (!result.conflict) alert('保存に失敗しました');
+      const ordersRes = await fetch('/api/orders');
+      window.appCache.orders = await ordersRes.json();
+      loadOrders();
+      closeOrderModal();
+      return;
+    }
   } else {
     await fetch('/api/orders', {
       method: 'POST',
