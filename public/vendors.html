@@ -409,7 +409,8 @@ async function openEditModal(id) {
 
 document.addEventListener('DOMContentLoaded', async () => {
   if (!window.appCache.categories || window.appCache.categories.length === 0) {
-    const res = await fetch('/api/cache');
+    // この画面が/api/cacheから使うのは工事区分のみ（vendorsは専用APIから別途取得）
+    const res = await fetch('/api/cache?only=categories');
     window.appCache = await res.json();
   }
   // 発注先マスタ画面は常に専用API（口座番号マスク済み）から取得する。/api/cacheの

@@ -351,7 +351,8 @@ if (!window.appCache) {
 
 async function initializeCache() {
   try {
-    const res = await fetch('/api/cache');
+    // このダッシュボードが使うのは案件・工事計画のみ（発注先・顧客・入金・請求書の全履歴は不要）
+    const res = await fetch('/api/cache?only=projects,orders');
     window.appCache = await res.json();
   } catch (e) {
     console.error('Failed to load cache:', e);

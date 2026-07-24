@@ -401,15 +401,6 @@ if (!window.appCache) {
 
 let payments = [];
 
-async function initializeCache() {
-  try {
-    const res = await fetch('/api/cache');
-    window.appCache = await res.json();
-  } catch (e) {
-    console.error('Failed to load cache:', e);
-  }
-}
-
 async function loadPayments() {
   // Always fetch latest data from server, don't rely on cache
   const [ordersRes, projectsRes, vendorsRes] = await Promise.all([fetch('/api/orders'), fetch('/api/projects'), fetch('/api/vendors')]);
@@ -671,7 +662,8 @@ function renderPayHistory() {
 
 // フィルタ機能
 document.addEventListener('DOMContentLoaded', async () => {
-  await initializeCache();
+  // この画面は/api/cacheを使わず、orders/projects/vendorsを直接取得する（loadPayments内）ため
+  // 全リソースを含む/api/cacheの呼び出しは不要（未使用の全社データ受信をやめる）
   await loadPayments();
   await loadPaymentRecords();
   await loadMiscPayments();

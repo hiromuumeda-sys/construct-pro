@@ -388,7 +388,8 @@ if (!window.appCache) {
 
 async function initializeGlobalCache() {
   try {
-    const res = await fetch('/api/cache', { headers: Auth.headers() });
+    // この画面が使うのは案件・工事計画・顧客のみ（発注先・工事区分・入金・請求書の全履歴は不要）
+    const res = await fetch('/api/cache?only=projects,orders,customers', { headers: Auth.headers() });
     window.appCache = await res.json();
     populateCustomerDropdown();
   } catch (e) {

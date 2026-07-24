@@ -104,6 +104,11 @@ function ensureAux() {
       await createIfMissing('ALTER TABLE invoices ADD CONSTRAINT invoices_subtotal_nonneg CHECK (subtotal IS NULL OR subtotal >= 0)');
       await createIfMissing('ALTER TABLE invoices ADD CONSTRAINT invoices_tax_nonneg CHECK (tax IS NULL OR tax >= 0)');
       await createIfMissing('ALTER TABLE invoices ADD CONSTRAINT invoices_total_nonneg CHECK (total IS NULL OR total >= 0)');
+      // 絞り込みに使われる頻出列へのインデックス（一覧・通知・レポート系のN+1/全件走査対策）
+      await createIfMissing('CREATE INDEX IF NOT EXISTS idx_orders_payment_status ON orders("paymentStatus")');
+      await createIfMissing('CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(status)');
+      await createIfMissing('CREATE INDEX IF NOT EXISTS idx_projects_status ON projects(status)');
+      await createIfMissing('CREATE INDEX IF NOT EXISTS idx_projects_start_date ON projects("startDate")');
     })().catch(e => {
       _auxReady = null;
       throw e;
@@ -296,6 +301,15 @@ function rejectNegativeAmount(res, body, fields) {
 }
 const FIELD_LABELS_ALL = { amount: '金額', estimate: '見積額', planned: '予算額', decided: '確定額', subtotal: '小計', tax: '消費税', total: '合計金額' };
 
+// 一覧APIの任意ページング。?limit=&offset= が無ければ従来通り全件を返す（既存フロントとの後方互換）。
+// parseIntで数値化するためSQLインジェクションの余地はない。
+function pagingClause(req) {
+  const limit = parseInt(req.query.limit, 10);
+  if (!limit || limit <= 0) return '';
+  const offset = Math.max(0, parseInt(req.query.offset, 10) || 0);
+  return ` LIMIT ${limit} OFFSET ${offset}`;
+}
+
 // 「削除前レコード取得→削除→監査ログ→成功応答」という各リソース共通のDELETEハンドラを生成する。
 // idParse: パスパラメータをレコードID型に変換（数値IDはparseInt、vendorsのようなtext IDはそのまま）
 // buildDetails(before): 削除前レコードから監査ログのdetails({name, changes})を組み立てる
@@ -473,7 +487,7 @@ app.get(
   authMiddleware,
   h(async (req, res) => {
     await ensureAux();
-    const [projects, files] = await Promise.all([q('SELECT * FROM projects WHERE deleted_at IS NULL ORDER BY id'), q('SELECT project_id, kind, filename FROM project_files')]);
+    const [projects, files] = await Promise.all([q('SELECT * FROM projects WHERE deleted_at IS NULL ORDER BY id' + pagingClause(req)), q('SELECT project_id, kind, filename FROM project_files')]);
     const key = (id, kind) => `${id}:${kind}`;
     const fmap = new Map(files.map(f => [key(f.project_id, f.kind), f.filename]));
     res.json(
@@ -625,7 +639,7 @@ app.get(
   '/api/vendors',
   authMiddleware,
   h(async (req, res) => {
-    const rows = await q('SELECT * FROM vendors WHERE deleted_at IS NULL ORDER BY id::int DESC');
+    const rows = await q('SELECT * FROM vendors WHERE deleted_at IS NULL ORDER BY id::int DESC' + pagingClause(req));
     res.json(rows.map(maskVendorBank));
   })
 );
@@ -769,7 +783,7 @@ app.get(
   authMiddleware,
   h(async (req, res) => {
     await ensureAux();
-    const [orders, files] = await Promise.all([q('SELECT * FROM orders ORDER BY id'), q('SELECT order_id, kind, filename FROM order_files')]);
+    const [orders, files] = await Promise.all([q('SELECT * FROM orders ORDER BY id' + pagingClause(req)), q('SELECT order_id, kind, filename FROM order_files')]);
     const key = (id, kind) => `${id}:${kind}`;
     const fmap = new Map(files.map(f => [key(f.order_id, f.kind), f.filename]));
     res.json(
@@ -1058,7 +1072,7 @@ app.get(
     FROM payment_records pr
     LEFT JOIN orders o ON pr.order_id = o.id
     LEFT JOIN projects p ON o.project_id = p.id
-    ORDER BY pr.created_at DESC`);
+    ORDER BY pr.created_at DESC` + pagingClause(req));
     res.json(rows);
   })
 );
@@ -1240,7 +1254,7 @@ app.get(
   authMiddleware,
   h(async (req, res) => {
     await ensureAux();
-    res.json(await q('SELECT * FROM customers WHERE deleted_at IS NULL ORDER BY id DESC'));
+    res.json(await q('SELECT * FROM customers WHERE deleted_at IS NULL ORDER BY id DESC' + pagingClause(req)));
   })
 );
 
@@ -1298,7 +1312,7 @@ app.get(
   '/api/receipts',
   authMiddleware,
   h(async (req, res) => {
-    res.json(await q('SELECT * FROM receipts ORDER BY received_date DESC'));
+    res.json(await q('SELECT * FROM receipts ORDER BY received_date DESC' + pagingClause(req)));
   })
 );
 
@@ -1342,7 +1356,22 @@ app.get(
   '/api/sales-summary',
   authMiddleware,
   h(async (req, res) => {
-    const projects = await q('SELECT * FROM projects WHERE deleted_at IS NULL ORDER BY id');
+    // 案件数に比例してSELECTを発行するN+1を避けるため、receipts/invoicesは一括取得してからJS側でproject_idごとに集約する
+    const [projects, allReceipts, allInvoices] = await Promise.all([
+      q('SELECT * FROM projects WHERE deleted_at IS NULL ORDER BY id'),
+      q('SELECT * FROM receipts ORDER BY project_id, received_date'),
+      q('SELECT * FROM invoices ORDER BY project_id, id'),
+    ]);
+    const receiptsByProject = new Map();
+    for (const r of allReceipts) {
+      if (!receiptsByProject.has(r.project_id)) receiptsByProject.set(r.project_id, []);
+      receiptsByProject.get(r.project_id).push(r);
+    }
+    const invoicesByProject = new Map();
+    for (const inv of allInvoices) {
+      if (!invoicesByProject.has(inv.project_id)) invoicesByProject.set(inv.project_id, []);
+      invoicesByProject.get(inv.project_id).push(inv);
+    }
     const now = new Date();
     const ym = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
@@ -1353,7 +1382,7 @@ app.get(
     };
     const summary = [];
     for (const p of projects) {
-      const rs = await q('SELECT * FROM receipts WHERE project_id=$1 ORDER BY received_date', [p.id]);
+      const rs = receiptsByProject.get(p.id) || [];
       const received = rs.reduce((s, r) => s + (Number(r.amount) || 0), 0);
       const thisMonthReceived = rs.filter(r => r.received_date && r.received_date.startsWith(ym)).reduce((s, r) => s + (Number(r.amount) || 0), 0);
       const prevReceived = received - thisMonthReceived;
@@ -1364,7 +1393,7 @@ app.get(
       else if (received > 0) payStatus = '一部入金';
       // 手動上書き（receipt_status）があればそれを優先
       if (p.receipt_status) payStatus = p.receipt_status;
-      const invs = await q('SELECT * FROM invoices WHERE project_id=$1', [p.id]);
+      const invs = invoicesByProject.get(p.id) || [];
       const invoiceIssued = invs.length > 0;
       const inv = invs.length ? invs[invs.length - 1] : null;
       // 完成判定：工期終了日が今日以前なら「完成」
@@ -1420,7 +1449,7 @@ app.get(
   '/api/invoices',
   authMiddleware,
   h(async (req, res) => {
-    res.json(await q('SELECT * FROM invoices ORDER BY id DESC'));
+    res.json(await q('SELECT * FROM invoices ORDER BY id DESC' + pagingClause(req)));
   })
 );
 
@@ -1483,11 +1512,21 @@ app.get(
       else if (d <= 7) notifications.push({ type: 'payment', level: 'warning', icon: 'schedule', title: '支払期日接近', message: `${o.vendor} への支払（${o.category}）まであと${d}日です`, date: o.paymentDate, link: '/payment.html', assignee: o.assignee || null });
     });
 
-    const invoices = await q('SELECT * FROM invoices');
+    // 案件・請求書数に比例したループ内SELECT（N+1）を避けるため、必要な集計を先に一括取得する
+    const [invoices, allProjectsForNotif, receiptSums, invoiceCounts] = await Promise.all([
+      q('SELECT * FROM invoices'),
+      q('SELECT * FROM projects'),
+      q('SELECT project_id, COALESCE(SUM(amount),0) AS total FROM receipts GROUP BY project_id'),
+      q('SELECT project_id, COUNT(*) AS cnt FROM invoices GROUP BY project_id'),
+    ]);
+    const projectByIdForNotif = new Map(allProjectsForNotif.map(p => [p.id, p]));
+    const receiptSumByProject = new Map(receiptSums.map(r => [r.project_id, Number(r.total) || 0]));
+    const invoiceCountByProject = new Map(invoiceCounts.map(r => [r.project_id, Number(r.cnt) || 0]));
+
     for (const inv of invoices) {
-      const project = await one('SELECT * FROM projects WHERE id=$1', [inv.project_id]);
-      const r = await one('SELECT COALESCE(SUM(amount),0) AS total FROM receipts WHERE project_id=$1', [inv.project_id]);
-      const outstanding = (Number(inv.total) || 0) - (Number(r.total) || 0);
+      const project = projectByIdForNotif.get(inv.project_id);
+      const received = receiptSumByProject.get(inv.project_id) || 0;
+      const outstanding = (Number(inv.total) || 0) - received;
       if (outstanding <= 0) continue;
       const d = daysBetween(inv.due_date);
       if (d === null) continue;
@@ -1498,8 +1537,7 @@ app.get(
 
     const wonProjects = await q("SELECT * FROM projects WHERE deleted_at IS NULL AND status = '受注'");
     for (const p of wonProjects) {
-      const c = await one('SELECT COUNT(*) AS cnt FROM invoices WHERE project_id=$1', [p.id]);
-      if (Number(c.cnt) === 0) notifications.push({ type: 'missing', level: 'info', icon: 'description', title: '請求書未発行', message: `${p.name} は受注済みですが請求書が未発行です`, date: null, link: '/projects.html' });
+      if (!invoiceCountByProject.get(p.id)) notifications.push({ type: 'missing', level: 'info', icon: 'description', title: '請求書未発行', message: `${p.name} は受注済みですが請求書が未発行です`, date: null, link: '/projects.html' });
     }
 
     const undelivered = await q("SELECT * FROM orders WHERE status NOT IN ('発注完了', '支払済み') AND decided > 0");
@@ -1525,12 +1563,15 @@ app.get(
     }
 
     // 契約書未締結アラート（議事録決定事項：着工日超過で未締結ならアラート）
-    const contractCheckProjects = await q('SELECT * FROM projects WHERE deleted_at IS NULL AND "startDate" IS NOT NULL');
+    const [contractCheckProjects, contractFiles] = await Promise.all([
+      q('SELECT * FROM projects WHERE deleted_at IS NULL AND "startDate" IS NOT NULL'),
+      q("SELECT project_id FROM project_files WHERE kind='contract'"),
+    ]);
+    const projectsWithContract = new Set(contractFiles.map(f => f.project_id));
     for (const p of contractCheckProjects) {
       const d = daysBetween(p.startDate);
       if (d === null || d >= 0) continue; // 着工日が未到来の案件は対象外
-      const file = await one('SELECT 1 FROM project_files WHERE project_id=$1 AND kind=$2', [p.id, 'contract']);
-      if (!file) notifications.push({ type: 'contract', level: 'error', icon: 'error', title: '契約書未締結', message: `${p.name} は着工日を${Math.abs(d)}日超過していますが契約書が未締結です`, date: p.startDate, link: '/projects.html' });
+      if (!projectsWithContract.has(p.id)) notifications.push({ type: 'contract', level: 'error', icon: 'error', title: '契約書未締結', message: `${p.name} は着工日を${Math.abs(d)}日超過していますが契約書が未締結です`, date: p.startDate, link: '/projects.html' });
     }
 
     // デモ用テスト通知（20件）
@@ -1593,13 +1634,16 @@ app.get(
     let csv = '',
       filename = '';
     if (type === 'sales') {
-      const projects = await q('SELECT * FROM projects WHERE deleted_at IS NULL ORDER BY id');
-      const rows = [];
-      for (const p of projects) {
-        const r = await one('SELECT COALESCE(SUM(amount),0) AS total FROM receipts WHERE project_id=$1', [p.id]);
-        const received = Number(r.total) || 0;
-        rows.push({ project_no: p.project_no, name: p.name, client: p.client, contract: p.amount, received, outstanding: (Number(p.amount) || 0) - received, status: p.status });
-      }
+      // 案件数に比例したループ内SELECT（N+1）を避けるため、入金合計は一括GROUP BYで取得する
+      const [projects, receiptSums] = await Promise.all([
+        q('SELECT * FROM projects WHERE deleted_at IS NULL ORDER BY id'),
+        q('SELECT project_id, COALESCE(SUM(amount),0) AS total FROM receipts GROUP BY project_id'),
+      ]);
+      const receiptSumByProject = new Map(receiptSums.map(r => [r.project_id, Number(r.total) || 0]));
+      const rows = projects.map(p => {
+        const received = receiptSumByProject.get(p.id) || 0;
+        return { project_no: p.project_no, name: p.name, client: p.client, contract: p.amount, received, outstanding: (Number(p.amount) || 0) - received, status: p.status };
+      });
       csv = toCSV(rows, [
         { key: 'project_no', label: '案件ID' },
         { key: 'name', label: '工事名' },
@@ -1912,21 +1956,27 @@ app.get(
 );
 
 // ============ Cache endpoint ============
+// ?only=projects,orders のようにカンマ区切りで指定すると、その画面が実際に使うリソースだけを
+// 返す（例：発注先マスタしか使わない画面が入金・請求書の全履歴まで毎回受け取っていた問題への対応）。
+// 未指定時は従来通り9系統すべてを返す（既存フロントとの後方互換）。
+const CACHE_RESOURCES = ['projects', 'vendors', 'categories', 'orders', 'customers', 'receipts', 'invoices'];
 app.get(
   '/api/cache',
   authMiddleware,
   h(async (req, res) => {
     await ensureAux();
+    const requested = req.query.only ? String(req.query.only).split(',').filter(r => CACHE_RESOURCES.includes(r)) : CACHE_RESOURCES;
+    const want = r => requested.includes(r);
     const [projects, vendors, categories, orders, customers, receipts, invoices, files, projectFiles] = await Promise.all([
-      q('SELECT * FROM projects WHERE deleted_at IS NULL ORDER BY id'),
-      q('SELECT * FROM vendors WHERE deleted_at IS NULL ORDER BY id::int DESC'),
-      q('SELECT * FROM categories ORDER BY "order"'),
-      q('SELECT * FROM orders ORDER BY id'),
-      q('SELECT * FROM customers WHERE deleted_at IS NULL ORDER BY id DESC'),
-      q('SELECT * FROM receipts ORDER BY received_date DESC'),
-      q('SELECT * FROM invoices ORDER BY id DESC'),
-      q('SELECT order_id, kind, filename FROM order_files'),
-      q('SELECT project_id, kind, filename FROM project_files'),
+      want('projects') ? q('SELECT * FROM projects WHERE deleted_at IS NULL ORDER BY id') : [],
+      want('vendors') ? q('SELECT * FROM vendors WHERE deleted_at IS NULL ORDER BY id::int DESC') : [],
+      want('categories') ? q('SELECT * FROM categories ORDER BY "order"') : [],
+      want('orders') ? q('SELECT * FROM orders ORDER BY id') : [],
+      want('customers') ? q('SELECT * FROM customers WHERE deleted_at IS NULL ORDER BY id DESC') : [],
+      want('receipts') ? q('SELECT * FROM receipts ORDER BY received_date DESC') : [],
+      want('invoices') ? q('SELECT * FROM invoices ORDER BY id DESC') : [],
+      want('orders') ? q('SELECT order_id, kind, filename FROM order_files') : [],
+      want('projects') ? q('SELECT project_id, kind, filename FROM project_files') : [],
     ]);
     // 請書/請求書PDFの添付状況をマージ（/api/orders と同じ）
     const fkey = (id, kind) => `${id}:${kind}`;

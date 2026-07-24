@@ -349,7 +349,8 @@ document.getElementById('keyword-search')?.addEventListener('input', function (e
 // Initialize global cache if empty
 (async () => {
   if (window.appCache.categories.length === 0) {
-    const res = await fetch('/api/cache');
+    // この画面が使うのは工事区分のみ（発注先・案件等の全履歴は不要）
+    const res = await fetch('/api/cache?only=categories');
     window.appCache = await res.json();
   }
   loadCategories();

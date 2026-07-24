@@ -341,7 +341,8 @@ function openEditModal(id) {
 
 document.addEventListener('DOMContentLoaded', async () => {
   if (window.appCache.customers.length === 0) {
-    const res = await fetch('/api/cache');
+    // この画面が使うのは顧客のみ（発注先・案件等の全履歴は不要）
+    const res = await fetch('/api/cache?only=customers');
     window.appCache = await res.json();
   }
   loadCustomers();

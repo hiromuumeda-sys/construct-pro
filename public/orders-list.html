@@ -1214,7 +1214,8 @@ function openOrderDetailModal(id) {
 document.addEventListener('DOMContentLoaded', async () => {
   // Check if cache is empty and populate it
   if (window.appCache.orders.length === 0) {
-    const res = await fetch('/api/cache');
+    // この画面が使うのは工事計画・案件・発注先・工事区分のみ（顧客・入金・請求書の全履歴は不要）
+    const res = await fetch('/api/cache?only=orders,projects,vendors,categories');
     window.appCache = await res.json();
   }
 

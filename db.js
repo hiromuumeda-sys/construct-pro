@@ -24,7 +24,8 @@ pg.types.setTypeParser(1700, v => (v === null ? null : parseFloat(v)));
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: { rejectUnauthorized: false },
-  max: 3,
+  // 3だとN+1クエリと組み合わさった際に同時アクセス時に詰まりやすいため引き上げ
+  max: 10,
 });
 
 // クエリ実行ヘルパ。行配列を返す。
