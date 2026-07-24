@@ -18,7 +18,7 @@ const SIDEBAR_LINKS = [
   { href: '/payment.html', icon: 'payments', label: '支払管理' },
   { href: '/orders-list.html', icon: 'receipt_long', label: '工事計画' },
   { href: '/history.html', icon: 'history', label: '履歴詳細', roles: ['admin', 'accounting'] },
-  { href: '/invite.html', icon: 'person_add', label: 'アカウント発行' },
+  { href: '/invite.html', icon: 'person_add', label: 'アカウント発行', roles: ['admin'] },
 ];
 
 const LABEL_STYLE = 'font-size:12px;font-weight:500;letter-spacing:0.01em';

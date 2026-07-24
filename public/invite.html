@@ -103,6 +103,30 @@ body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 </div>
 </section>
 </div>
+
+<!-- 登録済みアカウント -->
+<section class="mt-lg bg-surface-container-lowest border border-outline-variant rounded-lg custom-shadow overflow-hidden">
+<div class="px-lg py-md border-b border-outline-variant bg-surface-container-low flex justify-between items-center">
+<h3 class="text-label-md font-label-md text-primary flex items-center gap-1"><span class="material-symbols-outlined text-[18px]">manage_accounts</span>登録済みアカウント</h3>
+<button onclick="loadUsers()" class="material-symbols-outlined text-on-surface-variant hover:text-primary" title="再読み込み">refresh</button>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left whitespace-nowrap">
+<thead>
+<tr class="bg-surface-container-low">
+<th class="px-3 py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider">氏名 / メール</th>
+<th class="px-3 py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider">権限</th>
+<th class="px-3 py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider text-center">ステータス</th>
+<th class="px-3 py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider">登録日</th>
+<th class="px-3 py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider text-center">操作</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant/30" id="user-table-body">
+<tr><td colspan="5" class="px-3 py-8 text-center text-on-surface-variant">読み込み中...</td></tr>
+</tbody>
+</table>
+</div>
+</section>
 </div>
 
 <footer class="border-t border-outline-variant mt-xl py-lg px-margin-desktop text-center text-on-surface-variant">
@@ -230,7 +254,113 @@ async function revokeInvite(id) {
   }
 }
 
-document.addEventListener('DOMContentLoaded', loadInvites);
+// ===== 登録済みアカウント（削除・一時停止・権限変更） =====
+const USER_STATUS_LABEL = { active: '有効', suspended: '一時停止', deleted: '削除済み' };
+const USER_STATUS_BADGE = {
+  active: 'bg-secondary-container text-on-secondary-container',
+  suspended: 'bg-error-container text-on-error-container',
+  deleted: 'bg-surface-container text-on-surface-variant',
+};
+
+async function loadUsers() {
+  const body = document.getElementById('user-table-body');
+  try {
+    const res = await fetch('/api/users');
+    const list = res.ok ? await res.json() : [];
+    if (!Array.isArray(list) || list.length === 0) {
+      body.innerHTML = '<tr><td colspan="5" class="px-3 py-8 text-center text-on-surface-variant">登録済みのアカウントがありません</td></tr>';
+      return;
+    }
+    const myId = Auth.getUser()?.id;
+    body.innerHTML = list.map(u => renderUserRow(u, myId)).join('');
+  } catch (e) {
+    console.error('loadUsers failed:', e);
+    body.innerHTML = '<tr><td colspan="5" class="px-3 py-8 text-center text-error">読み込みエラー</td></tr>';
+  }
+}
+
+function renderUserRow(u, myId) {
+  const isSelf = u.id === myId;
+  const isDeleted = u.status === 'deleted';
+  // 招待で選べる3ロール（admin/accounting/staff）以外の値（レガシーな'user'等）は
+  // どれにも一致させず「未設定」を選択済みにする（実際には未設定なのに管理者に見えるのを防ぐ）
+  const isKnownRole = ['admin', 'accounting', 'staff'].includes(u.role);
+  const roleOptions =
+    (isKnownRole ? '' : `<option value="" disabled selected>(未設定: ${esc(u.role)})</option>`) +
+    Object.keys(HDR_ROLE_LABEL)
+      .filter(k => k !== 'user')
+      .map(k => `<option value="${k}" ${u.role === k ? 'selected' : ''}>${HDR_ROLE_LABEL[k]}</option>`)
+      .join('');
+  const roleCell = `<select ${isSelf || isDeleted ? 'disabled' : ''} onchange="updateUserRole(${u.id}, this.value)" class="text-[11px] border border-outline-variant rounded px-2 py-1 bg-surface-container-lowest disabled:opacity-50 disabled:bg-surface-container-low" title="${isSelf ? '自分自身の権限は変更できません' : ''}">${roleOptions}</select>`;
+  const statusBadge = `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold ${USER_STATUS_BADGE[u.status] || ''}">${USER_STATUS_LABEL[u.status] || u.status}</span>`;
+  const actions =
+    isSelf || isDeleted
+      ? `<span class="text-[11px] text-on-surface-variant/40" title="${isSelf ? '自分自身は変更できません' : '削除済みのアカウントは変更できません'}">-</span>`
+      : `<div class="flex items-center gap-1 justify-center">
+        <button onclick="toggleUserStatus(${u.id}, '${u.status}')" class="material-symbols-outlined text-[18px] ${u.status === 'suspended' ? 'text-secondary hover:opacity-70' : 'text-tertiary hover:opacity-70'}" title="${u.status === 'suspended' ? '有効化' : '一時停止'}">${u.status === 'suspended' ? 'play_circle' : 'pause_circle'}</button>
+        <button onclick="deleteUser(${u.id})" class="material-symbols-outlined text-[18px] text-on-surface-variant hover:text-error" title="削除">delete</button>
+      </div>`;
+  return `
+    <tr class="hover:bg-surface-container-low/50 ${isDeleted ? 'opacity-50' : ''}">
+      <td class="px-3 py-2"><div class="text-label-md font-bold text-on-surface">${esc(u.name) || '(氏名未設定)'}${isSelf ? ' <span class="text-[10px] text-secondary font-normal">（あなた）</span>' : ''}</div><div class="text-body-sm text-on-surface-variant">${esc(u.email)}</div></td>
+      <td class="px-3 py-2">${roleCell}</td>
+      <td class="px-3 py-2 text-center">${statusBadge}</td>
+      <td class="px-3 py-2 text-body-sm text-on-surface-variant tabular-numbers whitespace-nowrap">${fmtDate(u.created_at)}</td>
+      <td class="px-3 py-2 text-center">${actions}</td>
+    </tr>`;
+}
+
+async function updateUserRole(id, role) {
+  try {
+    const res = await fetch(`/api/users/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ role }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || '更新に失敗しました');
+  } catch (e) {
+    alert(e.message);
+  } finally {
+    loadUsers();
+  }
+}
+
+async function toggleUserStatus(id, currentStatus) {
+  const next = currentStatus === 'suspended' ? 'active' : 'suspended';
+  const msg = next === 'suspended' ? 'このアカウントを一時停止しますか？（ログインできなくなります）' : 'このアカウントを再度有効にしますか？';
+  if (!confirm(msg)) return;
+  try {
+    const res = await fetch(`/api/users/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: next }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || '更新に失敗しました');
+    loadUsers();
+  } catch (e) {
+    alert(e.message);
+  }
+}
+
+async function deleteUser(id) {
+  if (!confirm('このアカウントを削除しますか？（ログインできなくなります。元に戻せません）')) return;
+  try {
+    const res = await fetch(`/api/users/${id}`, { method: 'DELETE' });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || '削除に失敗しました');
+    loadUsers();
+  } catch (e) {
+    alert(e.message);
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  if (!Auth.redirectIfNotAllowedRole(['admin'])) return;
+  loadInvites();
+  loadUsers();
+});
 </script>
 </body>
 </html>

@@ -73,6 +73,9 @@ function ensureAux() {
       await createIfMissing('ALTER TABLE projects ADD COLUMN IF NOT EXISTS superseded_by integer');
       // 支払条件の既定値（議事録決定事項：月末締翌月末払いを基本の固定条件とする）
       await createIfMissing("ALTER TABLE orders ALTER COLUMN payment SET DEFAULT '月末締翌月末払い'");
+      // アカウントの一時停止・削除状態（active/suspended/deleted）。deletedはソフトデリート
+      // （audit_logs.user_idの外部キー制約があるため物理削除はしない）
+      await createIfMissing("ALTER TABLE users ADD COLUMN IF NOT EXISTS status text DEFAULT 'active'");
     })().catch(e => {
       _auxReady = null;
       throw e;
@@ -138,14 +141,27 @@ app.get('/', (req, res) => {
 });
 
 // ============ Auth Middleware ============
-const authMiddleware = (req, res, next) => {
+// トークンの署名検証に加え、アカウントが一時停止/削除されていないかを毎リクエスト確認する
+// （JWTは7日間有効で失効させる仕組みが無いため、停止・削除を即座に反映するにはここで見る必要がある）
+const authMiddleware = async (req, res, next) => {
   const token = req.headers.authorization?.replace('Bearer ', '');
   if (!token) return res.status(401).json({ error: 'Unauthorized' });
+  let payload;
   try {
-    req.user = jwt.verify(token, JWT_SECRET);
+    payload = jwt.verify(token, JWT_SECRET);
+  } catch (err) {
+    return res.status(401).json({ error: 'Invalid token' });
+  }
+  try {
+    await ensureAux();
+    const user = await one('SELECT status FROM users WHERE id=$1', [payload.id]);
+    if (!user || user.status === 'suspended' || user.status === 'deleted') {
+      return res.status(401).json({ error: 'このアカウントは無効になっています' });
+    }
+    req.user = payload;
     next();
   } catch (err) {
-    res.status(401).json({ error: 'Invalid token' });
+    res.status(500).json({ error: 'auth check failed' });
   }
 };
 
@@ -281,12 +297,15 @@ app.post(
 app.post(
   '/api/auth/login',
   h(async (req, res) => {
+    await ensureAux();
     const { email, password } = req.body;
     if (!email || !password) return res.status(400).json({ error: 'Email and password required' });
-    const user = await one('SELECT id,email,name,role,password_hash FROM users WHERE email=$1', [email]);
+    const user = await one('SELECT id,email,name,role,status,password_hash FROM users WHERE email=$1', [email]);
     if (!user) return res.status(401).json({ error: 'Invalid credentials' });
     const match = await bcrypt.compare(password, user.password_hash);
     if (!match) return res.status(401).json({ error: 'Invalid credentials' });
+    if (user.status === 'suspended') return res.status(403).json({ error: 'このアカウントは一時停止されています。管理者にお問い合わせください' });
+    if (user.status === 'deleted') return res.status(403).json({ error: 'このアカウントは削除されています' });
     const token = jwt.sign({ id: user.id, email: user.email }, JWT_SECRET, { expiresIn: '7d' });
     res.json({ token, user: { id: user.id, email: user.email, name: user.name, role: user.role } });
   })
@@ -2243,6 +2262,60 @@ app.post(
       text: body || '',
       attachments: [{ filename: `estimate-${String(project.id).padStart(5, '0')}.pdf`, content: pdfBuffer, contentType: 'application/pdf' }],
     });
+    res.json({ success: true });
+  })
+);
+
+// ============ 既存アカウント管理API（削除・一時停止・権限変更） ============
+app.get(
+  '/api/users',
+  authMiddleware,
+  requireRole(['admin']),
+  h(async (req, res) => {
+    await ensureAux();
+    const rows = await q('SELECT id, email, name, role, status, created_at FROM users ORDER BY id');
+    res.json(rows);
+  })
+);
+
+// 権限変更・一時停止/再開（statusとroleのどちらか、または両方を送信可）。自分自身は対象外（誤操作でロックアウトしないため）
+app.put(
+  '/api/users/:id',
+  authMiddleware,
+  requireRole(['admin']),
+  h(async (req, res) => {
+    await ensureAux();
+    const targetId = parseInt(req.params.id, 10);
+    if (targetId === req.user.id) return res.status(400).json({ error: '自分自身の権限・ステータスは変更できません' });
+    const before = await one('SELECT * FROM users WHERE id=$1', [targetId]);
+    if (!before) return res.status(404).json({ error: 'ユーザーが見つかりません' });
+    if (before.status === 'deleted') return res.status(400).json({ error: '削除済みのアカウントは変更できません' });
+    const role = req.body.role !== undefined ? req.body.role : before.role;
+    const status = req.body.status !== undefined ? req.body.status : before.status;
+    if (req.body.role !== undefined && !INVITE_ROLES[role]) return res.status(400).json({ error: '不正な権限です' });
+    if (req.body.status !== undefined && !['active', 'suspended'].includes(status)) return res.status(400).json({ error: '不正なステータスです' });
+    await q('UPDATE users SET role=$1, status=$2, updated_at=current_timestamp WHERE id=$3', [role, status, targetId]);
+    const changes = [];
+    if (req.body.role !== undefined && role !== before.role) changes.push(`権限変更: ${INVITE_ROLES[before.role] || before.role} → ${INVITE_ROLES[role] || role}`);
+    if (req.body.status !== undefined && status !== before.status) changes.push(`ステータス変更: ${before.status || 'active'} → ${status}`);
+    if (changes.length) await logAuditReq(req, 'UPDATE', 'users', targetId, { name: before.name || before.email, changes });
+    res.json({ id: targetId, role, status });
+  })
+);
+
+// アカウント削除（ソフトデリート）。audit_logs.user_idの外部キー制約があるため物理削除はせずstatus='deleted'にする
+app.delete(
+  '/api/users/:id',
+  authMiddleware,
+  requireRole(['admin']),
+  h(async (req, res) => {
+    await ensureAux();
+    const targetId = parseInt(req.params.id, 10);
+    if (targetId === req.user.id) return res.status(400).json({ error: '自分自身のアカウントは削除できません' });
+    const before = await one('SELECT * FROM users WHERE id=$1', [targetId]);
+    if (!before) return res.status(404).json({ error: 'ユーザーが見つかりません' });
+    await q("UPDATE users SET status='deleted', updated_at=current_timestamp WHERE id=$1", [targetId]);
+    await logAuditReq(req, 'DELETE', 'users', targetId, { name: before.name || before.email, changes: [`アカウント削除（${before.email}）`] });
     res.json({ success: true });
   })
 );
