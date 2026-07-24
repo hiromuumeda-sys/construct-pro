@@ -1,12 +1,17 @@
 const express = require('express');
 const cors = require('cors');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 const path = require('path');
 const PDFDocument = require('pdfkit');
 const nodemailer = require('nodemailer');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
+const pino = require('pino');
 const { q, one } = require('./db');
+
+const logger = pino();
 
 // 追加テーブル（請書ファイル・招待）を冪等に用意する。
 // schema.sql の再実行を待たずに動くよう、初回アクセス時に1度だけ作成する。
@@ -76,6 +81,9 @@ function ensureAux() {
       // アカウントの一時停止・削除状態（active/suspended/deleted）。deletedはソフトデリート
       // （audit_logs.user_idの外部キー制約があるため物理削除はしない）
       await createIfMissing("ALTER TABLE users ADD COLUMN IF NOT EXISTS status text DEFAULT 'active'");
+      // 強制ログアウト用のトークン世代。ロール変更・停止・削除のたびにインクリメントし、
+      // 発行済みJWTに埋め込んだ世代と食い違えば401にする（JWT自体には失効の仕組みが無いため）。
+      await createIfMissing('ALTER TABLE users ADD COLUMN IF NOT EXISTS token_version integer DEFAULT 1');
     })().catch(e => {
       _auxReady = null;
       throw e;
@@ -91,7 +99,12 @@ function baseUrl(req) {
   return `${proto}://${req.headers.host}`;
 }
 
-const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-key-change-in-production';
+if (!process.env.JWT_SECRET) {
+  throw new Error(
+    'JWT_SECRET が未設定です。起動できません。.env.example を参照し、`node -e "console.log(require(\'crypto\').randomBytes(48).toString(\'hex\'))"` 等で生成した値を .env（本番はホスティング先の環境変数）に設定してください。'
+  );
+}
+const JWT_SECRET = process.env.JWT_SECRET;
 
 // PDF用 日本語フォント（Hiragino Sans W3 を同梱）。doc.registerFont('jp', ...) で利用。
 const JP_FONT_PATH = path.join(__dirname, 'fonts', 'jp.ttc');
@@ -110,7 +123,41 @@ function useJpFont(doc) {
 const app = express();
 
 // Middleware
-app.use(cors());
+// CSPは既存の全画面がインラインscript/onclickで実装されているため 'unsafe-inline' を許容する。
+// （インラインハンドラの全廃は別スコープの大規模リファクタが必要なため、クリックジャッキング・
+//  外部スクリプト注入対策を優先し、自己XSS実行の防止までは目標にしない）
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'", "'unsafe-inline'"],
+        // helmetの既定はscript-src-attr(onclick=等のインライン属性)を別途 'none' にするため、
+        // このアプリの全画面が依存するonclickハンドラが動かなくなる。明示的に許可する。
+        scriptSrcAttr: ["'unsafe-inline'"],
+        styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
+        fontSrc: ["'self'", 'https://fonts.gstatic.com'],
+        imgSrc: ["'self'", 'data:'],
+        connectSrc: ["'self'"],
+        objectSrc: ["'none'"],
+        frameAncestors: ["'none'"],
+        baseUri: ["'self'"],
+      },
+    },
+    // Google Fontsのstylesheet/フォントはCORSモードで読み込んでいないため、
+    // COEPを既定(require-corp)のままにすると読み込みがブロックされる。
+    crossOriginEmbedderPolicy: false,
+  })
+);
+const allowedOrigins = (process.env.ALLOWED_ORIGIN || 'http://localhost:4500').split(',').map(s => s.trim());
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
+      callback(new Error('Not allowed by CORS'));
+    },
+  })
+);
 app.use(express.json({ limit: '25mb' })); // 請書/請求書PDF(base64)アップロードを許容
 // 静的ファイルのキャッシュ戦略（表示速度最適化）
 //  - HTML: 毎回再検証（更新を即反映、コストは小さい）
@@ -129,10 +176,17 @@ app.use(
 );
 
 // 非同期ハンドラのエラー処理ラッパ
+// err.message（DB制約名・カラム名等の内部情報を含み得る）を本番ではそのまま返さず、
+// サーバー側にはエラーIDつきで詳細をログし、クライアントには汎用メッセージ＋IDのみ返す。
 const h = fn => (req, res) =>
   fn(req, res).catch(err => {
-    console.error(err);
-    res.status(500).json({ error: err.message });
+    const errorId = crypto.randomUUID();
+    logger.error({ err, errorId, path: req.path, method: req.method }, 'request failed');
+    if (process.env.NODE_ENV === 'production') {
+      res.status(500).json({ error: 'サーバーエラーが発生しました', errorId });
+    } else {
+      res.status(500).json({ error: err.message, errorId });
+    }
   });
 
 // Route — デモはログイン画面を起点にする
@@ -154,9 +208,14 @@ const authMiddleware = async (req, res, next) => {
   }
   try {
     await ensureAux();
-    const user = await one('SELECT status FROM users WHERE id=$1', [payload.id]);
+    const user = await one('SELECT status, token_version FROM users WHERE id=$1', [payload.id]);
     if (!user || user.status === 'suspended' || user.status === 'deleted') {
       return res.status(401).json({ error: 'このアカウントは無効になっています' });
+    }
+    // トークン発行後にロール変更・停止解除等でtoken_versionが上がっていれば、
+    // このトークンは失効済みとして扱う（JWT自体に失効の仕組みが無いための強制ログアウト手段）。
+    if ((payload.tv ?? 1) !== (user.token_version ?? 1)) {
+      return res.status(401).json({ error: 'セッションが無効になりました。再度ログインしてください' });
     }
     req.user = payload;
     next();
@@ -287,26 +346,36 @@ app.post(
     const existing = await one('SELECT id FROM users WHERE email=$1', [email]);
     if (existing) return res.status(409).json({ error: 'Email already registered' });
     const hash = await bcrypt.hash(password, 10);
-    const user = await one('INSERT INTO users (email, password_hash, name, role) VALUES ($1,$2,$3,$4) RETURNING id,email,name,role', [email, hash, name || '', 'user']);
+    const user = await one('INSERT INTO users (email, password_hash, name, role) VALUES ($1,$2,$3,$4) RETURNING id,email,name,role,token_version', [email, hash, name || '', 'user']);
     await logAudit(user.id, 'CREATE', 'users', user.id, { email, name });
-    const token = jwt.sign({ id: user.id, email: user.email }, JWT_SECRET, { expiresIn: '7d' });
+    const token = jwt.sign({ id: user.id, email: user.email, tv: user.token_version ?? 1 }, JWT_SECRET, { expiresIn: '7d' });
     res.json({ token, user: { id: user.id, email: user.email, name: user.name, role: user.role } });
   })
 );
 
+// 総当たり攻撃対策。IPごと15分に10回まで。
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'ログイン試行回数が多すぎます。しばらく待ってから再度お試しください' },
+});
+
 app.post(
   '/api/auth/login',
+  loginLimiter,
   h(async (req, res) => {
     await ensureAux();
     const { email, password } = req.body;
     if (!email || !password) return res.status(400).json({ error: 'Email and password required' });
-    const user = await one('SELECT id,email,name,role,status,password_hash FROM users WHERE email=$1', [email]);
+    const user = await one('SELECT id,email,name,role,status,password_hash,token_version FROM users WHERE email=$1', [email]);
     if (!user) return res.status(401).json({ error: 'Invalid credentials' });
     const match = await bcrypt.compare(password, user.password_hash);
     if (!match) return res.status(401).json({ error: 'Invalid credentials' });
     if (user.status === 'suspended') return res.status(403).json({ error: 'このアカウントは一時停止されています。管理者にお問い合わせください' });
     if (user.status === 'deleted') return res.status(403).json({ error: 'このアカウントは削除されています' });
-    const token = jwt.sign({ id: user.id, email: user.email }, JWT_SECRET, { expiresIn: '7d' });
+    const token = jwt.sign({ id: user.id, email: user.email, tv: user.token_version ?? 1 }, JWT_SECRET, { expiresIn: '7d' });
     res.json({ token, user: { id: user.id, email: user.email, name: user.name, role: user.role } });
   })
 );
@@ -360,6 +429,7 @@ app.get(
 // ============ Projects API ============
 app.get(
   '/api/projects',
+  authMiddleware,
   h(async (req, res) => {
     await ensureAux();
     const [projects, files] = await Promise.all([q('SELECT * FROM projects ORDER BY id'), q('SELECT project_id, kind, filename FROM project_files')]);
@@ -387,6 +457,7 @@ async function nextProjectNo(deliveryMonth) {
 
 app.post(
   '/api/projects',
+  authMiddleware,
   h(async (req, res) => {
     const { name, client, clientCompany, clientPhone, clientEmail, clientAddress, amount, startDate, endDate, status, notes, deliveryMonth } = req.body;
     if (!deliveryMonth) return res.status(400).json({ error: '引渡月は必須です' });
@@ -404,6 +475,7 @@ app.post(
 
 app.put(
   '/api/projects/:id',
+  authMiddleware,
   h(async (req, res) => {
     await ensureAux();
     const b = req.body;
@@ -445,6 +517,7 @@ app.put(
 // 新しい案件IDへ付け替える。
 app.post(
   '/api/projects/:id/change-delivery-month',
+  authMiddleware,
   h(async (req, res) => {
     await ensureAux();
     const oldId = parseInt(req.params.id, 10);
@@ -493,6 +566,7 @@ app.post(
 
 app.delete(
   '/api/projects/:id',
+  authMiddleware,
   deleteWithAudit('projects', {
     buildDetails: before => ({ name: before?.name, changes: [`削除（案件: ${before?.name || '-'}）`] }),
   })
@@ -501,6 +575,7 @@ app.delete(
 // ============ Vendors API ============
 app.get(
   '/api/vendors',
+  authMiddleware,
   h(async (req, res) => {
     res.json(await q('SELECT * FROM vendors ORDER BY id::int DESC'));
   })
@@ -508,6 +583,7 @@ app.get(
 
 app.post(
   '/api/vendors',
+  authMiddleware,
   h(async (req, res) => {
     const { company, dept, contact, email, phone, address, categories, bank_name, bank_branch, bank_type, bank_number, bank_holder } = req.body;
     const row = await one('SELECT COALESCE(MAX(id::int),0) AS max FROM vendors');
@@ -534,6 +610,7 @@ app.post(
 
 app.put(
   '/api/vendors/:id',
+  authMiddleware,
   h(async (req, res) => {
     const { company, dept, contact, email, phone, address, categories, bank_name, bank_branch, bank_type, bank_number, bank_holder } = req.body;
     const before = await one('SELECT * FROM vendors WHERE id=$1', [req.params.id]);
@@ -559,6 +636,7 @@ app.put(
 
 app.delete(
   '/api/vendors/:id',
+  authMiddleware,
   deleteWithAudit('vendors', {
     idParse: id => id, // vendors.id は text型（'001'等）のためそのまま
     buildDetails: before => ({ name: before?.company, changes: [`削除（発注先: ${before?.company || '-'}）`] }),
@@ -568,6 +646,7 @@ app.delete(
 // ============ Categories API ============
 app.get(
   '/api/categories',
+  authMiddleware,
   h(async (req, res) => {
     res.json(await q('SELECT * FROM categories ORDER BY "order"'));
   })
@@ -575,6 +654,7 @@ app.get(
 
 app.post(
   '/api/categories',
+  authMiddleware,
   h(async (req, res) => {
     const { name, order, note } = req.body;
     const row = await one('SELECT COALESCE(MAX(code::int),0) AS max FROM categories');
@@ -587,6 +667,7 @@ app.post(
 
 app.put(
   '/api/categories/:id',
+  authMiddleware,
   h(async (req, res) => {
     const { code, name, order, note } = req.body;
     const before = await one('SELECT * FROM categories WHERE id=$1', [req.params.id]);
@@ -598,6 +679,7 @@ app.put(
 
 app.delete(
   '/api/categories/:id',
+  authMiddleware,
   deleteWithAudit('categories', {
     buildDetails: before => ({ name: before?.name, changes: [`削除（工事区分: ${before?.name || '-'}）`] }),
   })
@@ -623,6 +705,7 @@ async function ensureOrderNo(order) {
 
 app.get(
   '/api/orders',
+  authMiddleware,
   h(async (req, res) => {
     await ensureAux();
     const [orders, files] = await Promise.all([q('SELECT * FROM orders ORDER BY id'), q('SELECT order_id, kind, filename FROM order_files')]);
@@ -647,6 +730,7 @@ const FILE_KIND_DONE = { ack: 'ack_done', invoice: 'invoice_done' };
 // 請書/請求書 PDF アップロード → 対応する done フラグを true に
 app.post(
   '/api/orders/:id/file/:kind',
+  authMiddleware,
   h(async (req, res) => {
     await ensureAux();
     const kind = req.params.kind === 'invoice' ? 'invoice' : 'ack';
@@ -675,6 +759,7 @@ app.post(
 // 請書/請求書 PDF 表示（iframe からインライン参照）
 app.get(
   '/api/orders/:id/file/:kind',
+  authMiddleware,
   h(async (req, res) => {
     await ensureAux();
     const kind = req.params.kind === 'invoice' ? 'invoice' : 'ack';
@@ -691,6 +776,7 @@ app.get(
 // 請書/請求書 PDF 削除 → 対応する done フラグを false に
 app.delete(
   '/api/orders/:id/file/:kind',
+  authMiddleware,
   h(async (req, res) => {
     await ensureAux();
     const kind = req.params.kind === 'invoice' ? 'invoice' : 'ack';
@@ -708,6 +794,7 @@ app.delete(
 // 契約書 PDF アップロード（受注一覧・案件単位）。order_filesと同じ方式（DB直接保存）
 app.post(
   '/api/projects/:id/file/:kind',
+  authMiddleware,
   h(async (req, res) => {
     await ensureAux();
     const kind = 'contract';
@@ -734,6 +821,7 @@ app.post(
 // 契約書 PDF 表示（iframe からインライン参照）
 app.get(
   '/api/projects/:id/file/:kind',
+  authMiddleware,
   h(async (req, res) => {
     await ensureAux();
     const doc = await one('SELECT * FROM project_files WHERE project_id=$1 AND kind=$2', [req.params.id, 'contract']);
@@ -749,6 +837,7 @@ app.get(
 // 契約書 PDF 削除
 app.delete(
   '/api/projects/:id/file/:kind',
+  authMiddleware,
   h(async (req, res) => {
     await ensureAux();
     const project = await one('SELECT * FROM projects WHERE id=$1', [req.params.id]);
@@ -763,6 +852,7 @@ app.delete(
 
 app.post(
   '/api/orders',
+  authMiddleware,
   h(async (req, res) => {
     await ensureAux();
     const b = req.body;
@@ -800,6 +890,7 @@ app.post(
 
 app.put(
   '/api/orders/:id',
+  authMiddleware,
   h(async (req, res) => {
     const b = req.body;
     const before = await one('SELECT * FROM orders WHERE id=$1', [req.params.id]);
@@ -836,6 +927,7 @@ app.put(
 
 app.delete(
   '/api/orders/:id',
+  authMiddleware,
   deleteWithAudit('orders', {
     buildDetails: before => ({ name: `${before?.category || ''}（${before?.vendor || ''}）`, changes: [`削除（${before?.category || '-'} / ${before?.vendor || '-'}）`] }),
   })
@@ -844,6 +936,8 @@ app.delete(
 // 請書／請求書の未済トグル（DB保存＋履歴記録）
 app.put(
   '/api/orders/:id/doc-status',
+  authMiddleware,
+  requireRole(['admin', 'accounting']),
   h(async (req, res) => {
     const { kind, value } = req.body; // kind: 'ack' | 'invoice'
     const col = kind === 'invoice' ? 'invoice_done' : 'ack_done';
@@ -862,6 +956,7 @@ app.put(
 // 残金（支払の残額）を更新
 app.put(
   '/api/orders/:id/remaining',
+  authMiddleware,
   h(async (req, res) => {
     await ensureAux();
     const before = await one('SELECT * FROM orders WHERE id=$1', [req.params.id]);
@@ -880,6 +975,7 @@ app.put(
 // 工事IDを（未採番なら）確定する。注文書プレビュー表示時にダウンロード結果と番号を一致させるために使用
 app.post(
   '/api/orders/:id/ensure-order-no',
+  authMiddleware,
   h(async (req, res) => {
     const order = await one('SELECT * FROM orders WHERE id=$1', [req.params.id]);
     if (!order) return res.status(404).json({ error: 'order not found' });
@@ -891,6 +987,7 @@ app.post(
 // 支払登録明細（消し込み履歴）一覧
 app.get(
   '/api/payment-records',
+  authMiddleware,
   h(async (req, res) => {
     await ensureAux();
     const rows = await q(`
@@ -906,6 +1003,8 @@ app.get(
 // 支払登録（残金から差し引き、必要に応じてステータス自動更新）
 app.post(
   '/api/payment-records',
+  authMiddleware,
+  requireRole(['admin', 'accounting']),
   h(async (req, res) => {
     await ensureAux();
     const { order_id, note } = req.body;
@@ -932,6 +1031,8 @@ app.post(
 // 支払登録明細の削除（残金を戻す）
 app.delete(
   '/api/payment-records/:id',
+  authMiddleware,
+  requireRole(['admin', 'accounting']),
   h(async (req, res) => {
     await ensureAux();
     const rec = await one('SELECT * FROM payment_records WHERE id=$1', [req.params.id]);
@@ -955,6 +1056,7 @@ app.delete(
 // ============ 案件外支払（工事外費用・給与その他） API ============
 app.get(
   '/api/misc-payments',
+  authMiddleware,
   h(async (req, res) => {
     res.json(await q('SELECT * FROM misc_payments ORDER BY id DESC'));
   })
@@ -962,6 +1064,7 @@ app.get(
 
 app.post(
   '/api/misc-payments',
+  authMiddleware,
   h(async (req, res) => {
     const { category, type, payee, amount, payment_date, status, notes } = req.body;
     const row = await one('INSERT INTO misc_payments (category, type, payee, amount, payment_date, status, notes) VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING id', [
@@ -980,6 +1083,7 @@ app.post(
 
 app.put(
   '/api/misc-payments/:id',
+  authMiddleware,
   h(async (req, res) => {
     const { category, type, payee, amount, payment_date, status, notes } = req.body;
     const before = await one('SELECT * FROM misc_payments WHERE id=$1', [req.params.id]);
@@ -1000,6 +1104,7 @@ app.put(
 
 app.delete(
   '/api/misc-payments/:id',
+  authMiddleware,
   deleteWithAudit('misc_payments', {
     buildDetails: before => ({ name: `${before?.category || ''}（${before?.payee || ''}）`, changes: [`削除（${before?.category || '-'} / ${before?.payee || '-'}）`] }),
   })
@@ -1008,6 +1113,7 @@ app.delete(
 // ============ 案件外入金（案件に紐づかない入金） API ============
 app.get(
   '/api/misc-receipts',
+  authMiddleware,
   h(async (req, res) => {
     res.json(await q('SELECT * FROM misc_receipts ORDER BY id DESC'));
   })
@@ -1015,6 +1121,7 @@ app.get(
 
 app.post(
   '/api/misc-receipts',
+  authMiddleware,
   h(async (req, res) => {
     const { category, type, payer, amount, receipt_date, status, notes } = req.body;
     const row = await one('INSERT INTO misc_receipts (category, type, payer, amount, receipt_date, status, notes) VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING id', [
@@ -1033,6 +1140,7 @@ app.post(
 
 app.put(
   '/api/misc-receipts/:id',
+  authMiddleware,
   h(async (req, res) => {
     const { category, type, payer, amount, receipt_date, status, notes } = req.body;
     const before = await one('SELECT * FROM misc_receipts WHERE id=$1', [req.params.id]);
@@ -1053,6 +1161,7 @@ app.put(
 
 app.delete(
   '/api/misc-receipts/:id',
+  authMiddleware,
   deleteWithAudit('misc_receipts', {
     buildDetails: before => ({ name: `${before?.category || ''}（${before?.payer || ''}）`, changes: [`削除（${before?.category || '-'} / ${before?.payer || '-'}）`] }),
   })
@@ -1061,6 +1170,7 @@ app.delete(
 // ============ Customers API ============
 app.get(
   '/api/customers',
+  authMiddleware,
   h(async (req, res) => {
     await ensureAux();
     res.json(await q('SELECT * FROM customers ORDER BY id DESC'));
@@ -1069,6 +1179,7 @@ app.get(
 
 app.post(
   '/api/customers',
+  authMiddleware,
   h(async (req, res) => {
     await ensureAux();
     const { company, department, contact, email, phone, address, notes, capital, company_scale, website } = req.body;
@@ -1083,6 +1194,7 @@ app.post(
 
 app.put(
   '/api/customers/:id',
+  authMiddleware,
   h(async (req, res) => {
     await ensureAux();
     const { company, department, contact, email, phone, address, notes, capital, company_scale, website } = req.body;
@@ -1107,6 +1219,7 @@ app.put(
 
 app.delete(
   '/api/customers/:id',
+  authMiddleware,
   deleteWithAudit('customers', {
     buildDetails: before => ({ name: before?.company, changes: [`削除（顧客: ${before?.company || '-'}）`] }),
   })
@@ -1115,6 +1228,7 @@ app.delete(
 // ============ Receipts API (入金・売上 F5) ============
 app.get(
   '/api/receipts',
+  authMiddleware,
   h(async (req, res) => {
     res.json(await q('SELECT * FROM receipts ORDER BY received_date DESC'));
   })
@@ -1122,6 +1236,7 @@ app.get(
 
 app.post(
   '/api/receipts',
+  authMiddleware,
   h(async (req, res) => {
     const { project_id, received_date, amount, memo } = req.body;
     const month = toYM(req.body.month, received_date);
@@ -1133,6 +1248,7 @@ app.post(
 
 app.put(
   '/api/receipts/:id',
+  authMiddleware,
   h(async (req, res) => {
     const { project_id, received_date, amount, memo } = req.body;
     const month = toYM(req.body.month, received_date);
@@ -1145,6 +1261,7 @@ app.put(
 
 app.delete(
   '/api/receipts/:id',
+  authMiddleware,
   deleteWithAudit('receipts', {
     buildDetails: before => ({ name: before?.month, changes: [`削除（${before?.month || '-'} / ${fmtVal(before?.amount)}円）`] }),
   })
@@ -1153,6 +1270,7 @@ app.delete(
 // 売上サマリ
 app.get(
   '/api/sales-summary',
+  authMiddleware,
   h(async (req, res) => {
     const projects = await q('SELECT * FROM projects ORDER BY id');
     const now = new Date();
@@ -1212,6 +1330,7 @@ app.get(
 // 入金ステータスの手動変更（DB保存＋履歴記録）
 app.put(
   '/api/projects/:id/receipt-status',
+  authMiddleware,
   h(async (req, res) => {
     const { value } = req.body;
     const before = await one('SELECT * FROM projects WHERE id=$1', [req.params.id]);
@@ -1229,6 +1348,7 @@ app.put(
 // ============ Invoices API (請求書 F4-2) ============
 app.get(
   '/api/invoices',
+  authMiddleware,
   h(async (req, res) => {
     res.json(await q('SELECT * FROM invoices ORDER BY id DESC'));
   })
@@ -1236,6 +1356,7 @@ app.get(
 
 app.post(
   '/api/invoices',
+  authMiddleware,
   h(async (req, res) => {
     const projectId = req.body.projectId || req.body.project_id;
     const project = await one('SELECT * FROM projects WHERE id=$1', [projectId]);
@@ -1261,6 +1382,7 @@ app.post(
 
 app.delete(
   '/api/invoices/:id',
+  authMiddleware,
   h(async (req, res) => {
     await q('DELETE FROM invoices WHERE id=$1', [req.params.id]);
     await logAuditReq(req, 'DELETE', 'invoices', parseInt(req.params.id), {});
@@ -1271,6 +1393,7 @@ app.delete(
 // ============ Notifications API (通知 F7) ============
 app.get(
   '/api/notifications',
+  authMiddleware,
   h(async (req, res) => {
     await ensureAux();
     const notifications = [];
@@ -1394,6 +1517,7 @@ function toCSV(rows, headers) {
 
 app.get(
   '/api/export/:type',
+  authMiddleware,
   h(async (req, res) => {
     const type = req.params.type;
     let csv = '',
@@ -1454,6 +1578,7 @@ app.get(
 // ============ Dashboard summary (F8) ============
 app.get(
   '/api/dashboard',
+  authMiddleware,
   h(async (req, res) => {
     const allProjects = await q('SELECT * FROM projects');
     const orders = await q('SELECT * FROM orders');
@@ -1609,6 +1734,7 @@ async function buildReportData(from, to) {
 
 app.get(
   '/api/report/growth',
+  authMiddleware,
   h(async (req, res) => {
     res.json(await buildReportData(req.query.from, req.query.to));
   })
@@ -1617,6 +1743,7 @@ app.get(
 // レポートPDF（売上の棒グラフ＋利益の折れ線）
 app.get(
   '/api/report/growth-pdf',
+  authMiddleware,
   h(async (req, res) => {
     const { points, totalRevenue, totalProfit, from, to } = await buildReportData(req.query.from, req.query.to);
     const doc = new PDFDocument({ margin: 40, size: 'A4', layout: 'landscape', bufferPages: true });
@@ -1717,6 +1844,7 @@ app.get(
 // ============ Cache endpoint ============
 app.get(
   '/api/cache',
+  authMiddleware,
   h(async (req, res) => {
     await ensureAux();
     const [projects, vendors, categories, orders, customers, receipts, invoices, files, projectFiles] = await Promise.all([
@@ -2120,6 +2248,7 @@ function makeTransporter() {
 // 発注書 PDF
 app.get(
   '/api/po/:orderId',
+  authMiddleware,
   h(async (req, res) => {
     const order = await one('SELECT * FROM orders WHERE id=$1', [req.params.orderId]);
     if (!order) return res.status(404).json({ error: '発注明細が見つかりません' });
@@ -2137,6 +2266,7 @@ app.get(
 // 発注書 メール送信
 app.post(
   '/api/po/send',
+  authMiddleware,
   h(async (req, res) => {
     const { orderId, to, subject, body } = req.body;
     if (!orderId || !to || !subject) return res.status(400).json({ error: '必須パラメータが不足しています' });
@@ -2164,6 +2294,7 @@ const normalizeVariant = v => (INVOICE_VARIANTS.includes(v) ? v : 'sealed');
 // 請求書 PDF
 app.get(
   '/api/invoice/project/:projectId',
+  authMiddleware,
   h(async (req, res) => {
     const project = await one('SELECT * FROM projects WHERE id=$1', [req.params.projectId]);
     if (!project) return res.status(404).json({ error: 'プロジェクトが見つかりません' });
@@ -2180,6 +2311,7 @@ app.get(
 // 請求書 PDF（プレビューで手入力編集した内訳を反映）
 app.post(
   '/api/invoice/project/:projectId/pdf',
+  authMiddleware,
   h(async (req, res) => {
     const project = await one('SELECT * FROM projects WHERE id=$1', [req.params.projectId]);
     if (!project) return res.status(404).json({ error: 'プロジェクトが見つかりません' });
@@ -2196,6 +2328,8 @@ app.post(
 // 請求書 メール送信（常に電子印あり原本を添付。送信成功で請求ステータスを「発送済み」に）
 app.post(
   '/api/invoice/send',
+  authMiddleware,
+  requireRole(['admin', 'accounting']),
   h(async (req, res) => {
     const { projectId, to, subject, body, items } = req.body;
     if (!projectId || !to || !subject) return res.status(400).json({ error: '必須パラメータが不足しています' });
@@ -2218,6 +2352,7 @@ app.post(
 // 見積書 PDF
 app.get(
   '/api/estimate/project/:projectId',
+  authMiddleware,
   h(async (req, res) => {
     const project = await one('SELECT * FROM projects WHERE id=$1', [req.params.projectId]);
     if (!project) return res.status(404).json({ error: 'プロジェクトが見つかりません' });
@@ -2233,6 +2368,7 @@ app.get(
 // 見積書 PDF（プレビューで手入力編集した内訳を反映）
 app.post(
   '/api/estimate/project/:projectId/pdf',
+  authMiddleware,
   h(async (req, res) => {
     const project = await one('SELECT * FROM projects WHERE id=$1', [req.params.projectId]);
     if (!project) return res.status(404).json({ error: 'プロジェクトが見つかりません' });
@@ -2248,6 +2384,7 @@ app.post(
 // 見積書 メール送信
 app.post(
   '/api/estimate/send',
+  authMiddleware,
   h(async (req, res) => {
     const { projectId, to, subject, body, items } = req.body;
     if (!projectId || !to || !subject) return res.status(400).json({ error: '必須パラメータが不足しています' });
@@ -2294,7 +2431,8 @@ app.put(
     const status = req.body.status !== undefined ? req.body.status : before.status;
     if (req.body.role !== undefined && !INVITE_ROLES[role]) return res.status(400).json({ error: '不正な権限です' });
     if (req.body.status !== undefined && !['active', 'suspended'].includes(status)) return res.status(400).json({ error: '不正なステータスです' });
-    await q('UPDATE users SET role=$1, status=$2, updated_at=current_timestamp WHERE id=$3', [role, status, targetId]);
+    // ロール・ステータス変更は既存の発行済みトークンを即座に無効化する（token_versionをインクリメント）
+    await q('UPDATE users SET role=$1, status=$2, token_version=token_version+1, updated_at=current_timestamp WHERE id=$3', [role, status, targetId]);
     const changes = [];
     if (req.body.role !== undefined && role !== before.role) changes.push(`権限変更: ${INVITE_ROLES[before.role] || before.role} → ${INVITE_ROLES[role] || role}`);
     if (req.body.status !== undefined && status !== before.status) changes.push(`ステータス変更: ${before.status || 'active'} → ${status}`);
@@ -2314,7 +2452,7 @@ app.delete(
     if (targetId === req.user.id) return res.status(400).json({ error: '自分自身のアカウントは削除できません' });
     const before = await one('SELECT * FROM users WHERE id=$1', [targetId]);
     if (!before) return res.status(404).json({ error: 'ユーザーが見つかりません' });
-    await q("UPDATE users SET status='deleted', updated_at=current_timestamp WHERE id=$1", [targetId]);
+    await q("UPDATE users SET status='deleted', token_version=token_version+1, updated_at=current_timestamp WHERE id=$1", [targetId]);
     await logAuditReq(req, 'DELETE', 'users', targetId, { name: before.name || before.email, changes: [`アカウント削除（${before.email}）`] });
     res.json({ success: true });
   })
@@ -2332,6 +2470,7 @@ function inviteStatus(inv) {
 app.get(
   '/api/invitations',
   authMiddleware,
+  requireRole(['admin']),
   h(async (req, res) => {
     await ensureAux();
     await q('DELETE FROM invitations WHERE accepted_at IS NULL AND expires_at < now()');
@@ -2344,6 +2483,7 @@ app.get(
 app.post(
   '/api/invitations',
   authMiddleware,
+  requireRole(['admin']),
   h(async (req, res) => {
     await ensureAux();
     const { name, email, role } = req.body;
@@ -2387,6 +2527,7 @@ app.post(
 app.delete(
   '/api/invitations/:id',
   authMiddleware,
+  requireRole(['admin']),
   h(async (req, res) => {
     await ensureAux();
     const inv = await one('SELECT * FROM invitations WHERE id=$1', [req.params.id]);
