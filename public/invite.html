@@ -10,6 +10,7 @@
 <script src="/sidebar.js?v=77"></script>
 <script src="/auth.js?v=77"></script>
 <script src="/header.js?v=77"></script>
+<script src="/esc.js?v=77"></script>
 <script src="/notify.js?v=77"></script>
 <style>
 body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
@@ -154,9 +155,8 @@ function fmtDate(s) {
   const p = n => String(n).padStart(2, '0');
   return `${d.getFullYear()}/${p(d.getMonth() + 1)}/${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
 }
-function esc(s) {
-  return String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
-}
+// エスケープ処理は共通の escHtml()（/esc.js）に統一
+const esc = escHtml;
 
 async function sendInvite() {
   alert('メール送信機能は準備中です');

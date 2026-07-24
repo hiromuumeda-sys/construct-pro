@@ -10,6 +10,7 @@
 <script src="/sidebar.js?v=77"></script>
 <script src="/auth.js?v=77"></script>
 <script src="/header.js?v=77"></script>
+<script src="/esc.js?v=77"></script>
 <script src="/status-utils.js?v=77"></script>
 <style>
 body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
@@ -495,9 +496,9 @@ function buildOrderRow(order) {
             </div>`;
   return `
     <tr class="${rowCls}" data-order-id="${order.id}">
-        <td data-col="category" class="px-3 py-1.5 text-label-md font-label-md ${locked ? '' : 'text-on-surface group-hover:text-primary'} cursor-pointer transition-colors" onclick="openOrderDetailModal(${order.id})">${order.category || '-'}</td>
-        <td class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant cursor-pointer" onclick="openOrderDetailModal(${order.id})">${order.vendor || '-'}</td>
-        <td data-col="notes" class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant cursor-pointer" onclick="openOrderDetailModal(${order.id})" title="${(order.details || '').replace(/"/g, '&quot;')}">${order.details ? (order.details.length > 20 ? order.details.slice(0, 20) + '…' : order.details) : '-'}</td>
+        <td data-col="category" class="px-3 py-1.5 text-label-md font-label-md ${locked ? '' : 'text-on-surface group-hover:text-primary'} cursor-pointer transition-colors" onclick="openOrderDetailModal(${order.id})">${escHtml(order.category) || '-'}</td>
+        <td class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant cursor-pointer" onclick="openOrderDetailModal(${order.id})">${escHtml(order.vendor) || '-'}</td>
+        <td data-col="notes" class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant cursor-pointer" onclick="openOrderDetailModal(${order.id})" title="${escHtml(order.details)}">${order.details ? escHtml(order.details.length > 20 ? order.details.slice(0, 20) + '…' : order.details) : '-'}</td>
         <td data-col="estimate" class="px-3 py-1.5 text-label-md font-label-md text-right tabular-numbers cursor-pointer" onclick="openOrderDetailModal(${order.id})">${order.estimate ? order.estimate.toLocaleString() : '-'}</td>
         <td data-col="planned" class="px-3 py-1.5 text-label-md font-label-md text-right tabular-numbers cursor-pointer" onclick="openOrderDetailModal(${order.id})">${order.planned ? order.planned.toLocaleString() : '-'}</td>
         <td class="px-3 py-1.5 text-label-md font-label-md text-right tabular-numbers cursor-pointer ${locked ? '' : 'bg-amber-50'}" onclick="openOrderDetailModal(${order.id})" title="経理確認用（決定金額）">${order.decided ? order.decided.toLocaleString() : '-'}</td>
@@ -1282,7 +1283,7 @@ function renderProjectSelectList() {
       受注: 'bg-secondary text-on-secondary',
       失注: 'bg-error-container text-on-error-container',
     })[s] || 'bg-surface-container text-on-surface-variant';
-  const esc = x => String(x ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+  const esc = escHtml; // エスケープ処理は共通の escHtml()（/esc.js）に統一
   list.innerHTML = projects
     .map(p => {
       const period = p.startDate && p.endDate ? `${p.startDate} 〜 ${p.endDate}` : '工期未設定';

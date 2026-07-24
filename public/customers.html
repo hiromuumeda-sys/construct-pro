@@ -10,6 +10,7 @@
 <script src="/sidebar.js?v=77"></script>
 <script src="/auth.js?v=77"></script>
 <script src="/header.js?v=77"></script>
+<script src="/esc.js?v=77"></script>
 <style>
 body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
@@ -304,15 +305,15 @@ function renderTable(customers) {
       c => `
     <tr class="hover:bg-surface-container-low transition-colors cursor-pointer group" onclick="openEditModal(${c.id})">
       <td class="px-lg py-5 text-label-md font-label-md text-on-surface-variant tabular-nums">${String(c.id).padStart(4, '0')}</td>
-      <td class="px-lg py-5 text-label-md font-label-md text-primary">${c.company}</td>
-      <td class="px-lg py-5 text-label-md font-label-md text-on-surface-variant">${c.department || '-'}</td>
-      <td class="px-lg py-5 text-label-md font-label-md text-on-surface">${c.contact}</td>
-      <td class="px-lg py-5 text-label-md font-label-md tabular-nums text-on-surface-variant">${c.email}</td>
-      <td class="px-lg py-5 text-label-md font-label-md tabular-nums text-on-surface-variant">${c.phone || '-'}</td>
-      <td class="px-lg py-5 text-label-md font-label-md text-on-surface-variant">${c.address || '-'}</td>
+      <td class="px-lg py-5 text-label-md font-label-md text-primary">${escHtml(c.company)}</td>
+      <td class="px-lg py-5 text-label-md font-label-md text-on-surface-variant">${escHtml(c.department) || '-'}</td>
+      <td class="px-lg py-5 text-label-md font-label-md text-on-surface">${escHtml(c.contact)}</td>
+      <td class="px-lg py-5 text-label-md font-label-md tabular-nums text-on-surface-variant">${escHtml(c.email)}</td>
+      <td class="px-lg py-5 text-label-md font-label-md tabular-nums text-on-surface-variant">${escHtml(c.phone) || '-'}</td>
+      <td class="px-lg py-5 text-label-md font-label-md text-on-surface-variant">${escHtml(c.address) || '-'}</td>
       <td class="px-lg py-5 text-label-md font-label-md tabular-nums text-right text-on-surface-variant">${c.capital ? '¥' + Number(c.capital).toLocaleString() : '-'}</td>
-      <td class="px-lg py-5 text-label-md font-label-md text-on-surface-variant">${c.company_scale || '-'}</td>
-      <td class="px-lg py-5 text-label-md font-label-md" onclick="event.stopPropagation()">${c.website ? `<a href="${c.website}" target="_blank" rel="noopener noreferrer" class="text-secondary hover:underline">${c.website}</a>` : '-'}</td>
+      <td class="px-lg py-5 text-label-md font-label-md text-on-surface-variant">${escHtml(c.company_scale) || '-'}</td>
+      <td class="px-lg py-5 text-label-md font-label-md" onclick="event.stopPropagation()">${c.website ? `<a href="${escHtml(c.website)}" target="_blank" rel="noopener noreferrer" class="text-secondary hover:underline">${escHtml(c.website)}</a>` : '-'}</td>
     </tr>
   `
     )

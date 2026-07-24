@@ -10,6 +10,7 @@
 <script src="/sidebar.js?v=77"></script>
 <script src="/auth.js?v=77"></script>
 <script src="/header.js?v=77"></script>
+<script src="/esc.js?v=77"></script>
 <script src="/status-utils.js?v=77"></script>
 <style>
 body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
@@ -463,13 +464,13 @@ function renderPaymentRow(payment) {
       </td>
       <td class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant tabular-numbers">${String(payment.id).padStart(6, '0')}</td>
       <td class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant tabular-numbers whitespace-nowrap">${payment.projectNo}</td>
-      <td class="px-3 py-1.5 text-label-md font-label-md text-on-surface group-hover:text-primary transition-colors">${payment.projectName}</td>
-      <td class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant">${payment.category}</td>
-      <td class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant">${payment.vendor}</td>
+      <td class="px-3 py-1.5 text-label-md font-label-md text-on-surface group-hover:text-primary transition-colors">${escHtml(payment.projectName)}</td>
+      <td class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant">${escHtml(payment.category)}</td>
+      <td class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant">${escHtml(payment.vendor)}</td>
       <td class="px-3 py-1.5 text-label-md font-label-md text-right tabular-numbers">¥${payment.amount.toLocaleString()}</td>
       <td class="px-3 py-1.5 text-label-md font-label-md text-right tabular-numbers text-error font-bold">¥${(payment.remaining ?? payment.amount).toLocaleString()}</td>
       <td class="px-3 py-1.5 text-label-md font-label-md tabular-numbers ${dueCls}" title="${dueTitle}">${dueIcon}${payment.paymentDate || '-'}</td>
-      <td class="px-3 py-1.5 text-label-md font-label-md">${payment.bank && payment.bank.name ? `<span class="text-on-surface">${payment.bank.name}</span>` : '<span class="text-on-surface-variant/40">-</span>'}</td>
+      <td class="px-3 py-1.5 text-label-md font-label-md">${payment.bank && payment.bank.name ? `<span class="text-on-surface">${escHtml(payment.bank.name)}</span>` : '<span class="text-on-surface-variant/40">-</span>'}</td>
       <td class="px-3 py-1.5 text-label-md font-label-md text-center whitespace-nowrap">
         <div class="relative inline-block" onclick="event.stopPropagation()">
           <select onchange="updatePaymentStatus(${payment.id}, this.value)" class="appearance-none text-[11px] font-medium rounded-full pl-5 pr-5 py-1 text-center border border-transparent ring-1 ring-inset ring-black/5 cursor-pointer hover:opacity-90 focus:ring-2 focus:ring-secondary/40 shadow-sm transition-all ${getStatusColor(payment.status)}">
@@ -553,7 +554,7 @@ function openModal(id) {
   set('pd-amount', '¥' + (p.amount || 0).toLocaleString());
   set('pd-remaining', '¥' + ((p.remaining != null ? p.remaining : p.amount) || 0).toLocaleString());
   set('pd-date', p.paymentDate || '-');
-  document.getElementById('pd-status').innerHTML = `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] ${getStatusColor(p.status)}">${p.status}</span>`;
+  document.getElementById('pd-status').innerHTML = `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] ${getStatusColor(p.status)}">${escHtml(p.status)}</span>`;
   const b = p.bank || {};
   set('pd-bank-name', b.name || '-');
   set('pd-bank-branch', b.branch || '-');
@@ -658,7 +659,7 @@ function renderPayHistory() {
       <tr class="hover:bg-surface-container-low transition-colors">
         <td class="px-3 py-2.5 text-label-md font-label-md text-on-surface-variant tabular-numbers">${r.paid_date || '-'}</td>
         <td class="px-3 py-2.5 text-label-md font-label-md text-right tabular-numbers text-secondary">¥${(r.amount || 0).toLocaleString()}</td>
-        <td class="px-3 py-2.5 text-label-md font-label-md text-on-surface-variant">${r.note || '-'}</td>
+        <td class="px-3 py-2.5 text-label-md font-label-md text-on-surface-variant">${escHtml(r.note) || '-'}</td>
         <td class="px-3 py-2.5 text-center"><button class="material-symbols-outlined text-error/70 hover:bg-error/10 rounded-full w-8 h-8 text-[20px]" onclick="deletePaymentRecord(${r.id})" title="取消">delete</button></td>
       </tr>`
       )
@@ -705,10 +706,10 @@ function renderPaymentRecords() {
       r => `
     <tr class="hover:bg-surface-container-low transition-colors">
       <td class="px-3 py-2.5 text-label-md font-label-md text-on-surface-variant tabular-numbers">${r.paid_date || '-'}</td>
-      <td class="px-3 py-2.5 text-label-md font-label-md text-on-surface">${r.project_name || '案件#' + r.order_id}</td>
-      <td class="px-3 py-2.5 text-label-md font-label-md text-on-surface-variant">${r.vendor || '-'}</td>
+      <td class="px-3 py-2.5 text-label-md font-label-md text-on-surface">${r.project_name ? escHtml(r.project_name) : '案件#' + r.order_id}</td>
+      <td class="px-3 py-2.5 text-label-md font-label-md text-on-surface-variant">${escHtml(r.vendor) || '-'}</td>
       <td class="px-3 py-2.5 text-label-md font-label-md text-right tabular-numbers text-secondary">¥${(r.amount || 0).toLocaleString()}</td>
-      <td class="px-3 py-2.5 text-label-md font-label-md text-on-surface-variant">${r.note || '-'}</td>
+      <td class="px-3 py-2.5 text-label-md font-label-md text-on-surface-variant">${escHtml(r.note) || '-'}</td>
       <td class="px-3 py-2.5 text-center"><button class="material-symbols-outlined text-error/70 hover:bg-error/10 rounded-full w-8 h-8 text-[20px]" onclick="deletePaymentRecord(${r.id})" title="取消">delete</button></td>
     </tr>`
     )
@@ -764,13 +765,13 @@ function renderMiscPayments() {
       m => `
     <tr class="hover:bg-surface-container-low transition-colors cursor-pointer" onclick="openMiscPaymentModal(${m.id})">
       <td class="px-3 py-2.5 text-label-md font-label-md text-on-surface-variant tabular-numbers">${String(m.id).padStart(6, '0')}</td>
-      <td class="px-3 py-2.5 text-label-md font-label-md ${m.type === '返金' ? 'text-purple-600 font-bold' : 'text-on-surface-variant'}">${m.type || '支払'}</td>
-      <td class="px-3 py-2.5 text-label-md font-label-md text-on-surface">${m.category || '-'}</td>
-      <td class="px-3 py-2.5 text-label-md font-label-md text-on-surface-variant">${m.payee || '-'}</td>
+      <td class="px-3 py-2.5 text-label-md font-label-md ${m.type === '返金' ? 'text-purple-600 font-bold' : 'text-on-surface-variant'}">${escHtml(m.type) || '支払'}</td>
+      <td class="px-3 py-2.5 text-label-md font-label-md text-on-surface">${escHtml(m.category) || '-'}</td>
+      <td class="px-3 py-2.5 text-label-md font-label-md text-on-surface-variant">${escHtml(m.payee) || '-'}</td>
       <td class="px-3 py-2.5 text-label-md font-label-md text-right tabular-numbers">¥${(m.amount || 0).toLocaleString()}</td>
       <td class="px-3 py-2.5 text-label-md font-label-md text-on-surface-variant tabular-numbers">${m.payment_date || '-'}</td>
-      <td class="px-3 py-2.5 text-center"><span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold ${miscPayStatusClass(m.status)}">${m.status || '-'}</span></td>
-      <td class="px-3 py-2.5 text-label-md font-label-md text-on-surface-variant">${m.notes || '-'}</td>
+      <td class="px-3 py-2.5 text-center"><span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold ${miscPayStatusClass(m.status)}">${escHtml(m.status) || '-'}</span></td>
+      <td class="px-3 py-2.5 text-label-md font-label-md text-on-surface-variant">${escHtml(m.notes) || '-'}</td>
       <td class="px-3 py-2.5 text-center" onclick="event.stopPropagation()">
         <button class="material-symbols-outlined text-error/70 hover:bg-error/10 rounded-full w-8 h-8 text-[20px]" onclick="deleteMiscPayment(${m.id})" title="削除">delete</button>
       </td>

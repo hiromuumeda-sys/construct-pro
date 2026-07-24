@@ -10,6 +10,7 @@
 <script src="/sidebar.js?v=77"></script>
 <script src="/auth.js?v=77"></script>
 <script src="/header.js?v=77"></script>
+<script src="/esc.js?v=77"></script>
 <style>
 body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
@@ -887,7 +888,7 @@ async function renderGrowthChart() {
   const n = pts.length;
   const slot = pw / n;
   const barW = Math.min(40, slot * 0.5);
-  const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
+  const esc = escHtml; // エスケープ処理は共通の escHtml()（/esc.js）に統一。旧実装は&と<しかエスケープしていなかった
   let el = '';
   // grid lines (4段)
   for (let g = 0; g <= 4; g++) {

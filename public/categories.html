@@ -10,6 +10,7 @@
 <script src="/sidebar.js?v=77"></script>
 <script src="/auth.js?v=77"></script>
 <script src="/header.js?v=77"></script>
+<script src="/esc.js?v=77"></script>
 <style>
 body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
@@ -241,11 +242,11 @@ function renderTable(categories) {
   tbody.innerHTML = categories
     .map(
       c => `
-                <tr class="hover:bg-surface-container-low transition-colors cursor-pointer group" onclick="openEditModal(${c.id}, '${c.code}', '${c.name}', ${c.order}, '${c.note.replace(/'/g, "\\'")}')">
-                    <td class="px-3 py-1.5 text-label-md font-label-md text-primary tabular-numbers">${c.code}</td>
-                    <td class="px-3 py-1.5 text-label-md font-label-md group-hover:text-primary transition-colors">${c.name}</td>
+                <tr class="hover:bg-surface-container-low transition-colors cursor-pointer group" onclick="openEditModal(${c.id}, '${c.code.replace(/'/g, "\\'")}', '${c.name.replace(/'/g, "\\'")}', ${c.order}, '${(c.note || '').replace(/'/g, "\\'")}')">
+                    <td class="px-3 py-1.5 text-label-md font-label-md text-primary tabular-numbers">${escHtml(c.code)}</td>
+                    <td class="px-3 py-1.5 text-label-md font-label-md group-hover:text-primary transition-colors">${escHtml(c.name)}</td>
                     <td class="px-3 py-1.5 text-label-md font-label-md text-center tabular-numbers text-on-surface-variant">${c.order}</td>
-                    <td class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant leading-relaxed">${c.note}</td>
+                    <td class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant leading-relaxed">${escHtml(c.note)}</td>
                 </tr>
             `
     )

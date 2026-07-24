@@ -10,6 +10,7 @@
 <script src="/sidebar.js?v=77"></script>
 <script src="/auth.js?v=77"></script>
 <script src="/header.js?v=77"></script>
+<script src="/esc.js?v=77"></script>
 <script src="/status-utils.js?v=77"></script>
 <style>
 body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
@@ -498,11 +499,11 @@ function buildViewRow(p) {
   return `
     <tr class="${rowCls}" data-project-id="${p.id}" onclick="openEditModal(${p.id})">
       <td class="w-36 px-lg py-2 text-label-md font-label-md text-on-surface-variant tabular-numbers align-top whitespace-nowrap">${p.project_no || '-'}</td>
-      <td class="w-64 px-lg py-2 text-label-md font-label-md ${locked ? '' : 'text-primary'} align-top"><div class="truncate w-[210px]" title="${(p.name || '').replace(/"/g, '&quot;')}">${p.name}</div></td>
+      <td class="w-64 px-lg py-2 text-label-md font-label-md ${locked ? '' : 'text-primary'} align-top"><div class="truncate w-[210px]" title="${escHtml(p.name)}">${escHtml(p.name)}</div></td>
       <td class="w-32 px-lg py-2 text-label-md font-label-md text-on-surface-variant align-top">
-        <span class="inline-flex items-center gap-0.5 w-[100px]"><span class="truncate w-[80px]" title="${(p.client || '').replace(/"/g, '&quot;')}">${p.client}</span><button class="material-symbols-outlined text-[14px] text-on-surface-variant/60 hover:text-secondary align-middle shrink-0" onclick="event.stopPropagation(); showClientInfoPopover(event, ${p.id})" title="クライアント情報を表示">info</button></span>
+        <span class="inline-flex items-center gap-0.5 w-[100px]"><span class="truncate w-[80px]" title="${escHtml(p.client)}">${escHtml(p.client)}</span><button class="material-symbols-outlined text-[14px] text-on-surface-variant/60 hover:text-secondary align-middle shrink-0" onclick="event.stopPropagation(); showClientInfoPopover(event, ${p.id})" title="クライアント情報を表示">info</button></span>
       </td>
-      <td class="w-64 px-lg py-2 text-label-md font-label-md text-on-surface-variant align-top"><div class="line-clamp-2 whitespace-normal w-[210px]" title="${(p.notes || '').replace(/"/g, '&quot;')}">${p.notes || '-'}</div></td>
+      <td class="w-64 px-lg py-2 text-label-md font-label-md text-on-surface-variant align-top"><div class="line-clamp-2 whitespace-normal w-[210px]" title="${escHtml(p.notes)}">${escHtml(p.notes) || '-'}</div></td>
       <td class="w-28 px-lg py-2 text-label-md font-label-md text-on-surface-variant tabular-numbers align-top">${p.startDate || '-'} 〜 ${p.endDate || '-'}</td>
       <td class="w-24 px-lg py-2 text-label-md font-label-md tabular-numbers align-top text-on-surface-variant">${p.deliveryMonth || '-'}</td>
       <td class="w-28 px-lg py-2 text-label-md font-label-md ${locked ? '' : 'text-primary'} tabular-numbers text-right align-top">¥${p.amount.toLocaleString()}</td>
@@ -549,14 +550,14 @@ function buildEditRow(p) {
   // 隣の引渡月セルへはみ出して重なって見えるバグの原因）。blockで強制的に別行にする。
   const inputCls = 'block w-full bg-surface-container-lowest border border-outline-variant rounded text-[11px] px-1.5 py-1 focus:ring-1 focus:ring-secondary/40 focus:border-transparent';
   const customerOptions = (window.appCache.customers || [])
-    .map(c => `<option value="${c.id}" ${c.company === p.clientCompany ? 'selected' : ''}>${c.company}</option>`)
+    .map(c => `<option value="${c.id}" ${c.company === p.clientCompany ? 'selected' : ''}>${escHtml(c.company)}</option>`)
     .join('');
   return `
     <tr class="bg-secondary-container/10 ring-1 ring-inset ring-secondary/30" data-project-id="${p.id}">
       <td class="w-36 px-lg py-2 text-label-md font-label-md text-on-surface-variant tabular-numbers align-top whitespace-nowrap">${p.project_no || '-'}</td>
-      <td class="w-64 px-2 py-2 align-top"><input class="${inputCls}" id="edit-name" type="text" value="${(p.name || '').replace(/"/g, '&quot;')}"/></td>
+      <td class="w-64 px-2 py-2 align-top"><input class="${inputCls}" id="edit-name" type="text" value="${escHtml(p.name)}"/></td>
       <td class="w-32 px-2 py-2 align-top"><select class="${inputCls}" id="edit-customer-select"><option value="">選択...</option>${customerOptions}</select></td>
-      <td class="w-64 px-2 py-2 align-top"><input class="${inputCls}" id="edit-notes" type="text" value="${(p.notes || '').replace(/"/g, '&quot;')}"/></td>
+      <td class="w-64 px-2 py-2 align-top"><input class="${inputCls}" id="edit-notes" type="text" value="${escHtml(p.notes)}"/></td>
       <td class="w-28 px-2 py-2 align-top space-y-0.5">
         <input class="${inputCls}" id="edit-period-start" type="date" value="${toIsoDate(p.startDate)}"/>
         <input class="${inputCls}" id="edit-period-end" type="date" value="${toIsoDate(p.endDate)}"/>
@@ -717,13 +718,13 @@ function showClientInfoPopover(event, projectId) {
   pop.style.left = `${Math.max(8, rect.left - 200)}px`;
   pop.onclick = e => e.stopPropagation();
   if (!customer) {
-    pop.innerHTML = `<p class="text-on-surface-variant">「${p.client}」の顧客マスタ登録がありません</p>`;
+    pop.innerHTML = `<p class="text-on-surface-variant">「${escHtml(p.client)}」の顧客マスタ登録がありません</p>`;
   } else {
     pop.innerHTML = `
-      <p class="font-bold text-primary mb-1.5">${customer.company}</p>
+      <p class="font-bold text-primary mb-1.5">${escHtml(customer.company)}</p>
       <p class="text-on-surface-variant mb-1"><span class="text-label-sm uppercase tracking-wider">資本金</span><br/>${customer.capital ? '¥' + Number(customer.capital).toLocaleString() : '-'}</p>
-      <p class="text-on-surface-variant mb-1"><span class="text-label-sm uppercase tracking-wider">企業規模</span><br/>${customer.company_scale || '-'}</p>
-      <p class="text-on-surface-variant"><span class="text-label-sm uppercase tracking-wider">サイト</span><br/>${customer.website ? `<a href="${customer.website}" target="_blank" rel="noopener noreferrer" class="text-secondary hover:underline break-all">${customer.website}</a>` : '-'}</p>
+      <p class="text-on-surface-variant mb-1"><span class="text-label-sm uppercase tracking-wider">企業規模</span><br/>${escHtml(customer.company_scale) || '-'}</p>
+      <p class="text-on-surface-variant"><span class="text-label-sm uppercase tracking-wider">サイト</span><br/>${customer.website ? `<a href="${escHtml(customer.website)}" target="_blank" rel="noopener noreferrer" class="text-secondary hover:underline break-all">${escHtml(customer.website)}</a>` : '-'}</p>
     `;
   }
   document.body.appendChild(pop);
@@ -961,12 +962,12 @@ function renderInvoiceItems() {
         .map(
           (it, i) => `
     <tr>
-      <td class="border border-outline-variant p-1"><input type="text" value="${(it.name || '').replace(/"/g, '&quot;')}" class="w-full text-xs border-0 bg-transparent focus:ring-1 focus:ring-primary/40 rounded px-1 py-0.5" oninput="updateInvoiceItem(${i},'name',this.value)"/></td>
+      <td class="border border-outline-variant p-1"><input type="text" value="${escHtml(it.name)}" class="w-full text-xs border-0 bg-transparent focus:ring-1 focus:ring-primary/40 rounded px-1 py-0.5" oninput="updateInvoiceItem(${i},'name',this.value)"/></td>
       <td class="border border-outline-variant p-1"><input type="number" value="${it.qty}" class="w-full text-xs text-right border-0 bg-transparent focus:ring-1 focus:ring-primary/40 rounded px-1 py-0.5" oninput="updateInvoiceItem(${i},'qty',this.value)"/></td>
-      <td class="border border-outline-variant p-1"><input type="text" value="${(it.unit || '').replace(/"/g, '&quot;')}" class="w-full text-xs text-center border-0 bg-transparent focus:ring-1 focus:ring-primary/40 rounded px-1 py-0.5" oninput="updateInvoiceItem(${i},'unit',this.value)"/></td>
+      <td class="border border-outline-variant p-1"><input type="text" value="${escHtml(it.unit)}" class="w-full text-xs text-center border-0 bg-transparent focus:ring-1 focus:ring-primary/40 rounded px-1 py-0.5" oninput="updateInvoiceItem(${i},'unit',this.value)"/></td>
       <td class="border border-outline-variant p-1"><input type="number" value="${it.price}" class="w-full text-xs text-right border-0 bg-transparent focus:ring-1 focus:ring-primary/40 rounded px-1 py-0.5" oninput="updateInvoiceItem(${i},'price',this.value)"/></td>
       <td class="border border-outline-variant p-1.5 text-right tabular-numbers" id="inv-item-amount-${i}">¥${((it.qty || 0) * (it.price || 0)).toLocaleString()}</td>
-      <td class="border border-outline-variant p-1"><input type="text" value="${(it.note || '').replace(/"/g, '&quot;')}" class="w-full text-xs border-0 bg-transparent focus:ring-1 focus:ring-primary/40 rounded px-1 py-0.5" oninput="updateInvoiceItem(${i},'note',this.value)"/></td>
+      <td class="border border-outline-variant p-1"><input type="text" value="${escHtml(it.note)}" class="w-full text-xs border-0 bg-transparent focus:ring-1 focus:ring-primary/40 rounded px-1 py-0.5" oninput="updateInvoiceItem(${i},'note',this.value)"/></td>
       <td class="border border-outline-variant p-1 text-center"><button onclick="removeInvoiceItem(${i})" class="text-error hover:opacity-70 transition-opacity" title="行を削除"><span class="material-symbols-outlined text-[15px]">close</span></button></td>
     </tr>`
         )
@@ -1156,12 +1157,12 @@ function renderEstimateItems() {
         .map(
           (it, i) => `
     <tr>
-      <td class="border border-outline-variant p-1"><input type="text" value="${(it.name || '').replace(/"/g, '&quot;')}" class="w-full text-xs border-0 bg-transparent focus:ring-1 focus:ring-primary/40 rounded px-1 py-0.5" oninput="updateEstimateItem(${i},'name',this.value)"/></td>
+      <td class="border border-outline-variant p-1"><input type="text" value="${escHtml(it.name)}" class="w-full text-xs border-0 bg-transparent focus:ring-1 focus:ring-primary/40 rounded px-1 py-0.5" oninput="updateEstimateItem(${i},'name',this.value)"/></td>
       <td class="border border-outline-variant p-1"><input type="number" value="${it.qty}" class="w-full text-xs text-right border-0 bg-transparent focus:ring-1 focus:ring-primary/40 rounded px-1 py-0.5" oninput="updateEstimateItem(${i},'qty',this.value)"/></td>
-      <td class="border border-outline-variant p-1"><input type="text" value="${(it.unit || '').replace(/"/g, '&quot;')}" class="w-full text-xs text-center border-0 bg-transparent focus:ring-1 focus:ring-primary/40 rounded px-1 py-0.5" oninput="updateEstimateItem(${i},'unit',this.value)"/></td>
+      <td class="border border-outline-variant p-1"><input type="text" value="${escHtml(it.unit)}" class="w-full text-xs text-center border-0 bg-transparent focus:ring-1 focus:ring-primary/40 rounded px-1 py-0.5" oninput="updateEstimateItem(${i},'unit',this.value)"/></td>
       <td class="border border-outline-variant p-1"><input type="number" value="${it.price}" class="w-full text-xs text-right border-0 bg-transparent focus:ring-1 focus:ring-primary/40 rounded px-1 py-0.5" oninput="updateEstimateItem(${i},'price',this.value)"/></td>
       <td class="border border-outline-variant p-1.5 text-right tabular-numbers" id="est-item-amount-${i}">¥${((it.qty || 0) * (it.price || 0)).toLocaleString()}</td>
-      <td class="border border-outline-variant p-1"><input type="text" value="${(it.note || '').replace(/"/g, '&quot;')}" class="w-full text-xs border-0 bg-transparent focus:ring-1 focus:ring-primary/40 rounded px-1 py-0.5" oninput="updateEstimateItem(${i},'note',this.value)"/></td>
+      <td class="border border-outline-variant p-1"><input type="text" value="${escHtml(it.note)}" class="w-full text-xs border-0 bg-transparent focus:ring-1 focus:ring-primary/40 rounded px-1 py-0.5" oninput="updateEstimateItem(${i},'note',this.value)"/></td>
       <td class="border border-outline-variant p-1 text-center"><button onclick="removeEstimateItem(${i})" class="text-error hover:opacity-70 transition-opacity" title="行を削除"><span class="material-symbols-outlined text-[15px]">close</span></button></td>
     </tr>`
         )

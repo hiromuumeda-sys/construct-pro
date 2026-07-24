@@ -10,6 +10,7 @@
 <script src="/sidebar.js?v=77"></script>
 <script src="/auth.js?v=77"></script>
 <script src="/header.js?v=77"></script>
+<script src="/esc.js?v=77"></script>
 <script src="/status-utils.js?v=77"></script>
 <style>
 body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
@@ -490,13 +491,13 @@ function renderMiscReceipts() {
       m => `
     <tr class="hover:bg-surface-container-low transition-colors cursor-pointer" onclick="openMiscReceiptModal(${m.id})">
       <td class="px-3 py-2.5 text-label-md font-label-md text-on-surface-variant tabular-numbers">${String(m.id).padStart(6, '0')}</td>
-      <td class="px-3 py-2.5 text-label-md font-label-md ${m.type === '返金' ? 'text-purple-600 font-bold' : 'text-on-surface-variant'}">${m.type || '入金'}</td>
-      <td class="px-3 py-2.5 text-label-md font-label-md text-on-surface">${m.category || '-'}</td>
-      <td class="px-3 py-2.5 text-label-md font-label-md text-on-surface-variant">${m.payer || '-'}</td>
+      <td class="px-3 py-2.5 text-label-md font-label-md ${m.type === '返金' ? 'text-purple-600 font-bold' : 'text-on-surface-variant'}">${escHtml(m.type) || '入金'}</td>
+      <td class="px-3 py-2.5 text-label-md font-label-md text-on-surface">${escHtml(m.category) || '-'}</td>
+      <td class="px-3 py-2.5 text-label-md font-label-md text-on-surface-variant">${escHtml(m.payer) || '-'}</td>
       <td class="px-3 py-2.5 text-label-md font-label-md text-right tabular-numbers">¥${(m.amount || 0).toLocaleString()}</td>
       <td class="px-3 py-2.5 text-label-md font-label-md text-on-surface-variant tabular-numbers">${m.receipt_date || '-'}</td>
       <td class="px-3 py-2.5 text-center">${payStatusBadge(m.status || '未入金')}</td>
-      <td class="px-3 py-2.5 text-label-md font-label-md text-on-surface-variant">${m.notes || '-'}</td>
+      <td class="px-3 py-2.5 text-label-md font-label-md text-on-surface-variant">${escHtml(m.notes) || '-'}</td>
       <td class="px-3 py-2.5 text-center" onclick="event.stopPropagation()">
         <button class="material-symbols-outlined text-error/70 hover:bg-error/10 rounded-full w-8 h-8 text-[20px]" onclick="deleteMiscReceipt(${m.id})" title="削除">delete</button>
       </td>
@@ -617,8 +618,8 @@ function renderSales() {
         ${s.pay_status !== '入金済' ? `<button class="material-symbols-outlined text-secondary hover:bg-secondary/10 rounded-full w-8 h-8" onclick="event.stopPropagation(); openReceiptModal(${s.id})" title="入金登録">add_circle</button>` : ''}
       </td>
       <td class="px-3 py-2.5 text-label-md font-label-md text-on-surface-variant tabular-numbers">${s.project_no || '-'}</td>
-      <td class="px-3 py-2.5 text-label-md font-label-md text-on-surface-variant">${s.client}</td>
-      <td class="px-3 py-2.5 text-label-md font-label-md text-primary">${s.name}</td>
+      <td class="px-3 py-2.5 text-label-md font-label-md text-on-surface-variant">${escHtml(s.client)}</td>
+      <td class="px-3 py-2.5 text-label-md font-label-md text-primary">${escHtml(s.name)}</td>
       <td class="px-3 py-2.5 text-center"><span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] ${s.status === '受注' ? 'bg-secondary text-on-secondary' : 'bg-surface-container text-on-surface-variant'}">${s.status || '-'}</span></td>
       <td class="px-3 py-2.5 text-center text-label-md font-label-md ${s.invoice_issued ? 'text-secondary' : 'text-on-surface-variant/50'}">${s.invoice_issued ? '発行済' : '未発行'}</td>
       <td class="px-3 py-2.5 text-center text-label-md font-label-md ${s.completed ? 'text-on-surface-variant tabular-nums' : 'text-error'}">${s.completed ? s.last_receipt_date || '完成' : '未完'}</td>
@@ -665,10 +666,10 @@ function renderReceipts() {
       return `
     <tr class="hover:bg-surface-container-low transition-colors">
       <td class="px-3 py-2.5 text-label-md font-label-md text-on-surface-variant tabular-numbers">${r.received_date}</td>
-      <td class="px-3 py-2.5 text-label-md font-label-md text-on-surface">${project ? project.name : '案件#' + r.project_id}</td>
+      <td class="px-3 py-2.5 text-label-md font-label-md text-on-surface">${project ? escHtml(project.name) : '案件#' + r.project_id}</td>
       <td class="px-3 py-2.5 text-label-md font-label-md text-right tabular-numbers text-secondary">${fmt(r.amount)}</td>
       <td class="px-3 py-2.5 text-label-md font-label-md text-on-surface-variant tabular-numbers">${toYearMonth(r.month, r.received_date)}</td>
-      <td class="px-3 py-2.5 text-label-md font-label-md text-on-surface-variant">${r.memo || '-'}</td>
+      <td class="px-3 py-2.5 text-label-md font-label-md text-on-surface-variant">${escHtml(r.memo) || '-'}</td>
       <td class="px-3 py-2.5 text-center">
         <button class="material-symbols-outlined text-error/70 hover:bg-error/10 rounded-full w-8 h-8 text-[20px]" onclick="deleteReceipt(${r.id})" title="削除">delete</button>
       </td>
@@ -752,7 +753,7 @@ function renderHistory() {
         <td class="px-3 py-2.5 text-label-md font-label-md text-on-surface-variant tabular-numbers">${r.received_date}</td>
         <td class="px-3 py-2.5 text-label-md font-label-md text-right tabular-numbers text-secondary">${fmt(r.amount)}</td>
         <td class="px-3 py-2.5 text-label-md font-label-md text-on-surface-variant tabular-numbers">${toYearMonth(r.month, r.received_date)}</td>
-        <td class="px-3 py-2.5 text-label-md font-label-md text-on-surface-variant">${r.memo || '-'}</td>
+        <td class="px-3 py-2.5 text-label-md font-label-md text-on-surface-variant">${escHtml(r.memo) || '-'}</td>
         <td class="px-3 py-2.5 text-center">
           <button class="material-symbols-outlined text-error/70 hover:bg-error/10 rounded-full w-8 h-8 text-[20px]" onclick="deleteReceipt(${r.id})" title="削除">delete</button>
         </td>
