@@ -44,7 +44,7 @@ body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 <main class="ml-0 md:ml-48 min-h-screen">
 <!-- Top App Bar -->
 <header class="sticky top-0 z-40 flex justify-between items-center h-16 px-margin-desktop bg-surface/80 backdrop-blur-md shadow-sm">
-<button class="md:hidden material-symbols-outlined text-on-surface-variant hover:text-primary mr-3" onclick="toggleSidebar()">menu</button>
+<button class="md:hidden material-symbols-outlined text-on-surface-variant hover:text-primary mr-3" onclick="toggleSidebar()" aria-label="メニューを開く">menu</button>
 <div class="text-headline-sm font-bold text-primary">履歴詳細</div>
 <div class="flex items-center gap-3 cursor-pointer group relative" id="user-menu" onclick="toggleUserMenu()">
 <div class="text-right">

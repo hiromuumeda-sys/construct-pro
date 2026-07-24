@@ -69,7 +69,7 @@ body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 <main class="ml-0 md:ml-48 min-h-screen">
 <!-- Top App Bar -->
 <header class="sticky top-0 z-40 flex justify-between items-center h-16 px-margin-desktop bg-surface/80 backdrop-blur-md shadow-sm">
-<button class="md:hidden material-symbols-outlined text-on-surface-variant hover:text-primary mr-3" onclick="toggleSidebar()">menu</button>
+<button class="md:hidden material-symbols-outlined text-on-surface-variant hover:text-primary mr-3" onclick="toggleSidebar()" aria-label="メニューを開く">menu</button>
 <div class="flex items-center gap-4 bg-surface-container-low px-4 py-2 rounded-full w-96">
 <span class="material-symbols-outlined text-on-surface-variant">search</span>
 <input class="bg-transparent border-none focus:ring-0 text-body-md w-full" id="keyword-search" placeholder="Search..." type="text"/>
@@ -121,7 +121,7 @@ body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 <div class="bg-surface-container-lowest p-md rounded-lg custom-shadow border border-outline-variant">
 <div class="grid grid-cols-1 md:grid-cols-3 gap-md items-end">
 <div>
-<label class="block text-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">ステータス</label>
+<label for="status-filter" class="block text-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">ステータス</label>
 <select id="status-filter" class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-body-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent">
 <option value="">すべてのステータス</option>
 <option value="未払い">未払い</option>
@@ -130,11 +130,11 @@ body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 </select>
 </div>
 <div>
-<label class="block text-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">支払期日（以降）</label>
+<label for="due-filter-start" class="block text-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">支払期日（以降）</label>
 <input type="date" id="due-filter-start" class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-body-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent"/>
 </div>
 <div>
-<label class="block text-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">支払期日（以前）</label>
+<label for="due-filter-end" class="block text-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">支払期日（以前）</label>
 <input type="date" id="due-filter-end" class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-body-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent"/>
 </div>
 </div>
@@ -292,11 +292,11 @@ body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 </div>
 <div class="grid grid-cols-2 gap-md">
 <div>
-<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">支払日</label>
+<label for="pr-date" class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">支払日</label>
 <input id="pr-date" type="date" class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-3 py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent"/>
 </div>
 <div>
-<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">備考</label>
+<label for="pr-note" class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">備考</label>
 <input id="pr-note" type="text" class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-3 py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent"/>
 </div>
 </div>
@@ -344,19 +344,19 @@ body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 <input id="mp-id" type="hidden"/>
 <div class="grid grid-cols-2 gap-md">
 <div>
-<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">種別</label>
+<label for="mp-type" class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">種別</label>
 <select id="mp-type" class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-3 py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent">
 <option value="支払">支払</option>
 <option value="返金">返金（受取）</option>
 </select>
 </div>
 <div>
-<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">区分</label>
+<label for="mp-category" class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">区分</label>
 <input id="mp-category" type="text" placeholder="例：給与、雑費 等" class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-3 py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent"/>
 </div>
 </div>
 <div>
-<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">支払先</label>
+<label for="mp-payee" class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">支払先</label>
 <input id="mp-payee" type="text" class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-3 py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent"/>
 </div>
 <div class="grid grid-cols-2 gap-md">
@@ -365,12 +365,12 @@ body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 <input id="mp-amount" type="number" min="0" class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-3 py-2 tabular-numbers focus:ring-2 focus:ring-secondary/20 focus:border-transparent"/>
 </div>
 <div>
-<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">支払日</label>
+<label for="mp-date" class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">支払日</label>
 <input id="mp-date" type="date" class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-3 py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent"/>
 </div>
 </div>
 <div>
-<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">ステータス</label>
+<label for="mp-status" class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">ステータス</label>
 <select id="mp-status" class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-3 py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent">
 <option value="未払い">未払い</option>
 <option value="部分払い">部分払い</option>
@@ -378,7 +378,7 @@ body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 </select>
 </div>
 <div>
-<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">備考</label>
+<label for="mp-notes" class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">備考</label>
 <textarea id="mp-notes" rows="2" class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-3 py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent"></textarea>
 </div>
 </div>
@@ -460,7 +460,7 @@ function renderPaymentRow(payment) {
   return `
     <tr class="${['未払い', '部分払い'].includes(payment.status) ? 'bg-yellow-50 hover:bg-yellow-100' : 'hover:bg-surface-container-low'} transition-colors cursor-pointer group" onclick="openModal(${payment.id})">
       <td class="px-3 py-1.5 text-center whitespace-nowrap" onclick="event.stopPropagation()">
-        ${payment.status !== '支払済み' ? `<button onclick="event.stopPropagation(); openPayRegister(${payment.id})" class="material-symbols-outlined text-secondary hover:bg-secondary/10 rounded-full w-8 h-8" title="支払登録">add_circle</button>` : ''}
+        ${payment.status !== '支払済み' ? `<button onclick="event.stopPropagation(); openPayRegister(${payment.id})" class="material-symbols-outlined text-secondary hover:bg-secondary/10 rounded-full w-8 h-8" title="支払登録" aria-label="支払登録">add_circle</button>` : ''}
       </td>
       <td class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant tabular-numbers">${String(payment.id).padStart(6, '0')}</td>
       <td class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant tabular-numbers whitespace-nowrap">${payment.projectNo}</td>
@@ -480,7 +480,7 @@ function renderPaymentRow(payment) {
         </div>
       </td>
       <td class="px-3 py-1.5 text-center whitespace-nowrap" onclick="event.stopPropagation()">
-        <button class="material-symbols-outlined text-on-surface-variant hover:text-secondary hover:bg-secondary/10 rounded-full w-8 h-8" onclick="openPayHistoryModal(${payment.id})" title="支払履歴">receipt_long</button>
+        <button class="material-symbols-outlined text-on-surface-variant hover:text-secondary hover:bg-secondary/10 rounded-full w-8 h-8" onclick="openPayHistoryModal(${payment.id})" title="支払履歴" aria-label="支払履歴">receipt_long</button>
       </td>
     </tr>
   `;
@@ -660,7 +660,7 @@ function renderPayHistory() {
         <td class="px-3 py-2.5 text-label-md font-label-md text-on-surface-variant tabular-numbers">${r.paid_date || '-'}</td>
         <td class="px-3 py-2.5 text-label-md font-label-md text-right tabular-numbers text-secondary">¥${(r.amount || 0).toLocaleString()}</td>
         <td class="px-3 py-2.5 text-label-md font-label-md text-on-surface-variant">${escHtml(r.note) || '-'}</td>
-        <td class="px-3 py-2.5 text-center"><button class="material-symbols-outlined text-error/70 hover:bg-error/10 rounded-full w-8 h-8 text-[20px]" onclick="deletePaymentRecord(${r.id})" title="取消">delete</button></td>
+        <td class="px-3 py-2.5 text-center"><button class="material-symbols-outlined text-error/70 hover:bg-error/10 rounded-full w-8 h-8 text-[20px]" onclick="deletePaymentRecord(${r.id})" title="取消" aria-label="取消">delete</button></td>
       </tr>`
       )
       .join('');
@@ -710,7 +710,7 @@ function renderPaymentRecords() {
       <td class="px-3 py-2.5 text-label-md font-label-md text-on-surface-variant">${escHtml(r.vendor) || '-'}</td>
       <td class="px-3 py-2.5 text-label-md font-label-md text-right tabular-numbers text-secondary">¥${(r.amount || 0).toLocaleString()}</td>
       <td class="px-3 py-2.5 text-label-md font-label-md text-on-surface-variant">${escHtml(r.note) || '-'}</td>
-      <td class="px-3 py-2.5 text-center"><button class="material-symbols-outlined text-error/70 hover:bg-error/10 rounded-full w-8 h-8 text-[20px]" onclick="deletePaymentRecord(${r.id})" title="取消">delete</button></td>
+      <td class="px-3 py-2.5 text-center"><button class="material-symbols-outlined text-error/70 hover:bg-error/10 rounded-full w-8 h-8 text-[20px]" onclick="deletePaymentRecord(${r.id})" title="取消" aria-label="取消">delete</button></td>
     </tr>`
     )
     .join('');
@@ -773,7 +773,7 @@ function renderMiscPayments() {
       <td class="px-3 py-2.5 text-center"><span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold ${miscPayStatusClass(m.status)}">${escHtml(m.status) || '-'}</span></td>
       <td class="px-3 py-2.5 text-label-md font-label-md text-on-surface-variant">${escHtml(m.notes) || '-'}</td>
       <td class="px-3 py-2.5 text-center" onclick="event.stopPropagation()">
-        <button class="material-symbols-outlined text-error/70 hover:bg-error/10 rounded-full w-8 h-8 text-[20px]" onclick="deleteMiscPayment(${m.id})" title="削除">delete</button>
+        <button class="material-symbols-outlined text-error/70 hover:bg-error/10 rounded-full w-8 h-8 text-[20px]" onclick="deleteMiscPayment(${m.id})" title="削除" aria-label="削除">delete</button>
       </td>
     </tr>`
     )

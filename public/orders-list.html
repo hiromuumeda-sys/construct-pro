@@ -69,7 +69,7 @@ body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 <main class="ml-0 md:ml-48 min-h-screen">
 <!-- Top App Bar -->
 <header class="sticky top-0 z-40 flex justify-between items-center h-16 px-margin-desktop bg-surface/80 backdrop-blur-md shadow-sm">
-<button class="md:hidden material-symbols-outlined text-on-surface-variant hover:text-primary mr-3" onclick="toggleSidebar()">menu</button>
+<button class="md:hidden material-symbols-outlined text-on-surface-variant hover:text-primary mr-3" onclick="toggleSidebar()" aria-label="メニューを開く">menu</button>
 <div class="flex items-center gap-4 bg-surface-container-low px-md py-2 rounded-full w-96">
 <span class="material-symbols-outlined text-on-surface-variant">search</span>
 <input class="bg-transparent border-none focus:ring-0 text-body-md w-full" id="keyword-search" placeholder="Search..." type="text"/>
@@ -110,11 +110,11 @@ body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 <div class="bg-surface-container-lowest border border-outline-variant rounded-lg p-md">
 <div class="grid grid-cols-1 md:grid-cols-2 gap-md mb-md">
 <div>
-<label class="block text-label-sm text-on-surface-variant uppercase tracking-wider font-bold mb-1.5">工期開始（以降）</label>
+<label for="project-date-start" class="block text-label-sm text-on-surface-variant uppercase tracking-wider font-bold mb-1.5">工期開始（以降）</label>
 <input type="date" id="project-date-start" class="w-full bg-surface-container-low border border-outline-variant text-sm px-4 py-2.5 rounded-lg focus:ring-2 focus:ring-secondary/20 focus:border-transparent" onchange="renderProjectSelectList()"/>
 </div>
 <div>
-<label class="block text-label-sm text-on-surface-variant uppercase tracking-wider font-bold mb-1.5">工期終了（以前）</label>
+<label for="project-date-end" class="block text-label-sm text-on-surface-variant uppercase tracking-wider font-bold mb-1.5">工期終了（以前）</label>
 <input type="date" id="project-date-end" class="w-full bg-surface-container-low border border-outline-variant text-sm px-4 py-2.5 rounded-lg focus:ring-2 focus:ring-secondary/20 focus:border-transparent" onchange="renderProjectSelectList()"/>
 </div>
 </div>
@@ -321,17 +321,17 @@ CSV出力
 </select>
 </div>
 <div class="col-span-2">
-<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">発注先</label>
+<label for="edit-vendor" class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">発注先</label>
 <select class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent transition-all" id="edit-vendor">
 <option value="">選択してください</option>
 </select>
 </div>
 <div>
-<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">見積額</label>
+<label for="edit-estimate" class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">見積額</label>
 <input class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent transition-all tabular-numbers" id="edit-estimate" type="number"/>
 </div>
 <div>
-<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">予定金額</label>
+<label for="edit-planned" class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">予定金額</label>
 <input class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent transition-all tabular-numbers" id="edit-planned" type="number"/>
 </div>
 <div>
@@ -339,7 +339,7 @@ CSV出力
 <input class="w-full bg-amber-50 border border-amber-200 rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent transition-all tabular-numbers" id="edit-decided" type="number"/>
 </div>
 <div>
-<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">ステータス</label>
+<label for="edit-status" class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">ステータス</label>
 <select class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent transition-all" id="edit-status">
 <option value="未処理">未処理</option>
 <option value="見積待ち">見積待ち</option>
@@ -348,35 +348,35 @@ CSV出力
 </select>
 </div>
 <div class="col-span-2">
-<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">工事場所</label>
+<label for="edit-site" class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">工事場所</label>
 <input class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent transition-all" id="edit-site" type="text"/>
 </div>
 <div>
-<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">工事開始日</label>
+<label for="edit-period-start" class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">工事開始日</label>
 <input class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent transition-all" id="edit-period-start" type="date"/>
 </div>
 <div>
-<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">工事終了日</label>
+<label for="edit-period-end" class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">工事終了日</label>
 <input class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent transition-all" id="edit-period-end" type="date"/>
 </div>
 <div class="col-span-2">
-<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">検査・引渡時期</label>
+<label for="edit-handover" class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">検査・引渡時期</label>
 <input class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent transition-all" id="edit-handover" type="date"/>
 </div>
 <div class="col-span-2">
-<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">支払条件</label>
+<label for="edit-payment" class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">支払条件</label>
 <input class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent transition-all" id="edit-payment" type="text"/>
 </div>
 <div class="col-span-2">
-<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">担当者</label>
+<label for="edit-assignee" class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">担当者</label>
 <input class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent transition-all" id="edit-assignee" type="text" placeholder="注文書・メールに表示される社内担当者名"/>
 </div>
 <div class="col-span-2">
-<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">工事内容</label>
+<label for="edit-details" class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">工事内容</label>
 <textarea class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent transition-all" id="edit-details" rows="3"></textarea>
 </div>
 <div class="col-span-2">
-<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">備考（イレギュラー対応・指定業者・備品購入等）</label>
+<label for="edit-payment-notes" class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">備考（イレギュラー対応・指定業者・備品購入等）</label>
 <textarea class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent transition-all" id="edit-payment-notes" rows="2" placeholder="例：翌々月8日払い（指定業者）、ネット購入のため通常フロー対象外 等"></textarea>
 </div>
 </div>
@@ -507,16 +507,16 @@ function buildOrderRow(order) {
         </td>
         <td class="px-3 py-1.5 text-center whitespace-nowrap">${
           order.invoice_has_file
-            ? `<button onclick="event.stopPropagation(); openDocModal(${order.id},'invoice')" class="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-secondary-container text-on-secondary-container text-[11px] font-bold hover:opacity-80 transition-opacity max-w-[120px]" title="請求書PDFを表示"><span class="material-symbols-outlined text-[15px]">picture_as_pdf</span><span class="truncate">請求書</span></button>`
-            : `<button onclick="event.stopPropagation(); requestDocUpload(${order.id},'invoice')" class="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-surface-container text-on-surface-variant text-[11px] hover:bg-surface-container-high transition-colors" title="請求書PDFをアップロード"><span class="material-symbols-outlined text-[16px]">upload_file</span></button>`
+            ? `<button onclick="event.stopPropagation(); openDocModal(${order.id},'invoice')" class="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-secondary-container text-on-secondary-container text-[11px] font-bold hover:opacity-80 transition-opacity max-w-[120px]" title="請求書PDFを表示" aria-label="請求書PDFを表示"><span class="material-symbols-outlined text-[15px]">picture_as_pdf</span><span class="truncate">請求書</span></button>`
+            : `<button onclick="event.stopPropagation(); requestDocUpload(${order.id},'invoice')" class="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-surface-container text-on-surface-variant text-[11px] hover:bg-surface-container-high transition-colors" title="請求書PDFをアップロード" aria-label="請求書PDFをアップロード"><span class="material-symbols-outlined text-[16px]">upload_file</span></button>`
         }</td>
         <td class="px-3 py-1.5 text-center whitespace-nowrap">${
           order.ack_has_file
-            ? `<button onclick="event.stopPropagation(); openDocModal(${order.id},'ack')" class="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-secondary-container text-on-secondary-container text-[11px] font-bold hover:opacity-80 transition-opacity max-w-[120px]" title="請書PDFを表示"><span class="material-symbols-outlined text-[15px]">picture_as_pdf</span><span class="truncate">請書</span></button>`
-            : `<button onclick="event.stopPropagation(); requestDocUpload(${order.id},'ack')" class="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-surface-container text-on-surface-variant text-[11px] hover:bg-surface-container-high transition-colors" title="請書PDFをアップロード"><span class="material-symbols-outlined text-[16px]">upload_file</span></button>`
+            ? `<button onclick="event.stopPropagation(); openDocModal(${order.id},'ack')" class="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-secondary-container text-on-secondary-container text-[11px] font-bold hover:opacity-80 transition-opacity max-w-[120px]" title="請書PDFを表示" aria-label="請書PDFを表示"><span class="material-symbols-outlined text-[15px]">picture_as_pdf</span><span class="truncate">請書</span></button>`
+            : `<button onclick="event.stopPropagation(); requestDocUpload(${order.id},'ack')" class="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-surface-container text-on-surface-variant text-[11px] hover:bg-surface-container-high transition-colors" title="請書PDFをアップロード" aria-label="請書PDFをアップロード"><span class="material-symbols-outlined text-[16px]">upload_file</span></button>`
         }</td>
         <td class="px-3 py-1.5 text-center">
-          <button class="inline-flex items-center gap-1 px-2 py-1.5 rounded-lg bg-primary/10 text-primary text-[12px] font-normal hover:bg-primary/20 transition-colors whitespace-nowrap" onclick="event.stopPropagation(); showPoPreview(${order.id})" title="注文書プレビュー">
+          <button class="inline-flex items-center gap-1 px-2 py-1.5 rounded-lg bg-primary/10 text-primary text-[12px] font-normal hover:bg-primary/20 transition-colors whitespace-nowrap" onclick="event.stopPropagation(); showPoPreview(${order.id})" title="注文書プレビュー" aria-label="注文書プレビュー">
             <span class="material-symbols-outlined text-[16px]">receipt_long</span>
             注文書
           </button>
@@ -955,7 +955,7 @@ function showPoModal(order, project) {
       <div class="absolute inset-0 bg-inverse-surface/60 backdrop-blur-md"></div>
       <div class="flex items-center justify-center min-h-screen p-4" onclick="event.stopPropagation()">
         <div class="bg-white w-full max-w-2xl rounded-lg shadow-2xl overflow-hidden relative border border-outline-variant" onclick="event.stopPropagation()">
-          <button class="absolute bottom-6 right-6 w-14 h-14 bg-primary text-on-primary rounded-lg flex items-center justify-center shadow-lg hover:shadow-xl hover:scale-110 transition-all" onclick="openPoEmailForm()" title="メール送信">
+          <button class="absolute bottom-6 right-6 w-14 h-14 bg-primary text-on-primary rounded-lg flex items-center justify-center shadow-lg hover:shadow-xl hover:scale-110 transition-all" onclick="openPoEmailForm()" title="メール送信" aria-label="メール送信">
             <span class="material-symbols-outlined text-[24px]">send</span>
           </button>
           <div class="px-lg py-md border-b border-outline-variant flex justify-between items-center">
@@ -964,7 +964,7 @@ function showPoModal(order, project) {
               注文書プレビュー（発注確定前の最終確認）
             </h3>
             <div class="flex items-center gap-1">
-              <button class="text-outline hover:text-on-surface p-1 transition-colors" onclick="downloadPo()" title="ダウンロード">
+              <button class="text-outline hover:text-on-surface p-1 transition-colors" onclick="downloadPo()" title="ダウンロード" aria-label="ダウンロード">
                 <span class="material-symbols-outlined">download</span>
               </button>
               <button class="text-outline hover:text-on-surface p-1 transition-colors" onclick="closePoPreview()">
@@ -1049,15 +1049,15 @@ function openPoEmailForm() {
         </div>
         <div class="p-6 space-y-4">
           <div>
-            <label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">宛先</label>
+            <label for="po-email-to" class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">宛先</label>
             <input id="po-email-to" type="email" class="w-full bg-surface-container-low border border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent transition-all" placeholder="vendor@example.com" value="${order.vendor || ''}"/>
           </div>
           <div>
-            <label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">件名</label>
+            <label for="po-email-subject" class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">件名</label>
             <input id="po-email-subject" type="text" class="w-full bg-surface-container-low border border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent transition-all" value="【注文書送付】${project ? project.name : order.category || '工事'}${order.order_no ? `（${order.order_no}）` : ''}"/>
           </div>
           <div>
-            <label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">本文</label>
+            <label for="po-email-body" class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">本文</label>
             <textarea id="po-email-body" rows="11" class="w-full bg-surface-container-low border border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent transition-all">${order.vendor || 'ご担当者'} ご担当者様
 
 いつもお世話になっております。

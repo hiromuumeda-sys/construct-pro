@@ -69,7 +69,7 @@ body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 <main class="ml-0 md:ml-48 min-h-screen">
 <!-- Top App Bar -->
 <header class="sticky top-0 z-40 flex justify-between items-center h-16 px-margin-desktop bg-surface/80 backdrop-blur-md shadow-sm">
-<button class="md:hidden material-symbols-outlined text-on-surface-variant hover:text-primary mr-3" onclick="toggleSidebar()">menu</button>
+<button class="md:hidden material-symbols-outlined text-on-surface-variant hover:text-primary mr-3" onclick="toggleSidebar()" aria-label="メニューを開く">menu</button>
 <div class="flex items-center gap-4 bg-surface-container-low px-4 py-2 rounded-full w-96">
 <span class="material-symbols-outlined text-on-surface-variant">search</span>
 <input class="bg-transparent border-none focus:ring-0 text-body-md w-full" id="header-search" placeholder="Search..." type="text" oninput="renderSales()"/>
@@ -140,7 +140,7 @@ body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 <div class="bg-surface-container-lowest p-md rounded-lg custom-shadow border border-outline-variant mt-lg">
 <div class="grid grid-cols-1 md:grid-cols-3 gap-md items-end">
 <div>
-<label class="block text-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">入金ステータス</label>
+<label for="filter-pay-status" class="block text-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">入金ステータス</label>
 <select id="filter-pay-status" class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-body-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent" onchange="renderSales()">
 <option value="">すべて</option>
 <option value="未入金">未入金</option>
@@ -149,11 +149,11 @@ body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 </select>
 </div>
 <div>
-<label class="block text-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">入金期日（以降）</label>
+<label for="filter-due-start" class="block text-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">入金期日（以降）</label>
 <input type="date" id="filter-due-start" class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-body-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent" onchange="renderSales()"/>
 </div>
 <div>
-<label class="block text-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">入金期日（以前）</label>
+<label for="filter-due-end" class="block text-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">入金期日（以前）</label>
 <input type="date" id="filter-due-end" class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-body-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent" onchange="renderSales()"/>
 </div>
 </div>
@@ -292,7 +292,7 @@ body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 <div class="p-lg space-y-md overflow-y-auto flex-1">
 <input id="receipt-project-id" type="hidden"/>
 <div>
-<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">工事名</label>
+<label for="receipt-project-name" class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">工事名</label>
 <input class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2" id="receipt-project-name" type="text" readonly/>
 </div>
 <div class="bg-surface-container-low rounded-lg p-4 grid grid-cols-2 gap-2">
@@ -305,7 +305,7 @@ body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 <input class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent" id="receipt-date" type="date"/>
 </div>
 <div>
-<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">対象月度</label>
+<label for="receipt-month" class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">対象月度</label>
 <input class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent" id="receipt-month" type="date" title="カレンダーから選択（その月が対象月度になります）"/>
 </div>
 </div>
@@ -314,7 +314,7 @@ body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 <input class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent tabular-numbers" id="receipt-amount" type="number"/>
 </div>
 <div>
-<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">備考</label>
+<label for="receipt-memo" class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">備考</label>
 <textarea class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent" id="receipt-memo" rows="2"></textarea>
 </div>
 </div>
@@ -362,19 +362,19 @@ body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 <input id="mr-id" type="hidden"/>
 <div class="grid grid-cols-2 gap-md">
 <div>
-<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">種別</label>
+<label for="mr-type" class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">種別</label>
 <select id="mr-type" class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-3 py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent">
 <option value="入金">入金</option>
 <option value="返金">返金（支払）</option>
 </select>
 </div>
 <div>
-<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">区分</label>
+<label for="mr-category" class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">区分</label>
 <input id="mr-category" type="text" placeholder="例：雑収入、返金 等" class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-3 py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent"/>
 </div>
 </div>
 <div>
-<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">入金元</label>
+<label for="mr-payer" class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">入金元</label>
 <input id="mr-payer" type="text" class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-3 py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent"/>
 </div>
 <div class="grid grid-cols-2 gap-md">
@@ -383,12 +383,12 @@ body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 <input id="mr-amount" type="number" min="0" class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-3 py-2 tabular-numbers focus:ring-2 focus:ring-secondary/20 focus:border-transparent"/>
 </div>
 <div>
-<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">入金日</label>
+<label for="mr-date" class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">入金日</label>
 <input id="mr-date" type="date" class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-3 py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent"/>
 </div>
 </div>
 <div>
-<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">ステータス</label>
+<label for="mr-status" class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">ステータス</label>
 <select id="mr-status" class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-3 py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent">
 <option value="未入金">未入金</option>
 <option value="一部入金">一部入金</option>
@@ -396,7 +396,7 @@ body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 </select>
 </div>
 <div>
-<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">備考</label>
+<label for="mr-notes" class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-2">備考</label>
 <textarea id="mr-notes" rows="2" class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-3 py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent"></textarea>
 </div>
 </div>
@@ -499,7 +499,7 @@ function renderMiscReceipts() {
       <td class="px-3 py-2.5 text-center">${payStatusBadge(m.status || '未入金')}</td>
       <td class="px-3 py-2.5 text-label-md font-label-md text-on-surface-variant">${escHtml(m.notes) || '-'}</td>
       <td class="px-3 py-2.5 text-center" onclick="event.stopPropagation()">
-        <button class="material-symbols-outlined text-error/70 hover:bg-error/10 rounded-full w-8 h-8 text-[20px]" onclick="deleteMiscReceipt(${m.id})" title="削除">delete</button>
+        <button class="material-symbols-outlined text-error/70 hover:bg-error/10 rounded-full w-8 h-8 text-[20px]" onclick="deleteMiscReceipt(${m.id})" title="削除" aria-label="削除">delete</button>
       </td>
     </tr>`
     )
@@ -615,7 +615,7 @@ function renderSales() {
         s => `
     <tr class="${['未入金', '一部入金'].includes(s.pay_status) ? 'bg-yellow-50 hover:bg-yellow-100' : 'hover:bg-surface-container-low'} transition-colors cursor-pointer" onclick="openSalesDetail(${s.id})">
       <td class="px-3 py-2.5 text-center">
-        ${s.pay_status !== '入金済' ? `<button class="material-symbols-outlined text-secondary hover:bg-secondary/10 rounded-full w-8 h-8" onclick="event.stopPropagation(); openReceiptModal(${s.id})" title="入金登録">add_circle</button>` : ''}
+        ${s.pay_status !== '入金済' ? `<button class="material-symbols-outlined text-secondary hover:bg-secondary/10 rounded-full w-8 h-8" onclick="event.stopPropagation(); openReceiptModal(${s.id})" title="入金登録" aria-label="入金登録">add_circle</button>` : ''}
       </td>
       <td class="px-3 py-2.5 text-label-md font-label-md text-on-surface-variant tabular-numbers">${s.project_no || '-'}</td>
       <td class="px-3 py-2.5 text-label-md font-label-md text-on-surface-variant">${escHtml(s.client)}</td>
@@ -638,7 +638,7 @@ function renderSales() {
         </div>
       </td>
       <td class="px-3 py-2.5 text-center" onclick="event.stopPropagation()">
-        <button class="material-symbols-outlined text-on-surface-variant hover:text-secondary hover:bg-secondary/10 rounded-full w-8 h-8" onclick="openHistoryModal(${s.id})" title="消し込み履歴">receipt_long</button>
+        <button class="material-symbols-outlined text-on-surface-variant hover:text-secondary hover:bg-secondary/10 rounded-full w-8 h-8" onclick="openHistoryModal(${s.id})" title="消し込み履歴" aria-label="消し込み履歴">receipt_long</button>
       </td>
     </tr>
   `
@@ -671,7 +671,7 @@ function renderReceipts() {
       <td class="px-3 py-2.5 text-label-md font-label-md text-on-surface-variant tabular-numbers">${toYearMonth(r.month, r.received_date)}</td>
       <td class="px-3 py-2.5 text-label-md font-label-md text-on-surface-variant">${escHtml(r.memo) || '-'}</td>
       <td class="px-3 py-2.5 text-center">
-        <button class="material-symbols-outlined text-error/70 hover:bg-error/10 rounded-full w-8 h-8 text-[20px]" onclick="deleteReceipt(${r.id})" title="削除">delete</button>
+        <button class="material-symbols-outlined text-error/70 hover:bg-error/10 rounded-full w-8 h-8 text-[20px]" onclick="deleteReceipt(${r.id})" title="削除" aria-label="削除">delete</button>
       </td>
     </tr>`;
     })
@@ -755,7 +755,7 @@ function renderHistory() {
         <td class="px-3 py-2.5 text-label-md font-label-md text-on-surface-variant tabular-numbers">${toYearMonth(r.month, r.received_date)}</td>
         <td class="px-3 py-2.5 text-label-md font-label-md text-on-surface-variant">${escHtml(r.memo) || '-'}</td>
         <td class="px-3 py-2.5 text-center">
-          <button class="material-symbols-outlined text-error/70 hover:bg-error/10 rounded-full w-8 h-8 text-[20px]" onclick="deleteReceipt(${r.id})" title="削除">delete</button>
+          <button class="material-symbols-outlined text-error/70 hover:bg-error/10 rounded-full w-8 h-8 text-[20px]" onclick="deleteReceipt(${r.id})" title="削除" aria-label="削除">delete</button>
         </td>
       </tr>`
       )

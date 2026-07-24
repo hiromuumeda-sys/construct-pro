@@ -15,7 +15,7 @@
 const HEADER_RIGHT_HTML = `<div class="hdr-ready flex items-center gap-6">
 <div class="flex items-center gap-4">
 <div class="relative" id="notif-wrap">
-<button class="material-symbols-outlined text-on-surface-variant hover:text-primary relative" onclick="toggleNotif(event)">notifications<span id="notif-badge" class="absolute -top-1 -right-1 bg-error text-on-error text-[9px] font-normal rounded-full min-w-[16px] h-4 px-1 flex items-center justify-center" style="display:none">0</span></button>
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary relative" onclick="toggleNotif(event)" aria-label="通知">notifications<span id="notif-badge" class="absolute -top-1 -right-1 bg-error text-on-error text-[9px] font-normal rounded-full min-w-[16px] h-4 px-1 flex items-center justify-center" style="display:none">0</span></button>
 <div id="notif-panel" class="absolute right-0 mt-2 w-96 max-h-[480px] overflow-y-auto bg-surface-container-lowest border border-outline-variant rounded-lg custom-shadow z-[200]" style="display:none" onclick="event.stopPropagation()">
 <div class="px-4 py-3 border-b border-outline-variant sticky top-0 bg-surface-container-lowest">
 <div class="flex justify-between items-center">
@@ -29,7 +29,7 @@ const HEADER_RIGHT_HTML = `<div class="hdr-ready flex items-center gap-6">
 <div id="notif-list"></div>
 </div>
 </div>
-<button class="material-symbols-outlined text-on-surface-variant hover:text-primary" title="ヘルプ">help</button>
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary" title="ヘルプ" aria-label="ヘルプ">help</button>
 </div>
 <div class="h-8 w-px bg-outline-variant"></div>
 <div class="flex items-center gap-3 cursor-pointer relative" id="hdr-user-menu" onclick="hdrToggleUserMenu(event)">

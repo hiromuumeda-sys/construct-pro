@@ -68,7 +68,7 @@ body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 <main class="ml-0 md:ml-48 min-h-screen">
 <!-- Top App Bar -->
 <header class="sticky top-0 z-40 flex justify-between items-center h-16 px-margin-desktop bg-surface/80 backdrop-blur-md shadow-sm">
-<button class="md:hidden material-symbols-outlined text-on-surface-variant hover:text-primary mr-3" onclick="toggleSidebar()">menu</button>
+<button class="md:hidden material-symbols-outlined text-on-surface-variant hover:text-primary mr-3" onclick="toggleSidebar()" aria-label="メニューを開く">menu</button>
 <div class="flex items-center gap-4 bg-surface-container-low px-4 py-2 rounded-full w-96">
 <span class="material-symbols-outlined text-on-surface-variant">search</span>
 <input class="bg-transparent border-none focus:ring-0 text-body-md w-full" id="keyword-search" placeholder="Search..." type="text"/>
@@ -152,11 +152,11 @@ CSV出力
 <div class="p-lg space-y-md overflow-y-auto flex-1">
 <div class="grid grid-cols-2 gap-md">
 <div>
-<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">工事区分コード</label>
+<label for="modal-code" class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">工事区分コード</label>
 <input class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent tabular-nums" id="modal-code" readonly="" type="text"/>
 </div>
 <div>
-<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">表示順</label>
+<label for="modal-order" class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">表示順</label>
 <input class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent tabular-nums" id="modal-order" type="number"/>
 </div>
 </div>
@@ -165,7 +165,7 @@ CSV出力
 <input class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent" id="modal-name" type="text"/>
 </div>
 <div>
-<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">備考</label>
+<label for="modal-note" class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">備考</label>
 <textarea class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent" id="modal-note" rows="3"></textarea>
 </div>
 </div>
@@ -191,11 +191,11 @@ CSV出力
 <div class="p-lg space-y-md overflow-y-auto flex-1">
 <div class="grid grid-cols-2 gap-md">
 <div>
-<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">工事区分コード</label>
+<label for="new-modal-code" class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">工事区分コード</label>
 <input class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent tabular-nums" id="new-modal-code" readonly="" type="text"/>
 </div>
 <div>
-<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">表示順</label>
+<label for="new-modal-order" class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">表示順</label>
 <input class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent tabular-nums" id="new-modal-order" type="number"/>
 </div>
 </div>
@@ -204,7 +204,7 @@ CSV出力
 <input class="w-full bg-surface-container-low border-outline-variant/50 rounded-xl text-sm px-4 py-3 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" id="new-modal-name" placeholder="工事区分名を入力" type="text"/>
 </div>
 <div>
-<label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-1.5">備考</label>
+<label for="new-modal-note" class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-1.5">備考</label>
 <textarea class="w-full bg-surface-container-low border-outline-variant/50 rounded-xl text-sm px-4 py-3 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all resize-none" id="new-modal-note" placeholder="備考を入力してください" rows="3"></textarea>
 </div>
 </div>

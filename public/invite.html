@@ -39,7 +39,7 @@ body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 </div>
 <div class="p-lg space-y-4">
 <div>
-<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-1.5">氏名</label>
+<label for="inv-name" class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-1.5">氏名</label>
 <input id="inv-name" type="text" placeholder="例）山田 太郎" class="w-full px-3 py-2 border border-outline-variant rounded-lg focus:ring-2 focus:ring-secondary/30 focus:border-secondary"/>
 </div>
 <div>
@@ -84,7 +84,7 @@ body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 <section class="lg:col-span-3 bg-surface-container-lowest border border-outline-variant rounded-lg custom-shadow overflow-hidden self-start">
 <div class="px-lg py-md border-b border-outline-variant bg-surface-container-low flex justify-between items-center">
 <h3 class="text-label-md font-label-md text-primary flex items-center gap-1"><span class="material-symbols-outlined text-[18px]">group</span>発行済みの招待</h3>
-<button onclick="loadInvites()" class="material-symbols-outlined text-on-surface-variant hover:text-primary" title="再読み込み">refresh</button>
+<button onclick="loadInvites()" class="material-symbols-outlined text-on-surface-variant hover:text-primary" title="再読み込み" aria-label="再読み込み">refresh</button>
 </div>
 <div class="overflow-x-auto">
 <table class="w-full text-left whitespace-nowrap">
@@ -109,7 +109,7 @@ body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 <section class="mt-lg bg-surface-container-lowest border border-outline-variant rounded-lg custom-shadow overflow-hidden">
 <div class="px-lg py-md border-b border-outline-variant bg-surface-container-low flex justify-between items-center">
 <h3 class="text-label-md font-label-md text-primary flex items-center gap-1"><span class="material-symbols-outlined text-[18px]">manage_accounts</span>登録済みアカウント</h3>
-<button onclick="loadUsers()" class="material-symbols-outlined text-on-surface-variant hover:text-primary" title="再読み込み">refresh</button>
+<button onclick="loadUsers()" class="material-symbols-outlined text-on-surface-variant hover:text-primary" title="再読み込み" aria-label="再読み込み">refresh</button>
 </div>
 <div class="overflow-x-auto">
 <table class="w-full text-left whitespace-nowrap">
@@ -233,7 +233,7 @@ async function loadInvites() {
         <td class="px-3 py-2"><span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold ${ROLE_BADGE[inv.roleLabel] || 'bg-surface-container text-on-surface-variant'}">${esc(inv.roleLabel)}</span></td>
         <td class="px-3 py-2 text-center"><span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold ${STATUS_BADGE[inv.status] || ''}">${esc(inv.status)}</span></td>
         <td class="px-3 py-2 text-body-sm text-on-surface-variant tabular-numbers whitespace-nowrap">${fmtDate(inv.expires_at)}</td>
-        <td class="px-3 py-2 text-center"><button onclick="revokeInvite(${inv.id})" class="material-symbols-outlined text-[18px] text-on-surface-variant hover:text-error" title="招待を取り消し">delete</button></td>
+        <td class="px-3 py-2 text-center"><button onclick="revokeInvite(${inv.id})" class="material-symbols-outlined text-[18px] text-on-surface-variant hover:text-error" title="招待を取り消し" aria-label="招待を取り消し">delete</button></td>
       </tr>`
       )
       .join('');
@@ -297,8 +297,8 @@ function renderUserRow(u, myId) {
     isSelf || isDeleted
       ? `<span class="text-[11px] text-on-surface-variant/40" title="${isSelf ? '自分自身は変更できません' : '削除済みのアカウントは変更できません'}">-</span>`
       : `<div class="flex items-center gap-1 justify-center">
-        <button onclick="toggleUserStatus(${u.id}, '${u.status}')" class="material-symbols-outlined text-[18px] ${u.status === 'suspended' ? 'text-secondary hover:opacity-70' : 'text-tertiary hover:opacity-70'}" title="${u.status === 'suspended' ? '有効化' : '一時停止'}">${u.status === 'suspended' ? 'play_circle' : 'pause_circle'}</button>
-        <button onclick="deleteUser(${u.id})" class="material-symbols-outlined text-[18px] text-on-surface-variant hover:text-error" title="削除">delete</button>
+        <button onclick="toggleUserStatus(${u.id}, '${u.status}')" class="material-symbols-outlined text-[18px] ${u.status === 'suspended' ? 'text-secondary hover:opacity-70' : 'text-tertiary hover:opacity-70'}" title="${u.status === 'suspended' ? '有効化' : '一時停止'}" aria-label="${u.status === 'suspended' ? '有効化' : '一時停止'}">${u.status === 'suspended' ? 'play_circle' : 'pause_circle'}</button>
+        <button onclick="deleteUser(${u.id})" class="material-symbols-outlined text-[18px] text-on-surface-variant hover:text-error" title="削除" aria-label="削除">delete</button>
       </div>`;
   return `
     <tr class="hover:bg-surface-container-low/50 ${isDeleted ? 'opacity-50' : ''}">

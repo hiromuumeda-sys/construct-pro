@@ -68,7 +68,7 @@ body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 <main class="ml-0 md:ml-48 min-h-screen">
 <!-- Top App Bar -->
 <header class="sticky top-0 z-40 flex justify-between items-center h-16 px-margin-desktop bg-surface/80 backdrop-blur-md shadow-sm">
-<button class="md:hidden material-symbols-outlined text-on-surface-variant hover:text-primary mr-3" onclick="toggleSidebar()">menu</button>
+<button class="md:hidden material-symbols-outlined text-on-surface-variant hover:text-primary mr-3" onclick="toggleSidebar()" aria-label="メニューを開く">menu</button>
 <div class="flex items-center gap-4 bg-surface-container-low px-4 py-2 rounded-full w-96">
 <span class="material-symbols-outlined text-on-surface-variant">search</span>
 <input class="bg-transparent border-none focus:ring-0 text-body-md w-full" id="search-keyword" placeholder="Search..." type="text"/>
@@ -157,7 +157,7 @@ body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 <input class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent" id="modal-company-name" required type="text"/>
 </div>
 <div>
-<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">部署名</label>
+<label for="modal-dept-name" class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">部署名</label>
 <input class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent" id="modal-dept-name" type="text"/>
 </div>
 <div>
@@ -169,11 +169,11 @@ body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 <input class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent" id="modal-email" required type="email"/>
 </div>
 <div>
-<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">電話番号</label>
+<label for="modal-phone" class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">電話番号</label>
 <input class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent" id="modal-phone" type="tel"/>
 </div>
 <div class="col-span-2">
-<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">所在地</label>
+<label for="modal-address" class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">所在地</label>
 <input class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent" id="modal-address" type="text"/>
 </div>
 <div class="col-span-2">
@@ -377,9 +377,17 @@ function renderTable(vendors) {
     .join('');
 }
 
-function openEditModal(id) {
+async function openEditModal(id) {
   editingId = id;
-  const v = vendorList.find(x => x.id === id);
+  // 一覧のキャッシュは口座番号がマスク済み（下4桁のみ）のため、編集時はサーバーから
+  // フルの値を取り直す（マスクされた値をそのまま再保存してしまう事故を防ぐ）。
+  let v;
+  try {
+    const res = await fetch(`/api/vendors/${id}`);
+    v = res.ok ? await res.json() : vendorList.find(x => x.id === id);
+  } catch (e) {
+    v = vendorList.find(x => x.id === id);
+  }
   if (v) {
     document.getElementById('modal-vendor-id').value = v.id;
     document.getElementById('modal-company-name').value = v.company;
@@ -400,10 +408,14 @@ function openEditModal(id) {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
-  if (window.appCache.vendors.length === 0 || !window.appCache.categories || window.appCache.categories.length === 0) {
+  if (!window.appCache.categories || window.appCache.categories.length === 0) {
     const res = await fetch('/api/cache');
     window.appCache = await res.json();
   }
+  // 発注先マスタ画面は常に専用API（口座番号マスク済み）から取得する。/api/cacheの
+  // vendorsは他画面（支払管理の振込実行等）向けに実口座番号を含むため、ここでは使わない。
+  const vendorRes = await fetch('/api/vendors');
+  window.appCache.vendors = await vendorRes.json();
   populateCatSelects();
   loadVendors();
 

@@ -69,7 +69,7 @@ body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 <main class="ml-0 md:ml-48 min-h-screen">
 <!-- Top App Bar -->
 <header class="sticky top-0 z-40 flex justify-between items-center h-16 px-margin-desktop bg-surface/80 backdrop-blur-md shadow-sm">
-<button class="md:hidden material-symbols-outlined text-on-surface-variant hover:text-primary mr-3" onclick="toggleSidebar()">menu</button>
+<button class="md:hidden material-symbols-outlined text-on-surface-variant hover:text-primary mr-3" onclick="toggleSidebar()" aria-label="メニューを開く">menu</button>
 <div class="flex items-center gap-4 bg-surface-container-low px-4 py-2 rounded-full w-96">
 <span class="material-symbols-outlined text-on-surface-variant">search</span>
 <input class="bg-transparent border-none focus:ring-0 text-body-md w-full" id="keyword-search" placeholder="Search..." type="text"/>
@@ -127,7 +127,7 @@ CSV出力
 <div class="bg-surface-container-lowest p-md rounded-lg custom-shadow border border-outline-variant">
 <div class="grid grid-cols-1 md:grid-cols-3 gap-md items-end">
 <div>
-<label class="block text-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">ステータス</label>
+<label for="status-filter" class="block text-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">ステータス</label>
 <select id="status-filter" class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-body-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent">
 <option value="">すべてのステータス</option>
 <option value="未対応">未対応</option>
@@ -138,11 +138,11 @@ CSV出力
 </select>
 </div>
 <div>
-<label class="block text-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">工期開始（以降）</label>
+<label for="period-start-filter" class="block text-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">工期開始（以降）</label>
 <input type="date" id="period-start-filter" class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-body-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent"/>
 </div>
 <div>
-<label class="block text-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">工期終了（以前）</label>
+<label for="period-end-filter" class="block text-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">工期終了（以前）</label>
 <input type="date" id="period-end-filter" class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-body-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent"/>
 </div>
 </div>
@@ -177,7 +177,7 @@ CSV出力
 <span class="px-2.5 py-0.5 bg-surface-container text-on-surface-variant text-[10px] rounded-full">未対応</span>
 </td>
 <td class="w-32 px-lg py-2 text-center">
-<button class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-primary/10 text-primary text-label-md font-label-md hover:bg-primary/20 transition-colors whitespace-nowrap" title="この案件の工事計画を開く">
+<button class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-primary/10 text-primary text-label-md font-label-md hover:bg-primary/20 transition-colors whitespace-nowrap" title="この案件の工事計画を開く" aria-label="この案件の工事計画を開く">
 <span class="material-symbols-outlined text-[18px]">receipt_long</span>
 工事計画
 </button>
@@ -238,7 +238,7 @@ CSV出力
 </select>
 </div>
 <div>
-<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">ステータス</label>
+<label for="reg-status" class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">ステータス</label>
 <select class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent" id="reg-status">
 <option>未対応</option>
 <option>提案中</option>
@@ -248,15 +248,15 @@ CSV出力
 </select>
 </div>
 <div>
-<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">契約金額</label>
+<label for="reg-amount" class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">契約金額</label>
 <input class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent tabular-numbers" id="reg-amount" placeholder="0" type="text"/>
 </div>
 <div>
-<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">工期開始</label>
+<label for="reg-period-start" class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">工期開始</label>
 <input class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent" id="reg-period-start" type="date"/>
 </div>
 <div>
-<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">工期終了</label>
+<label for="reg-period-end" class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">工期終了</label>
 <input class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent" id="reg-period-end" type="date"/>
 </div>
 <div>
@@ -268,7 +268,7 @@ CSV出力
 </button>
 </div>
 <div class="col-span-2">
-<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">備考</label>
+<label for="reg-notes" class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">備考</label>
 <textarea class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent" id="reg-notes" placeholder="補足情報や特記事項を入力してください" rows="3"></textarea>
 </div>
 </div>
@@ -501,7 +501,7 @@ function buildViewRow(p) {
       <td class="w-36 px-lg py-2 text-label-md font-label-md text-on-surface-variant tabular-numbers align-top whitespace-nowrap">${p.project_no || '-'}</td>
       <td class="w-64 px-lg py-2 text-label-md font-label-md ${locked ? '' : 'text-primary'} align-top"><div class="truncate w-[210px]" title="${escHtml(p.name)}">${escHtml(p.name)}</div></td>
       <td class="w-32 px-lg py-2 text-label-md font-label-md text-on-surface-variant align-top">
-        <span class="inline-flex items-center gap-0.5 w-[100px]"><span class="truncate w-[80px]" title="${escHtml(p.client)}">${escHtml(p.client)}</span><button class="material-symbols-outlined text-[14px] text-on-surface-variant/60 hover:text-secondary align-middle shrink-0" onclick="event.stopPropagation(); showClientInfoPopover(event, ${p.id})" title="クライアント情報を表示">info</button></span>
+        <span class="inline-flex items-center gap-0.5 w-[100px]"><span class="truncate w-[80px]" title="${escHtml(p.client)}">${escHtml(p.client)}</span><button class="material-symbols-outlined text-[14px] text-on-surface-variant/60 hover:text-secondary align-middle shrink-0" onclick="event.stopPropagation(); showClientInfoPopover(event, ${p.id})" title="クライアント情報を表示" aria-label="クライアント情報を表示">info</button></span>
       </td>
       <td class="w-64 px-lg py-2 text-label-md font-label-md text-on-surface-variant align-top"><div class="line-clamp-2 whitespace-normal w-[210px]" title="${escHtml(p.notes)}">${escHtml(p.notes) || '-'}</div></td>
       <td class="w-28 px-lg py-2 text-label-md font-label-md text-on-surface-variant tabular-numbers align-top">${p.startDate || '-'} 〜 ${p.endDate || '-'}</td>
@@ -521,21 +521,21 @@ function buildViewRow(p) {
           ${
             locked
               ? ''
-              : `<button class="inline-flex items-center gap-0.5 px-1.5 py-1 rounded-lg bg-primary/10 text-primary text-[11px] font-label-md hover:bg-primary/20 transition-colors whitespace-nowrap" onclick="event.stopPropagation(); generateEstimate(${p.id})" title="見積書を発行">
+              : `<button class="inline-flex items-center gap-0.5 px-1.5 py-1 rounded-lg bg-primary/10 text-primary text-[11px] font-label-md hover:bg-primary/20 transition-colors whitespace-nowrap" onclick="event.stopPropagation(); generateEstimate(${p.id})" title="見積書を発行" aria-label="見積書を発行">
             <span class="material-symbols-outlined text-[15px]">request_quote</span>
             見積書
           </button>
-          <button class="inline-flex items-center gap-0.5 px-1.5 py-1 rounded-lg bg-primary/10 text-primary text-[11px] font-label-md hover:bg-primary/20 transition-colors whitespace-nowrap" onclick="event.stopPropagation(); generateInvoice(${p.id})" title="請求書を発行">
+          <button class="inline-flex items-center gap-0.5 px-1.5 py-1 rounded-lg bg-primary/10 text-primary text-[11px] font-label-md hover:bg-primary/20 transition-colors whitespace-nowrap" onclick="event.stopPropagation(); generateInvoice(${p.id})" title="請求書を発行" aria-label="請求書を発行">
             <span class="material-symbols-outlined text-[15px]">description</span>
             請求書
           </button>`
           }
           ${
             p.contract_has_file
-              ? `<button class="inline-flex items-center gap-0.5 px-1.5 py-1 rounded-lg bg-secondary-container text-on-secondary-container text-[11px] font-bold hover:opacity-80 transition-opacity whitespace-nowrap" onclick="event.stopPropagation(); openContractModal(${p.id})" title="契約書PDFを表示"><span class="material-symbols-outlined text-[15px]">picture_as_pdf</span>契約書</button>`
+              ? `<button class="inline-flex items-center gap-0.5 px-1.5 py-1 rounded-lg bg-secondary-container text-on-secondary-container text-[11px] font-bold hover:opacity-80 transition-opacity whitespace-nowrap" onclick="event.stopPropagation(); openContractModal(${p.id})" title="契約書PDFを表示" aria-label="契約書PDFを表示"><span class="material-symbols-outlined text-[15px]">picture_as_pdf</span>契約書</button>`
               : locked
                 ? ''
-                : `<button class="inline-flex items-center gap-0.5 px-1.5 py-1 rounded-lg bg-error-container text-on-error-container text-[11px] font-bold hover:opacity-80 transition-opacity whitespace-nowrap" onclick="event.stopPropagation(); requestContractUpload(${p.id})" title="契約書が未締結です（未アップロード）"><span class="material-symbols-outlined text-[15px]">upload_file</span>契約書未締結</button>`
+                : `<button class="inline-flex items-center gap-0.5 px-1.5 py-1 rounded-lg bg-error-container text-on-error-container text-[11px] font-bold hover:opacity-80 transition-opacity whitespace-nowrap" onclick="event.stopPropagation(); requestContractUpload(${p.id})" title="契約書が未締結です（未アップロード）" aria-label="契約書が未締結です（未アップロード）"><span class="material-symbols-outlined text-[15px]">upload_file</span>契約書未締結</button>`
           }
         </div>
       </td>
@@ -583,13 +583,13 @@ function buildEditRow(p) {
       </td>
       <td class="w-44 px-lg py-2 text-center align-top">
         <div class="flex gap-1 justify-center flex-wrap">
-          <button class="inline-flex items-center gap-0.5 px-2 py-1 rounded-lg bg-secondary text-on-secondary text-[11px] font-bold hover:opacity-90 transition-opacity whitespace-nowrap" onclick="saveEdit()" title="保存">
+          <button class="inline-flex items-center gap-0.5 px-2 py-1 rounded-lg bg-secondary text-on-secondary text-[11px] font-bold hover:opacity-90 transition-opacity whitespace-nowrap" onclick="saveEdit()" title="保存" aria-label="保存">
             <span class="material-symbols-outlined text-[15px]">check</span>保存
           </button>
-          <button class="inline-flex items-center gap-0.5 px-2 py-1 rounded-lg bg-surface-container text-on-surface-variant text-[11px] hover:bg-surface-container-high transition-colors whitespace-nowrap" onclick="closeEditModal()" title="キャンセル">
+          <button class="inline-flex items-center gap-0.5 px-2 py-1 rounded-lg bg-surface-container text-on-surface-variant text-[11px] hover:bg-surface-container-high transition-colors whitespace-nowrap" onclick="closeEditModal()" title="キャンセル" aria-label="キャンセル">
             <span class="material-symbols-outlined text-[15px]">close</span>
           </button>
-          <button class="inline-flex items-center gap-0.5 px-2 py-1 rounded-lg bg-error-container text-on-error-container text-[11px] hover:opacity-80 transition-opacity whitespace-nowrap" onclick="deleteProject()" title="削除">
+          <button class="inline-flex items-center gap-0.5 px-2 py-1 rounded-lg bg-error-container text-on-error-container text-[11px] hover:opacity-80 transition-opacity whitespace-nowrap" onclick="deleteProject()" title="削除" aria-label="削除">
             <span class="material-symbols-outlined text-[15px]">delete</span>
           </button>
         </div>
@@ -968,7 +968,7 @@ function renderInvoiceItems() {
       <td class="border border-outline-variant p-1"><input type="number" value="${it.price}" class="w-full text-xs text-right border-0 bg-transparent focus:ring-1 focus:ring-primary/40 rounded px-1 py-0.5" oninput="updateInvoiceItem(${i},'price',this.value)"/></td>
       <td class="border border-outline-variant p-1.5 text-right tabular-numbers" id="inv-item-amount-${i}">¥${((it.qty || 0) * (it.price || 0)).toLocaleString()}</td>
       <td class="border border-outline-variant p-1"><input type="text" value="${escHtml(it.note)}" class="w-full text-xs border-0 bg-transparent focus:ring-1 focus:ring-primary/40 rounded px-1 py-0.5" oninput="updateInvoiceItem(${i},'note',this.value)"/></td>
-      <td class="border border-outline-variant p-1 text-center"><button onclick="removeInvoiceItem(${i})" class="text-error hover:opacity-70 transition-opacity" title="行を削除"><span class="material-symbols-outlined text-[15px]">close</span></button></td>
+      <td class="border border-outline-variant p-1 text-center"><button onclick="removeInvoiceItem(${i})" class="text-error hover:opacity-70 transition-opacity" title="行を削除" aria-label="行を削除"><span class="material-symbols-outlined text-[15px]">close</span></button></td>
     </tr>`
         )
         .join('')
@@ -1163,7 +1163,7 @@ function renderEstimateItems() {
       <td class="border border-outline-variant p-1"><input type="number" value="${it.price}" class="w-full text-xs text-right border-0 bg-transparent focus:ring-1 focus:ring-primary/40 rounded px-1 py-0.5" oninput="updateEstimateItem(${i},'price',this.value)"/></td>
       <td class="border border-outline-variant p-1.5 text-right tabular-numbers" id="est-item-amount-${i}">¥${((it.qty || 0) * (it.price || 0)).toLocaleString()}</td>
       <td class="border border-outline-variant p-1"><input type="text" value="${escHtml(it.note)}" class="w-full text-xs border-0 bg-transparent focus:ring-1 focus:ring-primary/40 rounded px-1 py-0.5" oninput="updateEstimateItem(${i},'note',this.value)"/></td>
-      <td class="border border-outline-variant p-1 text-center"><button onclick="removeEstimateItem(${i})" class="text-error hover:opacity-70 transition-opacity" title="行を削除"><span class="material-symbols-outlined text-[15px]">close</span></button></td>
+      <td class="border border-outline-variant p-1 text-center"><button onclick="removeEstimateItem(${i})" class="text-error hover:opacity-70 transition-opacity" title="行を削除" aria-label="行を削除"><span class="material-symbols-outlined text-[15px]">close</span></button></td>
     </tr>`
         )
         .join('')
@@ -1278,7 +1278,7 @@ async function sendEstimateEmail() {
   <div class="flex items-center justify-center min-h-screen p-4" onclick="event.stopPropagation()">
     <div class="bg-white w-full max-w-2xl rounded-lg shadow-2xl overflow-hidden relative transform transition-all border border-outline-variant/30" onclick="event.stopPropagation()">
       <!-- Floating Email FAB -->
-      <button class="absolute bottom-6 right-6 w-14 h-14 bg-primary text-on-primary rounded-lg flex items-center justify-center shadow-lg hover:shadow-xl hover:scale-110 transition-all" onclick="openInvoiceEmailForm()" title="メール送信">
+      <button class="absolute bottom-6 right-6 w-14 h-14 bg-primary text-on-primary rounded-lg flex items-center justify-center shadow-lg hover:shadow-xl hover:scale-110 transition-all" onclick="openInvoiceEmailForm()" title="メール送信" aria-label="メール送信">
         <span class="material-symbols-outlined text-[24px]">send</span>
       </button>
       <!-- Header -->
@@ -1289,7 +1289,7 @@ async function sendEstimateEmail() {
         </h3>
         <div class="flex items-center gap-1">
           <div class="relative">
-            <button onclick="event.stopPropagation(); toggleInvoiceDownloadMenu()" class="text-outline hover:text-on-surface p-1 transition-colors flex items-center" title="ダウンロード">
+            <button onclick="event.stopPropagation(); toggleInvoiceDownloadMenu()" class="text-outline hover:text-on-surface p-1 transition-colors flex items-center" title="ダウンロード" aria-label="ダウンロード">
               <span class="material-symbols-outlined">download</span>
               <span class="material-symbols-outlined text-[16px]">arrow_drop_down</span>
             </button>
@@ -1380,15 +1380,15 @@ async function sendEstimateEmail() {
       </div>
       <div class="p-6 space-y-4">
         <div>
-          <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-2">宛先</label>
+          <label for="invoice-email-to" class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-2">宛先</label>
           <input id="invoice-email-to" type="email" class="w-full bg-surface-container-low border border-outline-variant/50 rounded-xl text-sm px-4 py-3 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" placeholder="client@example.com"/>
         </div>
         <div>
-          <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-2">件名</label>
+          <label for="invoice-email-subject" class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-2">件名</label>
           <input id="invoice-email-subject" type="text" class="w-full bg-surface-container-low border border-outline-variant/50 rounded-xl text-sm px-4 py-3 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"/>
         </div>
         <div>
-          <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-2">本文</label>
+          <label for="invoice-email-body" class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-2">本文</label>
           <textarea id="invoice-email-body" rows="12" class="w-full bg-surface-container-low border border-outline-variant/50 rounded-xl text-sm px-4 py-3 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"></textarea>
         </div>
       </div>
@@ -1407,7 +1407,7 @@ async function sendEstimateEmail() {
   <div class="absolute inset-0 bg-inverse-surface/60 backdrop-blur-md"></div>
   <div class="flex items-center justify-center min-h-screen p-4" onclick="event.stopPropagation()">
     <div class="bg-white w-full max-w-2xl rounded-lg shadow-2xl overflow-hidden relative transform transition-all border border-outline-variant/30" onclick="event.stopPropagation()">
-      <button class="absolute bottom-6 right-6 w-14 h-14 bg-primary text-on-primary rounded-lg flex items-center justify-center shadow-lg hover:shadow-xl hover:scale-110 transition-all" onclick="openEstimateEmailForm()" title="メール送信">
+      <button class="absolute bottom-6 right-6 w-14 h-14 bg-primary text-on-primary rounded-lg flex items-center justify-center shadow-lg hover:shadow-xl hover:scale-110 transition-all" onclick="openEstimateEmailForm()" title="メール送信" aria-label="メール送信">
         <span class="material-symbols-outlined text-[24px]">send</span>
       </button>
       <div class="px-6 py-4 border-b border-outline-variant flex justify-between items-center">
@@ -1416,7 +1416,7 @@ async function sendEstimateEmail() {
           見積書プレビュー
         </h3>
         <div class="flex items-center gap-1">
-          <button onclick="downloadEstimate()" class="text-outline hover:text-on-surface p-1 transition-colors" title="ダウンロード">
+          <button onclick="downloadEstimate()" class="text-outline hover:text-on-surface p-1 transition-colors" title="ダウンロード" aria-label="ダウンロード">
             <span class="material-symbols-outlined">download</span>
           </button>
           <button class="text-outline hover:text-on-surface p-1 transition-colors" onclick="closeEstimatePreview()">
@@ -1495,15 +1495,15 @@ async function sendEstimateEmail() {
       </div>
       <div class="p-6 space-y-4">
         <div>
-          <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-2">宛先</label>
+          <label for="estimate-email-to" class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-2">宛先</label>
           <input id="estimate-email-to" type="email" class="w-full bg-surface-container-low border border-outline-variant/50 rounded-xl text-sm px-4 py-3 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" placeholder="client@example.com"/>
         </div>
         <div>
-          <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-2">件名</label>
+          <label for="estimate-email-subject" class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-2">件名</label>
           <input id="estimate-email-subject" type="text" class="w-full bg-surface-container-low border border-outline-variant/50 rounded-xl text-sm px-4 py-3 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"/>
         </div>
         <div>
-          <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-2">本文</label>
+          <label for="estimate-email-body" class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-2">本文</label>
           <textarea id="estimate-email-body" rows="12" class="w-full bg-surface-container-low border border-outline-variant/50 rounded-xl text-sm px-4 py-3 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"></textarea>
         </div>
       </div>

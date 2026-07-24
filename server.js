@@ -17,11 +17,12 @@ const logger = pino();
 // schema.sql の再実行を待たずに動くよう、初回アクセス時に1度だけ作成する。
 let _auxReady = null;
 // CREATE TABLE IF NOT EXISTS は複数インスタンス同時実行で稀に重複エラー(23505/42P07)になるため握りつぶす。
+// 42710(duplicate_object)はCHECK制約側（ADD CONSTRAINT IF NOT EXISTS相当が無いため）の再実行時に発生する。
 async function createIfMissing(sql) {
   try {
     await q(sql);
   } catch (e) {
-    if (!['23505', '42P07'].includes(e.code)) throw e;
+    if (!['23505', '42P07', '42710'].includes(e.code)) throw e;
   }
 }
 function ensureAux() {
@@ -84,6 +85,25 @@ function ensureAux() {
       // 強制ログアウト用のトークン世代。ロール変更・停止・削除のたびにインクリメントし、
       // 発行済みJWTに埋め込んだ世代と食い違えば401にする（JWT自体には失効の仕組みが無いため）。
       await createIfMissing('ALTER TABLE users ADD COLUMN IF NOT EXISTS token_version integer DEFAULT 1');
+      // 案件・発注先・顧客の論理削除用。物理削除だとON DELETE CASCADEで工事計画・入金・請求書まで
+      // 連鎖的に消えてしまうため、usersと同じ考え方でソフトデリートに統一する。
+      await createIfMissing('ALTER TABLE projects ADD COLUMN IF NOT EXISTS deleted_at timestamp');
+      await createIfMissing('ALTER TABLE vendors ADD COLUMN IF NOT EXISTS deleted_at timestamp');
+      await createIfMissing('ALTER TABLE customers ADD COLUMN IF NOT EXISTS deleted_at timestamp');
+      // 金額列に負数を禁止するCHECK制約（契約金額・見積額・決定金額・入金額等が負の値のまま
+      // 受け入れられてしまっていた問題への対応）。NULLは許容（未入力と0を区別するため）。
+      await createIfMissing('ALTER TABLE projects ADD CONSTRAINT projects_amount_nonneg CHECK (amount IS NULL OR amount >= 0)');
+      await createIfMissing('ALTER TABLE orders ADD CONSTRAINT orders_estimate_nonneg CHECK (estimate IS NULL OR estimate >= 0)');
+      await createIfMissing('ALTER TABLE orders ADD CONSTRAINT orders_planned_nonneg CHECK (planned IS NULL OR planned >= 0)');
+      await createIfMissing('ALTER TABLE orders ADD CONSTRAINT orders_decided_nonneg CHECK (decided IS NULL OR decided >= 0)');
+      await createIfMissing('ALTER TABLE orders ADD CONSTRAINT orders_remaining_nonneg CHECK (remaining IS NULL OR remaining >= 0)');
+      await createIfMissing('ALTER TABLE payment_records ADD CONSTRAINT payment_records_amount_nonneg CHECK (amount IS NULL OR amount >= 0)');
+      await createIfMissing('ALTER TABLE misc_payments ADD CONSTRAINT misc_payments_amount_nonneg CHECK (amount IS NULL OR amount >= 0)');
+      await createIfMissing('ALTER TABLE misc_receipts ADD CONSTRAINT misc_receipts_amount_nonneg CHECK (amount IS NULL OR amount >= 0)');
+      await createIfMissing('ALTER TABLE receipts ADD CONSTRAINT receipts_amount_nonneg CHECK (amount IS NULL OR amount >= 0)');
+      await createIfMissing('ALTER TABLE invoices ADD CONSTRAINT invoices_subtotal_nonneg CHECK (subtotal IS NULL OR subtotal >= 0)');
+      await createIfMissing('ALTER TABLE invoices ADD CONSTRAINT invoices_tax_nonneg CHECK (tax IS NULL OR tax >= 0)');
+      await createIfMissing('ALTER TABLE invoices ADD CONSTRAINT invoices_total_nonneg CHECK (total IS NULL OR total >= 0)');
     })().catch(e => {
       _auxReady = null;
       throw e;
@@ -261,13 +281,34 @@ const getUserId = req => {
 // logAudit(getUserId(req), ...) の反復を1呼び出しに集約するショートハンド
 const logAuditReq = (req, ...args) => logAudit(getUserId(req), ...args);
 
+// 金額系フィールドの負数を弾く（DB側のCHECK制約と同じ規則をAPI層でも検証し、
+// 生のPostgresエラーではなく分かりやすい400を返す）。未入力(null/undefined/空文字)は許容。
+function rejectNegativeAmount(res, body, fields) {
+  for (const f of fields) {
+    const v = body[f];
+    if (v === undefined || v === null || v === '') continue;
+    if (Number(v) < 0) {
+      res.status(400).json({ error: `${FIELD_LABELS_ALL[f] || f}に負の値は入力できません` });
+      return true;
+    }
+  }
+  return false;
+}
+const FIELD_LABELS_ALL = { amount: '金額', estimate: '見積額', planned: '予算額', decided: '確定額', subtotal: '小計', tax: '消費税', total: '合計金額' };
+
 // 「削除前レコード取得→削除→監査ログ→成功応答」という各リソース共通のDELETEハンドラを生成する。
 // idParse: パスパラメータをレコードID型に変換（数値IDはparseInt、vendorsのようなtext IDはそのまま）
 // buildDetails(before): 削除前レコードから監査ログのdetails({name, changes})を組み立てる
-function deleteWithAudit(table, { idParse = id => parseInt(id, 10), buildDetails }) {
+// softDelete: true の場合、物理削除の代わりに deleted_at を設定する（財務・案件記録の連鎖削除防止。
+// projects.statusは業務ステータス（未対応/受注等）で意味が競合するため、削除専用の別列を使う）
+function deleteWithAudit(table, { idParse = id => parseInt(id, 10), buildDetails, softDelete = false }) {
   return h(async (req, res) => {
     const before = await one(`SELECT * FROM ${table} WHERE id=$1`, [req.params.id]);
-    await q(`DELETE FROM ${table} WHERE id=$1`, [req.params.id]);
+    if (softDelete) {
+      await q(`UPDATE ${table} SET deleted_at=current_timestamp WHERE id=$1`, [req.params.id]);
+    } else {
+      await q(`DELETE FROM ${table} WHERE id=$1`, [req.params.id]);
+    }
     await logAuditReq(req, 'DELETE', table, idParse(req.params.id), buildDetails(before));
     res.json({ success: true });
   });
@@ -432,7 +473,7 @@ app.get(
   authMiddleware,
   h(async (req, res) => {
     await ensureAux();
-    const [projects, files] = await Promise.all([q('SELECT * FROM projects ORDER BY id'), q('SELECT project_id, kind, filename FROM project_files')]);
+    const [projects, files] = await Promise.all([q('SELECT * FROM projects WHERE deleted_at IS NULL ORDER BY id'), q('SELECT project_id, kind, filename FROM project_files')]);
     const key = (id, kind) => `${id}:${kind}`;
     const fmap = new Map(files.map(f => [key(f.project_id, f.kind), f.filename]));
     res.json(
@@ -461,6 +502,7 @@ app.post(
   h(async (req, res) => {
     const { name, client, clientCompany, clientPhone, clientEmail, clientAddress, amount, startDate, endDate, status, notes, deliveryMonth } = req.body;
     if (!deliveryMonth) return res.status(400).json({ error: '引渡月は必須です' });
+    if (rejectNegativeAmount(res, req.body, ['amount'])) return;
     const row = await one(
       `INSERT INTO projects (name, client, "clientCompany", "clientPhone", "clientEmail", "clientAddress", amount, "startDate", "endDate", status, notes, delivery_month, project_no)
      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12, '') RETURNING id`,
@@ -485,6 +527,7 @@ app.put(
     if (b.deliveryMonth !== undefined && b.deliveryMonth !== before?.delivery_month) {
       return res.status(400).json({ error: '引渡月の変更は複製処理（change-delivery-month）経由で行ってください' });
     }
+    if (rejectNegativeAmount(res, b, ['amount'])) return;
     const newDeliveryMonth = before?.delivery_month;
     const deliveryMonthChanged = false;
     // 呼び出し元によって送られてくる項目が一部だけの場合があるため、未送信の項目は既存値を維持する
@@ -568,16 +611,33 @@ app.delete(
   '/api/projects/:id',
   authMiddleware,
   deleteWithAudit('projects', {
+    softDelete: true,
     buildDetails: before => ({ name: before?.name, changes: [`削除（案件: ${before?.name || '-'}）`] }),
   })
 );
 
 // ============ Vendors API ============
+// 一覧・全社共有キャッシュでは口座番号を下4桁のみ表示（銀行口座情報の平文・無制限閲覧対策）。
+// 編集時は GET /api/vendors/:id で都度フルの値を取得する。
+const maskVendorBank = v => (v && v.bank_number ? { ...v, bank_number: '****' + String(v.bank_number).slice(-4) } : v);
+
 app.get(
   '/api/vendors',
   authMiddleware,
   h(async (req, res) => {
-    res.json(await q('SELECT * FROM vendors ORDER BY id::int DESC'));
+    const rows = await q('SELECT * FROM vendors WHERE deleted_at IS NULL ORDER BY id::int DESC');
+    res.json(rows.map(maskVendorBank));
+  })
+);
+
+// 編集画面用：口座番号を含む全項目を返す（一覧はマスク済みのため、編集時はここから取得する）
+app.get(
+  '/api/vendors/:id',
+  authMiddleware,
+  h(async (req, res) => {
+    const row = await one('SELECT * FROM vendors WHERE id=$1', [req.params.id]);
+    if (!row) return res.status(404).json({ error: '発注先が見つかりません' });
+    res.json(row);
   })
 );
 
@@ -639,6 +699,7 @@ app.delete(
   authMiddleware,
   deleteWithAudit('vendors', {
     idParse: id => id, // vendors.id は text型（'001'等）のためそのまま
+    softDelete: true,
     buildDetails: before => ({ name: before?.company, changes: [`削除（発注先: ${before?.company || '-'}）`] }),
   })
 );
@@ -856,6 +917,7 @@ app.post(
   h(async (req, res) => {
     await ensureAux();
     const b = req.body;
+    if (rejectNegativeAmount(res, b, ['estimate', 'planned', 'decided'])) return;
     const ins = await one(`INSERT INTO orders (${ORDER_COLS}) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17) RETURNING id`, [
       b.project_id,
       b.category,
@@ -893,6 +955,7 @@ app.put(
   authMiddleware,
   h(async (req, res) => {
     const b = req.body;
+    if (rejectNegativeAmount(res, b, ['estimate', 'planned', 'decided'])) return;
     const before = await one('SELECT * FROM orders WHERE id=$1', [req.params.id]);
     const newStatus = b.status ?? before?.status;
     // 発注が確定した状態に遷移した時点で初めて工事IDを採番（未処理/見積待ち等の段階では発注実体が無いため採番しない）
@@ -1067,6 +1130,7 @@ app.post(
   authMiddleware,
   h(async (req, res) => {
     const { category, type, payee, amount, payment_date, status, notes } = req.body;
+    if (rejectNegativeAmount(res, req.body, ['amount'])) return;
     const row = await one('INSERT INTO misc_payments (category, type, payee, amount, payment_date, status, notes) VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING id', [
       category || '',
       type || '支払',
@@ -1086,6 +1150,7 @@ app.put(
   authMiddleware,
   h(async (req, res) => {
     const { category, type, payee, amount, payment_date, status, notes } = req.body;
+    if (rejectNegativeAmount(res, req.body, ['amount'])) return;
     const before = await one('SELECT * FROM misc_payments WHERE id=$1', [req.params.id]);
     await q('UPDATE misc_payments SET category=$1, type=$2, payee=$3, amount=$4, payment_date=$5, status=$6, notes=$7 WHERE id=$8', [
       category ?? before?.category,
@@ -1124,6 +1189,7 @@ app.post(
   authMiddleware,
   h(async (req, res) => {
     const { category, type, payer, amount, receipt_date, status, notes } = req.body;
+    if (rejectNegativeAmount(res, req.body, ['amount'])) return;
     const row = await one('INSERT INTO misc_receipts (category, type, payer, amount, receipt_date, status, notes) VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING id', [
       category || '',
       type || '入金',
@@ -1143,6 +1209,7 @@ app.put(
   authMiddleware,
   h(async (req, res) => {
     const { category, type, payer, amount, receipt_date, status, notes } = req.body;
+    if (rejectNegativeAmount(res, req.body, ['amount'])) return;
     const before = await one('SELECT * FROM misc_receipts WHERE id=$1', [req.params.id]);
     await q('UPDATE misc_receipts SET category=$1, type=$2, payer=$3, amount=$4, receipt_date=$5, status=$6, notes=$7 WHERE id=$8', [
       category ?? before?.category,
@@ -1173,7 +1240,7 @@ app.get(
   authMiddleware,
   h(async (req, res) => {
     await ensureAux();
-    res.json(await q('SELECT * FROM customers ORDER BY id DESC'));
+    res.json(await q('SELECT * FROM customers WHERE deleted_at IS NULL ORDER BY id DESC'));
   })
 );
 
@@ -1221,6 +1288,7 @@ app.delete(
   '/api/customers/:id',
   authMiddleware,
   deleteWithAudit('customers', {
+    softDelete: true,
     buildDetails: before => ({ name: before?.company, changes: [`削除（顧客: ${before?.company || '-'}）`] }),
   })
 );
@@ -1239,6 +1307,7 @@ app.post(
   authMiddleware,
   h(async (req, res) => {
     const { project_id, received_date, amount, memo } = req.body;
+    if (rejectNegativeAmount(res, req.body, ['amount'])) return;
     const month = toYM(req.body.month, received_date);
     const ins = await one('INSERT INTO receipts (project_id, received_date, amount, month, memo) VALUES ($1,$2,$3,$4,$5) RETURNING id', [project_id, received_date, amount, month, memo]);
     await logAuditReq(req, 'CREATE', 'receipts', ins.id, { name: month, changes: [`新規登録（${month || '-'} / ${fmtVal(amount)}円）`] });
@@ -1251,6 +1320,7 @@ app.put(
   authMiddleware,
   h(async (req, res) => {
     const { project_id, received_date, amount, memo } = req.body;
+    if (rejectNegativeAmount(res, req.body, ['amount'])) return;
     const month = toYM(req.body.month, received_date);
     const before = await one('SELECT * FROM receipts WHERE id=$1', [req.params.id]);
     await q('UPDATE receipts SET project_id=$1, received_date=$2, amount=$3, month=$4, memo=$5 WHERE id=$6', [project_id, received_date, amount, month, memo, req.params.id]);
@@ -1272,7 +1342,7 @@ app.get(
   '/api/sales-summary',
   authMiddleware,
   h(async (req, res) => {
-    const projects = await q('SELECT * FROM projects ORDER BY id');
+    const projects = await q('SELECT * FROM projects WHERE deleted_at IS NULL ORDER BY id');
     const now = new Date();
     const ym = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
@@ -1426,7 +1496,7 @@ app.get(
       else if (d <= 7) notifications.push({ type: 'receipt', level: 'warning', icon: 'schedule', title: '入金期日接近', message: `${project ? project.name : '案件'}（${inv.invoice_no}）の入金期日まであと${d}日・未入金残 ${yen}`, date: inv.due_date, link: '/receipts.html' });
     }
 
-    const wonProjects = await q("SELECT * FROM projects WHERE status = '受注'");
+    const wonProjects = await q("SELECT * FROM projects WHERE deleted_at IS NULL AND status = '受注'");
     for (const p of wonProjects) {
       const c = await one('SELECT COUNT(*) AS cnt FROM invoices WHERE project_id=$1', [p.id]);
       if (Number(c.cnt) === 0) notifications.push({ type: 'missing', level: 'info', icon: 'description', title: '請求書未発行', message: `${p.name} は受注済みですが請求書が未発行です`, date: null, link: '/projects.html' });
@@ -1455,7 +1525,7 @@ app.get(
     }
 
     // 契約書未締結アラート（議事録決定事項：着工日超過で未締結ならアラート）
-    const contractCheckProjects = await q('SELECT * FROM projects WHERE "startDate" IS NOT NULL');
+    const contractCheckProjects = await q('SELECT * FROM projects WHERE deleted_at IS NULL AND "startDate" IS NOT NULL');
     for (const p of contractCheckProjects) {
       const d = daysBetween(p.startDate);
       if (d === null || d >= 0) continue; // 着工日が未到来の案件は対象外
@@ -1523,7 +1593,7 @@ app.get(
     let csv = '',
       filename = '';
     if (type === 'sales') {
-      const projects = await q('SELECT * FROM projects ORDER BY id');
+      const projects = await q('SELECT * FROM projects WHERE deleted_at IS NULL ORDER BY id');
       const rows = [];
       for (const p of projects) {
         const r = await one('SELECT COALESCE(SUM(amount),0) AS total FROM receipts WHERE project_id=$1', [p.id]);
@@ -1580,7 +1650,7 @@ app.get(
   '/api/dashboard',
   authMiddleware,
   h(async (req, res) => {
-    const allProjects = await q('SELECT * FROM projects');
+    const allProjects = await q('SELECT * FROM projects WHERE deleted_at IS NULL');
     const orders = await q('SELECT * FROM orders');
     const receipts = await q('SELECT * FROM receipts');
     const now = new Date();
@@ -1708,7 +1778,7 @@ async function buildReportData(from, to) {
     const d = new Date(now.getFullYear(), now.getMonth() - 11, 1);
     from = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
   }
-  const projects = await q('SELECT * FROM projects');
+  const projects = await q('SELECT * FROM projects WHERE deleted_at IS NULL');
   const orders = await q('SELECT * FROM orders');
   const projMonth = {}; // project_id -> ym
   const map = {}; // ym -> { revenue, cost }
@@ -1848,11 +1918,11 @@ app.get(
   h(async (req, res) => {
     await ensureAux();
     const [projects, vendors, categories, orders, customers, receipts, invoices, files, projectFiles] = await Promise.all([
-      q('SELECT * FROM projects ORDER BY id'),
-      q('SELECT * FROM vendors ORDER BY id::int DESC'),
+      q('SELECT * FROM projects WHERE deleted_at IS NULL ORDER BY id'),
+      q('SELECT * FROM vendors WHERE deleted_at IS NULL ORDER BY id::int DESC'),
       q('SELECT * FROM categories ORDER BY "order"'),
       q('SELECT * FROM orders ORDER BY id'),
-      q('SELECT * FROM customers ORDER BY id DESC'),
+      q('SELECT * FROM customers WHERE deleted_at IS NULL ORDER BY id DESC'),
       q('SELECT * FROM receipts ORDER BY received_date DESC'),
       q('SELECT * FROM invoices ORDER BY id DESC'),
       q('SELECT order_id, kind, filename FROM order_files'),
@@ -1877,6 +1947,8 @@ app.get(
       contract_has_file: pfmap.has(fkey(p.id, 'contract')),
       contract_filename: pfmap.get(fkey(p.id, 'contract')) || null,
     }));
+    // vendorsはここでは口座番号をマスクしない（支払管理画面が振込実行のため実口座番号を必要とするため）。
+    // マスクは発注先マスタ画面専用の GET /api/vendors のみで行う。
     res.json({ projects: projectsWithFiles, vendors, categories, orders: ordersWithFiles, customers, receipts, invoices });
   })
 );
@@ -2283,6 +2355,7 @@ app.post(
       text: body || '',
       attachments: [{ filename: `po-${String(order.id).padStart(5, '0')}.pdf`, content: pdfBuffer, contentType: 'application/pdf' }],
     });
+    await logAuditReq(req, 'UPDATE', 'orders', order.id, { name: `${order.category || ''}（${order.vendor || ''}）`, changes: [`発注確定メールを送信（宛先: ${to}）`] });
     res.json({ success: true });
   })
 );
@@ -2345,6 +2418,7 @@ app.post(
       attachments: [{ filename: `invoice-${String(project.id).padStart(5, '0')}.pdf`, content: pdfBuffer, contentType: 'application/pdf' }],
     });
     await q("UPDATE invoices SET status='発送済み' WHERE project_id=$1", [projectId]);
+    await logAuditReq(req, 'UPDATE', 'invoices', projectId, { name: project.name, changes: [`請求書を発送済みに変更（宛先: ${to}）`] });
     res.json({ success: true });
   })
 );
