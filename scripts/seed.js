@@ -15,7 +15,9 @@ try {
       if (m && !process.env[m[1]]) process.env[m[1]] = m[2].replace(/^["']|["']$/g, '');
     });
   }
-} catch (_) {}
+} catch (_) {
+  /* .envが無い/読めない場合は環境変数が既に設定されているものとして続行する */
+}
 
 const url = process.env.DATABASE_URL;
 if (!url) {

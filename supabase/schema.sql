@@ -5,8 +5,11 @@
 -- ============================================================
 
 drop table if exists payment_records cascade;
+drop table if exists misc_payments cascade;
+drop table if exists misc_receipts cascade;
 drop table if exists invitations cascade;
 drop table if exists order_files cascade;
+drop table if exists project_files cascade;
 drop table if exists audit_logs cascade;
 drop table if exists users cascade;
 drop table if exists invoices cascade;
@@ -25,7 +28,12 @@ create table users (
   name          text,
   role          text default 'user',
   created_at    timestamp default current_timestamp,
-  updated_at    timestamp default current_timestamp
+  updated_at    timestamp default current_timestamp,
+  -- アカウントの一時停止・削除状態（active/suspended/deleted）。deletedはソフトデリート
+  -- （audit_logs.user_idの外部キー制約があるため物理削除はしない）
+  status        text default 'active',
+  -- 強制ログアウト用のトークン世代。ロール変更・停止・削除のたびにインクリメントする
+  token_version integer default 1
 );
 
 -- 操作履歴
@@ -56,7 +64,16 @@ create table projects (
   project_no    text,
   receipt_status text,
   delivery_month text,
-  process_info   text
+  process_info   text,
+  -- 引き渡し月の変更検知用（変更のたびに更新し、直近変更を一覧でハイライトする）
+  delivery_month_changed_at timestamp,
+  -- 引渡月変更による複製元→複製先の追跡用（複製元は「オーダー移行」ステータスで凍結）
+  superseded_by integer,
+  -- 論理削除用。物理削除だとON DELETE CASCADEで工事計画・入金・請求書まで連鎖的に消えるため
+  deleted_at    timestamp,
+  -- 楽観的ロック用（決定金額・支払/入金ステータス等の同時更新を検知する）
+  version       integer default 1,
+  constraint projects_amount_nonneg check (amount is null or amount >= 0)
 );
 
 -- 協力業者（発注先）
@@ -73,7 +90,9 @@ create table vendors (
   bank_branch   text,
   bank_type     text,
   bank_number   text,
-  bank_holder   text
+  bank_holder   text,
+  -- 論理削除用（projectsと同じ理由でソフトデリートに統一）
+  deleted_at    timestamp
 );
 
 -- 工事区分
@@ -108,7 +127,13 @@ create table orders (
   invoice_done    boolean,
   remaining       bigint,
   order_no        text,
-  assignee        text
+  assignee        text,
+  -- 楽観的ロック用（決定金額・支払ステータス等の同時更新を検知する）
+  version         integer default 1,
+  constraint orders_estimate_nonneg check (estimate is null or estimate >= 0),
+  constraint orders_planned_nonneg check (planned is null or planned >= 0),
+  constraint orders_decided_nonneg check (decided is null or decided >= 0),
+  constraint orders_remaining_nonneg check (remaining is null or remaining >= 0)
 );
 
 -- 添付書類（請書/請求書のPDF）。orders × kind ごとに1件。
@@ -138,7 +163,8 @@ create table payment_records (
   paid_date  text,
   amount     bigint,
   note       text,
-  created_at timestamp default current_timestamp
+  created_at timestamp default current_timestamp,
+  constraint payment_records_amount_nonneg check (amount is null or amount >= 0)
 );
 
 -- 案件外の支払（工事外費用・給与その他）。工事計画（orders）に紐づかない支払を管理
@@ -151,7 +177,8 @@ create table misc_payments (
   payment_date text,
   status       text default '未払い', -- 未払い | 部分払い | 支払済み
   notes        text,
-  created_at   timestamp default current_timestamp
+  created_at   timestamp default current_timestamp,
+  constraint misc_payments_amount_nonneg check (amount is null or amount >= 0)
 );
 
 -- 案件外の入金（案件に紐づかない売上・雑収入等）
@@ -164,7 +191,8 @@ create table misc_receipts (
   receipt_date text,
   status       text default '未入金', -- 未入金 | 一部入金 | 入金済
   notes        text,
-  created_at   timestamp default current_timestamp
+  created_at   timestamp default current_timestamp,
+  constraint misc_receipts_amount_nonneg check (amount is null or amount >= 0)
 );
 
 -- アカウント招待（24時間有効の発行リンク）
@@ -189,7 +217,13 @@ create table customers (
   email       text,
   phone       text,
   address     text,
-  notes       text
+  notes       text,
+  -- クライアント情報の拡張（資本金・企業規模・コーポレートサイトURL）
+  capital       bigint,
+  company_scale text,
+  website       text,
+  -- 論理削除用（projectsと同じ理由でソフトデリートに統一）
+  deleted_at    timestamp
 );
 
 -- 入金
@@ -199,7 +233,8 @@ create table receipts (
   received_date text,
   amount        bigint,
   month         text,
-  memo          text
+  memo          text,
+  constraint receipts_amount_nonneg check (amount is null or amount >= 0)
 );
 
 -- 請求書
@@ -214,7 +249,10 @@ create table invoices (
   tax             bigint,
   total           bigint,
   bank_info       text,
-  status          text default '発行済'
+  status          text default '発行済',
+  constraint invoices_subtotal_nonneg check (subtotal is null or subtotal >= 0),
+  constraint invoices_tax_nonneg check (tax is null or tax >= 0),
+  constraint invoices_total_nonneg check (total is null or total >= 0)
 );
 
 -- 外部キー相当カラムのインデックス（Postgresは外部キーに自動でインデックスを張らないため明示）
@@ -223,6 +261,15 @@ create index idx_receipts_project_id on receipts(project_id);
 create index idx_invoices_project_id on invoices(project_id);
 create index idx_payment_records_order_id on payment_records(order_id);
 create index idx_audit_logs_table_created on audit_logs(table_name, created_at desc);
+
+-- 絞り込みに使われる頻出列へのインデックス（一覧・通知・レポート系のN+1/全件走査対策）
+create index idx_orders_payment_status on orders("paymentStatus");
+create index idx_orders_status on orders(status);
+create index idx_projects_status on projects(status);
+create index idx_projects_start_date on projects("startDate");
+
+-- project_noの重複登録を防ぐUNIQUE制約（案件ID採番のレース条件対策とセット。空文字/NULLは対象外）
+create unique index idx_projects_project_no_unique on projects(project_no) where project_no is not null and project_no != '';
 
 -- ============ 初期データ ============
 

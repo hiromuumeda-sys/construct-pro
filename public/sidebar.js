@@ -31,7 +31,9 @@ function buildSidebar() {
   let currentRole = null;
   try {
     currentRole = JSON.parse(localStorage.getItem('user') || 'null')?.role || null;
-  } catch (_) {}
+  } catch (_) {
+    /* JSON解析失敗時はロール未設定として扱う */
+  }
   const visibleLinks = SIDEBAR_LINKS.filter(l => !l.roles || l.roles.includes(currentRole));
 
   const items = visibleLinks.map(l => {

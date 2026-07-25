@@ -10,3 +10,6 @@ function escHtml(v) {
     "'": '&#39;',
   })[c]);
 }
+
+// ブラウザではグローバル関数として、Node（テスト）ではrequireで使えるようにする
+if (typeof module !== 'undefined' && module.exports) module.exports = { escHtml };

@@ -4,7 +4,7 @@ function notifKey(n) {
 function getConfirmedNotif() {
   try {
     return JSON.parse(localStorage.getItem('notif_confirmed') || '[]');
-  } catch (e) {
+  } catch {
     return [];
   }
 }
@@ -19,7 +19,9 @@ function __readNotifCache() {
   try {
     const c = JSON.parse(sessionStorage.getItem('notif_cache') || 'null');
     if (c && Array.isArray(c.items)) return c;
-  } catch (_) {}
+  } catch (_) {
+    /* キャッシュ破損時は無視して取得し直す */
+  }
   return null;
 }
 let __notifFetching = null;
@@ -42,7 +44,9 @@ async function loadNotif(force) {
         __notifItems = items;
         try {
           sessionStorage.setItem('notif_cache', JSON.stringify({ ts: Date.now(), items }));
-        } catch (_) {}
+        } catch (_) {
+          /* sessionStorageが使えない環境ではキャッシュを諦める */
+        }
       })
       .catch(() => {})
       .finally(() => {

@@ -1,0 +1,25 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm test
+        env:
+          # このリポジトリには別建てのテストDBが無く、テストは実際のdev用Supabaseに対して
+          # 実行される。GitHub リポジトリの Settings > Secrets and variables > Actions に
+          # DATABASE_URL と JWT_SECRET を登録しておくこと（未設定だとこのステップは失敗する）。
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}

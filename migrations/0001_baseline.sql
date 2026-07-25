@@ -1,0 +1,12 @@
+-- ベースライン。この時点までの全スキーマ変更（invitations/order_files/project_files/
+-- payment_records/misc_payments/misc_receiptsの新設、users.status・token_version、
+-- projects.deleted_at/superseded_by/delivery_month_changed_at/version、
+-- vendors.deleted_at、customers.capital/company_scale/website/deleted_at、
+-- orders.version、金額列のCHECK制約、各種インデックス、project_noのUNIQUE制約）は
+-- 過去にensureAux()（server.js起動時の冪等マイグレーション）で個別に本番へ適用済みで、
+-- supabase/schema.sql には今回まとめて反映済み。
+--
+-- このファイル自体は何もしない（新規環境をゼロから作る場合は supabase/schema.sql を
+-- 直接実行すればこの内容も含めて全て作られるため）。scripts/migrate.js が管理する
+-- schema_migrations テーブルに「0001_baseline」を適用済みとして記録するためだけに存在する。
+select 1;

@@ -146,7 +146,7 @@ function useJpFont(doc) {
     doc.font('jp');
     return true;
   } catch (e) {
-    console.error('jp font load failed:', e.message);
+    logger.error({ err: e }, 'jp font load failed');
     return false;
   }
 }
@@ -234,7 +234,7 @@ const authMiddleware = async (req, res, next) => {
   let payload;
   try {
     payload = jwt.verify(token, JWT_SECRET);
-  } catch (err) {
+  } catch {
     return res.status(401).json({ error: 'Invalid token' });
   }
   try {
@@ -250,7 +250,7 @@ const authMiddleware = async (req, res, next) => {
     }
     req.user = payload;
     next();
-  } catch (err) {
+  } catch {
     res.status(500).json({ error: 'auth check failed' });
   }
 };
@@ -261,7 +261,7 @@ const requireRole = allowedRoles => async (req, res, next) => {
     const user = await one('SELECT role FROM users WHERE id=$1', [req.user.id]);
     if (!user || !allowedRoles.includes(user.role)) return res.status(403).json({ error: 'このページを閲覧する権限がありません' });
     next();
-  } catch (err) {
+  } catch {
     res.status(500).json({ error: 'permission check failed' });
   }
 };
@@ -275,7 +275,7 @@ const logAudit = async (userId, action, tableName, recordId, details = {}) => {
     if (!u) return;
     await q('INSERT INTO audit_logs (user_id, action, table_name, record_id, details) VALUES ($1,$2,$3,$4,$5)', [userId, action, tableName, recordId, JSON.stringify(details)]);
   } catch (err) {
-    console.error('audit log failed:', err.message);
+    logger.error({ err }, 'audit log failed');
   }
 };
 
@@ -1687,8 +1687,7 @@ app.get(
   authMiddleware,
   h(async (req, res) => {
     const type = req.params.type;
-    let csv = '',
-      filename = '';
+    let csv, filename;
     if (type === 'sales') {
       // 案件数に比例したループ内SELECT（N+1）を避けるため、入金合計は一括GROUP BYで取得する
       const [projects, receiptSums] = await Promise.all([
@@ -2236,8 +2235,7 @@ function buildDocumentPDF(kind, project, orders, customItems, variant = 'sealed'
     doc.on('end', () => resolve(Buffer.concat(chunks)));
     doc.on('error', reject);
     useJpFont(doc);
-    const navy = '#030424',
-      gray = '#6b7280',
+    const gray = '#6b7280',
       accent = '#7030A0'; // accent=Excelテンプレの紫
     const L = 50,
       R = 545,
@@ -2381,8 +2379,7 @@ function buildDocumentPDF(kind, project, orders, customItems, variant = 'sealed'
     }
     // 合計ブロック（右寄せ）
     y += 10;
-    const tlX = R - 220,
-      tvX = R - 100;
+    const tlX = R - 220;
     const totalRow = (label, val, bold) => {
       doc.lineWidth(bold ? 1 : 0.6).strokeColor(bold ? accent : '#999');
       doc.rect(tlX, y, 120, 20).stroke();
@@ -2693,7 +2690,7 @@ app.post(
       emailSent = true;
     } catch (e) {
       emailError = e.message;
-      console.error('invite mail failed:', e.message);
+      logger.error({ err: e }, 'invite mail failed');
     }
     await logAudit(getUserId(req), 'CREATE', 'invitations', inv.id, {
       name: email,
@@ -2761,10 +2758,21 @@ app.post(
   })
 );
 
+// 稼働監視用ヘルスチェック（DB疎通確認込み）。認証不要。
+app.get('/health', async (req, res) => {
+  try {
+    await q('SELECT 1');
+    res.json({ status: 'ok', db: 'ok', uptime: process.uptime() });
+  } catch (err) {
+    logger.error({ err }, 'health check failed');
+    res.status(503).json({ status: 'error', db: 'unreachable' });
+  }
+});
+
 // ローカル実行時のみ listen（Vercel ではモジュールとして読み込まれる）
 if (require.main === module) {
   const PORT = parseInt(process.env.PORT || '4500', 10);
-  app.listen(PORT, () => console.log(`🚀 Server running at http://localhost:${PORT}`));
+  app.listen(PORT, () => logger.info(`🚀 Server running at http://localhost:${PORT}`));
 }
 
 module.exports = app;

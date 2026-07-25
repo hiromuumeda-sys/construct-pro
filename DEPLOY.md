@@ -39,6 +39,8 @@ vercel --prod              # 本番デプロイ
 | 変数 | 値 |
 |------|----|
 | `DATABASE_URL` | Supabase の Transaction 接続文字列（必須） |
+| `JWT_SECRET` | ログイントークンの署名鍵（必須・未設定だと起動時にエラーで落ちる）。`node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"` 等でランダムな値を生成して設定する |
+| `ALLOWED_ORIGIN` | CORSで許可する本番オリジン（例: `https://your-app.vercel.app`）。未設定時はlocalhostのみ許可される |
 | `SMTP_HOST` / `SMTP_PORT` / `SMTP_SECURE` / `SMTP_USER` / `SMTP_PASS` / `MAIL_FROM` | メール送信を使う場合のみ |
 
 ## 構成メモ

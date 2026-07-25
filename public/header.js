@@ -76,7 +76,9 @@ function hdrRenderUser() {
   let u = null;
   try {
     u = JSON.parse(localStorage.getItem('user') || 'null');
-  } catch (_) {}
+  } catch (_) {
+    /* JSON解析失敗時は未ログイン扱い */
+  }
   if (!u) return;
   const n = document.getElementById('hdr-user-name');
   const r = document.getElementById('hdr-user-role');
