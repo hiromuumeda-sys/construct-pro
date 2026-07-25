@@ -2077,6 +2077,17 @@ const COMPANY = {
   accountHolder: 'カ）ウィン',
   feeNote: '振込手数料は振込人様にてご負担ください。',
 };
+
+// 自社情報（銀行口座等）はCOMPANYを唯一の情報源とする。以前はprojects.htmlの請求書プレビューが
+// 同じ内容を別途べた書きしており、銀行変更時に一方の更新を忘れると画面とPDFで表示が食い違っていた。
+app.get(
+  '/api/company-info',
+  authMiddleware,
+  h(async (req, res) => {
+    res.json({ bank: COMPANY.bank, account: COMPANY.account, accountHolder: COMPANY.accountHolder, feeNote: COMPANY.feeNote });
+  })
+);
+
 const fmtDateJa = d => `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日`;
 const toWareki = d => ({ y: d.getFullYear() - 2018, m: d.getMonth() + 1, d: d.getDate() }); // 令和
 

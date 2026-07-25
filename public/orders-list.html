@@ -6,12 +6,12 @@
 <title>工事計画 - WIN WIN様デモ</title>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
-<link rel="stylesheet" href="/styles.css?v=77"/>
-<script src="/sidebar.js?v=77"></script>
-<script src="/auth.js?v=77"></script>
-<script src="/header.js?v=77"></script>
-<script src="/esc.js?v=77"></script>
-<script src="/status-utils.js?v=77"></script>
+<link rel="stylesheet" href="/styles.css?v=78"/>
+<script src="/sidebar.js?v=78"></script>
+<script src="/auth.js?v=78"></script>
+<script src="/header.js?v=78"></script>
+<script src="/esc.js?v=78"></script>
+<script src="/status-utils.js?v=78"></script>
 <style>
 body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
@@ -552,14 +552,7 @@ async function putOrderWithVersionCheck(id, body) {
 }
 
 function getStatusColor(status) {
-  const colors = {
-    未処理: 'bg-surface-container text-on-surface-variant',
-    見積待ち: 'bg-tertiary-container text-on-tertiary-container',
-    決定済み: 'bg-primary-container text-on-primary-container',
-    発注完了: 'bg-secondary-container text-on-secondary-container',
-    支払済み: 'bg-secondary text-on-secondary',
-  };
-  return statusClass(colors, status, 'bg-surface-container text-on-surface');
+  return statusClass(STATUS_MAP.order, status, 'bg-surface-container text-on-surface');
 }
 
 // 未/済を変更（DB保存＋履歴記録）
@@ -1376,6 +1369,6 @@ function filterTable() {
   applyColumnVisibility();
 }
 </script>
-<script src="/notify.js?v=77"></script>
+<script src="/notify.js?v=78"></script>
 </body>
 </html>

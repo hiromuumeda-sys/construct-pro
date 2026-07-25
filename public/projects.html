@@ -6,12 +6,12 @@
 <title>受注一覧 - WIN WIN様デモ</title>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
-<link rel="stylesheet" href="/styles.css?v=77"/>
-<script src="/sidebar.js?v=77"></script>
-<script src="/auth.js?v=77"></script>
-<script src="/header.js?v=77"></script>
-<script src="/esc.js?v=77"></script>
-<script src="/status-utils.js?v=77"></script>
+<link rel="stylesheet" href="/styles.css?v=78"/>
+<script src="/sidebar.js?v=78"></script>
+<script src="/auth.js?v=78"></script>
+<script src="/header.js?v=78"></script>
+<script src="/esc.js?v=78"></script>
+<script src="/status-utils.js?v=78"></script>
 <style>
 body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
@@ -600,16 +600,7 @@ function buildEditRow(p) {
 }
 
 function getStatusClass(status) {
-  const map = {
-    未対応: 'bg-surface-container text-on-surface-variant',
-    提案中: 'bg-secondary-container text-on-secondary-container',
-    見積確認中: 'border border-outline-variant bg-surface-container-lowest text-on-surface-variant',
-    受注: 'bg-secondary text-on-secondary',
-    失注: 'bg-error-container text-on-error-container',
-    // 引渡月変更に伴う複製元（旧案件ID）。手動選択はさせず、複製処理からのみ付与される
-    オーダー移行: 'bg-surface-container-high text-on-surface-variant',
-  };
-  return statusClass(map, status);
+  return statusClass(STATUS_MAP.project, status);
 }
 
 // ===== 契約書PDF アップロード/表示/削除（order_filesと同じ方式：DB直接保存） =====
@@ -935,6 +926,23 @@ document.getElementById('period-end-filter').addEventListener('change', applyPro
 let currentInvoiceProjectId = null;
 let invoiceItems = []; // 請求書プレビュー上でのみ編集可能な内訳（マスタのordersには反映しない）
 
+// 自社の振込先情報。server.js の COMPANY を唯一の情報源とし、ここで別途べた書きしない
+// （以前はこのプレビューだけ銀行名・口座番号を直書きしており、変更時に食い違う事故があった）。
+let _companyInfoCache = null;
+async function fillInvoiceBankInfo() {
+  try {
+    if (!_companyInfoCache) {
+      const res = await fetch('/api/company-info');
+      _companyInfoCache = await res.json();
+    }
+    const c = _companyInfoCache;
+    document.getElementById('inv-bank-info').textContent = `[振込先]　${c.bank}　／　口座番号　${c.account}　／　口座名義　${c.accountHolder}`;
+    document.getElementById('inv-fee-note').textContent = `※${c.feeNote}`;
+  } catch (e) {
+    // 取得失敗時はプレースホルダのまま（請求書PDF自体には影響しない）
+  }
+}
+
 function generateInvoice(projectId) {
   if (!projectId) {
     alert('案件を選択してから請求書を発行してください');
@@ -948,6 +956,7 @@ function generateInvoice(projectId) {
   const orders = (window.appCache.orders || []).filter(o => o.project_id === projectId);
 
   currentInvoiceProjectId = projectId;
+  fillInvoiceBankInfo();
 
   // Populate invoice document
   document.getElementById('inv-client').textContent = (project.clientCompany || project.client) + ' 御中';
@@ -1355,8 +1364,8 @@ async function sendEstimateEmail() {
               <div>お支払期限：<span id="inv-due">---</span></div>
             </div>
           </div>
-          <p class="text-[11px] mb-0.5">[振込先]　〇〇銀行 京都支店　／　口座番号　(普)0777777　／　口座名義　カ）ウィン</p>
-          <p class="text-[10px] text-on-surface-variant mb-2">※振込手数料は振込人様にてご負担ください。</p>
+          <p class="text-[11px] mb-0.5" id="inv-bank-info">[振込先]　読み込み中...</p>
+          <p class="text-[10px] text-on-surface-variant mb-2" id="inv-fee-note"></p>
           <table class="w-full text-xs mb-1" style="border-collapse:collapse">
             <thead>
               <tr class="text-white" style="background:#7030A0">
@@ -1537,6 +1546,6 @@ async function sendEstimateEmail() {
   </div>
 </div>
 
-<script src="/notify.js?v=77"></script>
+<script src="/notify.js?v=78"></script>
 </body>
 </html>
