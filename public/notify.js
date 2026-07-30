@@ -15,10 +15,14 @@ let __notifItems = [];
 // 通知はsessionStorageにキャッシュし、画面遷移のたびに取得しない（TTL内はキャッシュ表示）。
 // 最新化はベルを開いた時のみ（loadNotif(true)）。
 const NOTIF_TTL = 5 * 60 * 1000;
+// 通知データの形（keywordの持たせ方等）を変える場合はこの値を上げる。
+// 値が食い違う古いキャッシュ（サーバー側の変更前にsessionStorageへ保存されたもの）は
+// 破棄され、フォーマット差異による表示不整合（例:リンクのqパラメータが古いまま）を防ぐ。
+const NOTIF_CACHE_VERSION = 2;
 function __readNotifCache() {
   try {
     const c = JSON.parse(sessionStorage.getItem('notif_cache') || 'null');
-    if (c && Array.isArray(c.items)) return c;
+    if (c && Array.isArray(c.items) && c.v === NOTIF_CACHE_VERSION) return c;
   } catch (_) {
     /* キャッシュ破損時は無視して取得し直す */
   }
@@ -43,7 +47,7 @@ async function loadNotif(force) {
       .then(items => {
         __notifItems = items;
         try {
-          sessionStorage.setItem('notif_cache', JSON.stringify({ ts: Date.now(), items }));
+          sessionStorage.setItem('notif_cache', JSON.stringify({ ts: Date.now(), items, v: NOTIF_CACHE_VERSION }));
         } catch (_) {
           /* sessionStorageが使えない環境ではキャッシュを諦める */
         }
