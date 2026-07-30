@@ -63,6 +63,8 @@ create table projects (
   notes         text,
   project_no    text,
   receipt_status text,
+  -- 売上・入金管理の一覧から直接編集する備考欄
+  receipt_notes text,
   delivery_month text,
   process_info   text,
   -- 引き渡し月の変更検知用（変更のたびに更新し、直近変更を一覧でハイライトする）

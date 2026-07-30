@@ -6,12 +6,12 @@
 <title>売上・入金管理 - WIN WIN様デモ</title>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
-<link rel="stylesheet" href="/styles.css?v=80"/>
-<script src="/sidebar.js?v=80"></script>
-<script src="/auth.js?v=80"></script>
-<script src="/header.js?v=80"></script>
-<script src="/esc.js?v=80"></script>
-<script src="/status-utils.js?v=80"></script>
+<link rel="stylesheet" href="/styles.css?v=81"/>
+<script src="/sidebar.js?v=81"></script>
+<script src="/auth.js?v=81"></script>
+<script src="/header.js?v=81"></script>
+<script src="/esc.js?v=81"></script>
+<script src="/status-utils.js?v=81"></script>
 <style>
 body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
@@ -181,6 +181,7 @@ body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 <th class="px-3 py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant text-right">未成工事受入金</th>
 <th class="px-3 py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant text-center w-24">ステータス</th>
 <th class="px-3 py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant text-center w-24">消し込み履歴</th>
+<th class="px-3 py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant w-56">備考</th>
 </tr>
 </thead>
 <tbody class="divide-y divide-outline-variant/20" id="sales-table-body">
@@ -578,6 +579,23 @@ async function updateReceiptStatus(id, value) {
   }
 }
 
+// 一覧から備考を直接編集（projects.receipt_notesを更新）
+async function updateReceiptNotes(id, value) {
+  const s = salesData.find(x => x.id === id);
+  if (!s) return;
+  try {
+    const res = await fetch(`/api/projects/${id}/receipt-notes`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ value }),
+    });
+    if (!res.ok) throw new Error('failed');
+    s.receipt_notes = value;
+  } catch (e) {
+    alert('備考の更新に失敗しました');
+  }
+}
+
 function clearReceiptFilters() {
   document.getElementById('filter-pay-status').value = '';
   document.getElementById('filter-due-start').value = '';
@@ -609,7 +627,7 @@ function renderSales() {
 
   const tbody = document.getElementById('sales-table-body');
   if (filtered.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="16" class="px-3 py-8 text-center text-on-surface-variant text-label-md">該当する案件がありません</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="17" class="px-3 py-8 text-center text-on-surface-variant text-label-md">該当する案件がありません</td></tr>';
   } else {
     tbody.innerHTML = filtered
       .map(
@@ -641,6 +659,11 @@ function renderSales() {
       </td>
       <td class="px-3 py-2.5 text-center" onclick="event.stopPropagation()">
         <button class="material-symbols-outlined text-on-surface-variant hover:text-secondary hover:bg-secondary/10 rounded-full w-8 h-8" onclick="openHistoryModal(${s.id})" title="消し込み履歴" aria-label="消し込み履歴">receipt_long</button>
+      </td>
+      <td class="px-3 py-2.5 whitespace-normal" onclick="event.stopPropagation()">
+        <input type="text" value="${escHtml(s.receipt_notes)}" placeholder="備考" aria-label="備考"
+          class="w-full bg-transparent border border-transparent hover:border-outline-variant focus:border-secondary focus:bg-surface-container-lowest rounded-lg text-label-md px-2 py-1 focus:ring-2 focus:ring-secondary/20 transition-all"
+          onchange="updateReceiptNotes(${s.id}, this.value)"/>
       </td>
     </tr>
   `
@@ -809,5 +832,5 @@ loadAll().then(() => {
 loadMiscReceipts();
 </script>
 
-<script src="/notify.js?v=80"></script>
+<script src="/notify.js?v=81"></script>
 </body></html>

@@ -77,6 +77,9 @@ function ensureAux() {
       await createIfMissing('ALTER TABLE vendors ADD COLUMN IF NOT EXISTS capital bigint');
       await createIfMissing('ALTER TABLE vendors ADD COLUMN IF NOT EXISTS company_scale text');
       await createIfMissing('ALTER TABLE vendors ADD COLUMN IF NOT EXISTS website text');
+      // 売上・入金管理の一覧から直接編集する備考欄（支払管理のorders.paymentNotesに相当するものが
+      // 案件の入金サマリ側に無かったため追加）
+      await createIfMissing('ALTER TABLE projects ADD COLUMN IF NOT EXISTS receipt_notes text');
       // 引き渡し月の変更検知用（変更のたびに更新し、直近変更を一覧でハイライトする）
       await createIfMissing('ALTER TABLE projects ADD COLUMN IF NOT EXISTS delivery_month_changed_at timestamp');
       // 引渡月変更による複製元→複製先の追跡用（議事録決定事項：複製元は「オーダー移行」ステータスで凍結）
@@ -1492,6 +1495,7 @@ app.get(
         last_receipt_date: lastReceiptDate,
         pay_status: payStatus,
         due_date: inv ? inv.due_date : null,
+        receipt_notes: p.receipt_notes || '',
       });
     }
     res.json(summary);
@@ -1511,6 +1515,23 @@ app.put(
     await logAuditReq(req, 'UPDATE', 'receipts', parseInt(req.params.id), {
       name: before.name,
       changes: [`入金ステータスを ${prev} → ${value} に変更`],
+    });
+    res.json({ success: true });
+  })
+);
+
+// 売上・入金管理の一覧からの備考直接編集
+app.put(
+  '/api/projects/:id/receipt-notes',
+  authMiddleware,
+  h(async (req, res) => {
+    const { value } = req.body;
+    const before = await one('SELECT * FROM projects WHERE id=$1', [req.params.id]);
+    if (!before) return res.status(404).json({ error: 'project not found' });
+    await q('UPDATE projects SET receipt_notes=$1 WHERE id=$2', [value, req.params.id]);
+    await logAuditReq(req, 'UPDATE', 'receipts', parseInt(req.params.id), {
+      name: before.name,
+      changes: [`備考を ${before.receipt_notes || '(空)'} → ${value || '(空)'} に変更`],
     });
     res.json({ success: true });
   })

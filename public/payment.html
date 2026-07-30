@@ -6,12 +6,12 @@
 <title>支払管理 - WIN WIN様デモ</title>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
-<link rel="stylesheet" href="/styles.css?v=80"/>
-<script src="/sidebar.js?v=80"></script>
-<script src="/auth.js?v=80"></script>
-<script src="/header.js?v=80"></script>
-<script src="/esc.js?v=80"></script>
-<script src="/status-utils.js?v=80"></script>
+<link rel="stylesheet" href="/styles.css?v=81"/>
+<script src="/sidebar.js?v=81"></script>
+<script src="/auth.js?v=81"></script>
+<script src="/header.js?v=81"></script>
+<script src="/esc.js?v=81"></script>
+<script src="/status-utils.js?v=81"></script>
 <style>
 body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
@@ -158,6 +158,7 @@ body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 <th class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant w-28">支払銀行</th>
 <th class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant text-center w-32">支払ステータス</th>
 <th class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant text-center w-24">支払履歴</th>
+<th class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant w-56">備考</th>
 </tr>
 </thead>
 <tbody class="divide-y divide-outline-variant/20" id="payment-table-body">
@@ -473,6 +474,11 @@ function renderPaymentRow(payment) {
       <td class="px-3 py-1.5 text-center whitespace-nowrap" onclick="event.stopPropagation()">
         <button class="material-symbols-outlined text-on-surface-variant hover:text-secondary hover:bg-secondary/10 rounded-full w-8 h-8" onclick="openPayHistoryModal(${payment.id})" title="支払履歴" aria-label="支払履歴">receipt_long</button>
       </td>
+      <td class="px-3 py-1.5 whitespace-normal" onclick="event.stopPropagation()">
+        <input type="text" value="${escHtml(payment.notes)}" placeholder="備考" aria-label="備考"
+          class="w-full bg-transparent border border-transparent hover:border-outline-variant focus:border-secondary focus:bg-surface-container-lowest rounded-lg text-label-md px-2 py-1 focus:ring-2 focus:ring-secondary/20 transition-all"
+          onchange="updatePaymentNotes(${payment.id}, this.value)"/>
+      </td>
     </tr>
   `;
 }
@@ -521,6 +527,24 @@ async function updatePaymentStatus(id, status) {
     filterTable();
   } catch (e) {
     alert('ステータス更新に失敗しました');
+  }
+}
+
+// 一覧から備考を直接編集（orders.paymentNotesを更新）
+async function updatePaymentNotes(id, value) {
+  const p = payments.find(x => x.id === id);
+  if (!p) return;
+  try {
+    const res = await fetch(`/api/orders/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...p._raw, paymentNotes: value }),
+    });
+    if (!res.ok) throw new Error('failed');
+    p.notes = value;
+    if (p._raw) p._raw.paymentNotes = value;
+  } catch (e) {
+    alert('備考の更新に失敗しました');
   }
 }
 
@@ -865,6 +889,6 @@ function filterTable() {
   tbody.innerHTML = filtered.map(renderPaymentRow).join('');
 }
 </script>
-<script src="/notify.js?v=80"></script>
+<script src="/notify.js?v=81"></script>
 </body>
 </html>
