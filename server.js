@@ -1580,8 +1580,11 @@ app.get(
       if (!o.paymentDate) return;
       const d = daysBetween(o.paymentDate);
       if (d === null) return;
-      if (d < 0) notifications.push({ type: 'payment', level: 'error', icon: 'error', title: '支払期日超過', message: `${o.vendor} への支払（${o.category}）が${Math.abs(d)}日超過しています`, date: o.paymentDate, link: '/payment.html', keyword: o.vendor, assignee: o.assignee || null });
-      else if (d <= 7) notifications.push({ type: 'payment', level: 'warning', icon: 'schedule', title: '支払期日接近', message: `${o.vendor} への支払（${o.category}）まであと${d}日です`, date: o.paymentDate, link: '/payment.html', keyword: o.vendor, assignee: o.assignee || null });
+      // keywordは発注先名ではなく発注明細の# (id) を使う：同じ発注先には他にも多数の
+      // 発注明細があるため、発注先名だと検索結果がその発注先の全件になってしまい、
+      // 通知が指している1件に絞り込めない。
+      if (d < 0) notifications.push({ type: 'payment', level: 'error', icon: 'error', title: '支払期日超過', message: `${o.vendor} への支払（${o.category}）が${Math.abs(d)}日超過しています`, date: o.paymentDate, link: '/payment.html', keyword: String(o.id), assignee: o.assignee || null });
+      else if (d <= 7) notifications.push({ type: 'payment', level: 'warning', icon: 'schedule', title: '支払期日接近', message: `${o.vendor} への支払（${o.category}）まであと${d}日です`, date: o.paymentDate, link: '/payment.html', keyword: String(o.id), assignee: o.assignee || null });
     });
 
     // 案件・請求書数に比例したループ内SELECT（N+1）を避けるため、必要な集計を先に一括取得する
@@ -1680,17 +1683,18 @@ app.get(
       if (/注文|発注|請書|協力業者|竣工|工程|進捗/.test(t)) return '/orders-list.html';
       return null;
     };
-    // デモ通知のkeywordは案件名で書かれているが、実データと同様に検索の複数ヒットを避けるため
-    // 実在する案件の#(id)に解決できる場合はidへ差し替える（発注先名はこのマップに無いのでそのまま）。
+    // デモ通知のkeywordは案件名・発注先名で書かれているが、実データと同様に検索の複数ヒットを
+    // 避けるため、実在するレコードの#(id)に解決できる場合はidへ差し替える。
+    // 案件は同名の複製があり得るため案件id、発注先は同じ発注先に多数の明細があるため発注明細idを使う
+    // （発注先→明細は1対多のため代表の1件になるが、通知が指す正確な1件よりは絞り込めている方が良い）。
     const projectIdByName = new Map(allProjectsForNotif.map(p => [p.name, p.id]));
-    demoNotifications.forEach(n =>
-      notifications.push({
-        type: 'demo',
-        link: linkFor(n),
-        ...n,
-        keyword: n.keyword && projectIdByName.has(n.keyword) ? String(projectIdByName.get(n.keyword)) : n.keyword,
-      })
-    );
+    const orderIdByVendor = new Map(orders.map(o => [o.vendor, o.id]));
+    demoNotifications.forEach(n => {
+      let keyword = n.keyword;
+      if (keyword && projectIdByName.has(keyword)) keyword = String(projectIdByName.get(keyword));
+      else if (keyword && orderIdByVendor.has(keyword)) keyword = String(orderIdByVendor.get(keyword));
+      notifications.push({ type: 'demo', link: linkFor(n), ...n, keyword });
+    });
 
     const order = { error: 0, warning: 1, info: 2 };
     notifications.sort((a, b) => order[a.level] - order[b.level]);
