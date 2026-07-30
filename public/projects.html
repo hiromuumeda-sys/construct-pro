@@ -896,7 +896,12 @@ function applyProjectFilters() {
   const rEnd = periodEnd ? new Date(periodEnd) : null;
 
   const filtered = window.appCache.projects.filter(p => {
-    if (kw && !(p.name.toLowerCase().includes(kw) || (p.client || '').toLowerCase().includes(kw) || (p.project_no || '').toLowerCase().includes(kw))) return false;
+    // 数字のみの入力は#（案件の一意なid。通知リンクの絞り込みで使用）への完全一致とみなす。
+    // 工事名は引渡月変更による複製で同名になり得るため、部分一致では一意に絞り込めないことがある。
+    if (kw) {
+      const matched = /^\d+$/.test(kw) ? String(p.id) === kw : p.name.toLowerCase().includes(kw) || (p.client || '').toLowerCase().includes(kw) || (p.project_no || '').toLowerCase().includes(kw);
+      if (!matched) return false;
+    }
     if (status && p.status !== status) return false;
     if (rStart || rEnd) {
       // 工期が指定範囲に重なる案件のみ

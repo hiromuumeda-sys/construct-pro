@@ -166,6 +166,7 @@ body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 <thead>
 <tr class="bg-surface-container-low sticky top-0 z-10">
 <th class="px-3 py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant text-center w-20">入金登録</th>
+<th class="px-3 py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant w-16">#</th>
 <th class="px-3 py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant">案件ID</th>
 <th class="px-3 py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant">発注者</th>
 <th class="px-3 py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant">工事名</th>
@@ -597,13 +598,18 @@ function renderSales() {
       if (fDueStart && s.due_date < fDueStart) return false;
       if (fDueEnd && s.due_date > fDueEnd) return false;
     }
-    if (kw && !((s.name || '').toLowerCase().includes(kw) || (s.client || '').toLowerCase().includes(kw) || (s.project_no || '').toLowerCase().includes(kw))) return false;
+    if (kw) {
+      // 数字のみの入力は#（案件の一意なid）への完全一致とみなす。工事名は引渡月変更による
+      // 複製で同名になり得るため、文字列の部分一致では対象を一意に絞り込めないことがある。
+      const matched = /^\d+$/.test(kw) ? String(s.id) === kw : (s.name || '').toLowerCase().includes(kw) || (s.client || '').toLowerCase().includes(kw) || (s.project_no || '').toLowerCase().includes(kw);
+      if (!matched) return false;
+    }
     return true;
   });
 
   const tbody = document.getElementById('sales-table-body');
   if (filtered.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="15" class="px-3 py-8 text-center text-on-surface-variant text-label-md">該当する案件がありません</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="16" class="px-3 py-8 text-center text-on-surface-variant text-label-md">該当する案件がありません</td></tr>';
   } else {
     tbody.innerHTML = filtered
       .map(
@@ -612,6 +618,7 @@ function renderSales() {
       <td class="px-3 py-2.5 text-center">
         ${s.pay_status !== '入金済' ? `<button class="material-symbols-outlined text-secondary hover:bg-secondary/10 rounded-full w-8 h-8" onclick="event.stopPropagation(); openReceiptModal(${s.id})" title="入金登録" aria-label="入金登録">add_circle</button>` : ''}
       </td>
+      <td class="px-3 py-2.5 text-label-md font-label-md text-on-surface-variant tabular-numbers">${String(s.id).padStart(4, '0')}</td>
       <td class="px-3 py-2.5 text-label-md font-label-md text-on-surface-variant tabular-numbers">${s.project_no || '-'}</td>
       <td class="px-3 py-2.5 text-label-md font-label-md text-on-surface-variant">${escHtml(s.client)}</td>
       <td class="px-3 py-2.5 text-label-md font-label-md text-primary">${escHtml(s.name)}</td>

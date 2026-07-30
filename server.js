@@ -1603,13 +1603,15 @@ app.get(
       const d = daysBetween(inv.due_date);
       if (d === null) continue;
       const yen = '¥' + outstanding.toLocaleString();
-      if (d < 0) notifications.push({ type: 'receipt', level: 'error', icon: 'error', title: '入金期日超過（未入金）', message: `${project ? project.name : '案件'}（${inv.invoice_no}）の入金期日が${Math.abs(d)}日超過・未入金残 ${yen}`, date: inv.due_date, link: '/receipts.html', keyword: project ? project.name : null });
-      else if (d <= 7) notifications.push({ type: 'receipt', level: 'warning', icon: 'schedule', title: '入金期日接近', message: `${project ? project.name : '案件'}（${inv.invoice_no}）の入金期日まであと${d}日・未入金残 ${yen}`, date: inv.due_date, link: '/receipts.html', keyword: project ? project.name : null });
+      // keywordは案件名ではなく案件の# (id) を使う：引渡月変更で複製された案件は同名になるため、
+      // 名前だと検索時に複数ヒットしてしまい対象を一意に絞り込めない。
+      if (d < 0) notifications.push({ type: 'receipt', level: 'error', icon: 'error', title: '入金期日超過（未入金）', message: `${project ? project.name : '案件'}（${inv.invoice_no}）の入金期日が${Math.abs(d)}日超過・未入金残 ${yen}`, date: inv.due_date, link: '/receipts.html', keyword: project ? String(project.id) : null });
+      else if (d <= 7) notifications.push({ type: 'receipt', level: 'warning', icon: 'schedule', title: '入金期日接近', message: `${project ? project.name : '案件'}（${inv.invoice_no}）の入金期日まであと${d}日・未入金残 ${yen}`, date: inv.due_date, link: '/receipts.html', keyword: project ? String(project.id) : null });
     }
 
     const wonProjects = await q("SELECT * FROM projects WHERE deleted_at IS NULL AND status = '受注'");
     for (const p of wonProjects) {
-      if (!invoiceCountByProject.get(p.id)) notifications.push({ type: 'missing', level: 'info', icon: 'description', title: '請求書未発行', message: `${p.name} は受注済みですが請求書が未発行です`, date: null, link: '/projects.html', keyword: p.name });
+      if (!invoiceCountByProject.get(p.id)) notifications.push({ type: 'missing', level: 'info', icon: 'description', title: '請求書未発行', message: `${p.name} は受注済みですが請求書が未発行です`, date: null, link: '/projects.html', keyword: String(p.id) });
     }
 
     const undelivered = await q("SELECT * FROM orders WHERE status NOT IN ('発注完了', '支払済み') AND decided > 0");
@@ -1643,7 +1645,7 @@ app.get(
     for (const p of contractCheckProjects) {
       const d = daysBetween(p.startDate);
       if (d === null || d >= 0) continue; // 着工日が未到来の案件は対象外
-      if (!projectsWithContract.has(p.id)) notifications.push({ type: 'contract', level: 'error', icon: 'error', title: '契約書未締結', message: `${p.name} は着工日を${Math.abs(d)}日超過していますが契約書が未締結です`, date: p.startDate, link: '/projects.html', keyword: p.name });
+      if (!projectsWithContract.has(p.id)) notifications.push({ type: 'contract', level: 'error', icon: 'error', title: '契約書未締結', message: `${p.name} は着工日を${Math.abs(d)}日超過していますが契約書が未締結です`, date: p.startDate, link: '/projects.html', keyword: String(p.id) });
     }
 
     // デモ用テスト通知（20件）
@@ -1678,7 +1680,17 @@ app.get(
       if (/注文|発注|請書|協力業者|竣工|工程|進捗/.test(t)) return '/orders-list.html';
       return null;
     };
-    demoNotifications.forEach(n => notifications.push({ type: 'demo', link: linkFor(n), ...n }));
+    // デモ通知のkeywordは案件名で書かれているが、実データと同様に検索の複数ヒットを避けるため
+    // 実在する案件の#(id)に解決できる場合はidへ差し替える（発注先名はこのマップに無いのでそのまま）。
+    const projectIdByName = new Map(allProjectsForNotif.map(p => [p.name, p.id]));
+    demoNotifications.forEach(n =>
+      notifications.push({
+        type: 'demo',
+        link: linkFor(n),
+        ...n,
+        keyword: n.keyword && projectIdByName.has(n.keyword) ? String(projectIdByName.get(n.keyword)) : n.keyword,
+      })
+    );
 
     const order = { error: 0, warning: 1, info: 2 };
     notifications.sort((a, b) => order[a.level] - order[b.level]);

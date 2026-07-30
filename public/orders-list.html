@@ -1286,7 +1286,12 @@ function renderProjectSelectList() {
   const projects = window.appCache.projects.filter(p => {
     const name = p.name.toLowerCase();
     const projectNo = (p.project_no || '').toLowerCase();
-    if (kwHeader && !name.includes(kwHeader) && !projectNo.includes(kwHeader)) return false;
+    // 数字のみの入力は#（案件の一意なid。通知リンクの絞り込みで使用）への完全一致とみなす。
+    // 工事名は引渡月変更による複製で同名になり得るため、部分一致では一意に絞り込めないことがある。
+    if (kwHeader) {
+      const matched = /^\d+$/.test(kwHeader) ? String(p.id) === kwHeader : name.includes(kwHeader) || projectNo.includes(kwHeader);
+      if (!matched) return false;
+    }
     // 期間で絞り込み：案件の工期が指定範囲に重なるもの
     if (rangeStart || rangeEnd) {
       const st = parseD(p.startDate),

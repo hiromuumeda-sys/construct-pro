@@ -851,7 +851,13 @@ function filterTable() {
   const filtered = payments.filter(p => {
     const matchStatus = !status || p.status === status;
     const matchDue = matchDueRange(p.paymentDate, dueStart, dueEnd);
-    const matchKeyword = !keyword || p.projectName.toLowerCase().includes(keyword) || p.vendor.toLowerCase().includes(keyword) || String(p.projectNo || '').toLowerCase().includes(keyword);
+    // 数字のみの入力は#（発注明細の一意なid）への完全一致とみなす。工事名や案件IDの部分一致では
+    // 一件に絞り込めないことがあるため（同一案件に複数の発注明細がある、工事名が重複する等）。
+    const matchKeyword = !keyword
+      ? true
+      : /^\d+$/.test(keyword)
+        ? String(p.id) === keyword
+        : p.projectName.toLowerCase().includes(keyword) || p.vendor.toLowerCase().includes(keyword) || String(p.projectNo || '').toLowerCase().includes(keyword);
     return matchStatus && matchDue && matchKeyword;
   });
 
