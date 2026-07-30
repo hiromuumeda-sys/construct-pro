@@ -2264,16 +2264,19 @@ function buildPurchaseOrderPDF(order, project, vendor) {
 
 // ============ PDF: 請求書／見積書（添付テンプレートの明細表形式） ============
 // ダミーの電子印（角印）。実物の印影画像が用意でき次第、画像描画に差し替え可能
-function drawDummySeal(doc, cx, cy) {
-  const size = 46;
+// 社名（COMPANY.name）と押印日（発行日＝本日付）を入れる
+function drawDummySeal(doc, cx, cy, date) {
+  const size = 54;
   const x = cx - size / 2,
     y = cy - size / 2;
   doc.lineWidth(1.8).strokeColor('#c0392b').rect(x, y, size, size).stroke();
   doc.lineWidth(0.6).rect(x + 4, y + 4, size - 8, size - 8).stroke();
-  doc
-    .fillColor('#c0392b')
-    .fontSize(15)
-    .text('印', x, y + size / 2 - 9, { width: size, align: 'center' });
+  doc.fillColor('#c0392b');
+  doc.fontSize(9).text('株式会社', x, y + 10, { width: size, align: 'center' });
+  doc.fontSize(9).text('WIN WIN', x, y + 22, { width: size, align: 'center' });
+  const d = date || new Date();
+  const dateStr = `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`;
+  doc.fontSize(7).text(dateStr, x, y + size - 17, { width: size, align: 'center' });
   doc.fillColor('#000');
 }
 
@@ -2345,7 +2348,6 @@ function buildDocumentPDF(kind, project, orders, customItems, variant = 'sealed'
       ry += 13;
     }
     doc.fontSize(11).text(COMPANY.name, R - 250, ry, { width: 250, align: 'right' });
-    if (isInvoice && variant === 'sealed') drawDummySeal(doc, R - 20, ry + 5);
     ry += 15;
     if (isInvoice) {
       doc
@@ -2360,6 +2362,8 @@ function buildDocumentPDF(kind, project, orders, customItems, variant = 'sealed'
       ry += 11;
     });
     doc.fillColor('#000');
+    // 連絡先ブロックの下の余白（合計金額ボックスより上）に電子印を配置し、社名等のテキストと重ならないようにする
+    if (isInvoice && variant === 'sealed') drawDummySeal(doc, R - 28, ry + 25, now);
     y += 48;
     // 件名・リード
     doc.fontSize(9).text('件名：' + (project.name || ''), L, y);
