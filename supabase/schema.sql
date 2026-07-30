@@ -91,6 +91,10 @@ create table vendors (
   bank_type     text,
   bank_number   text,
   bank_holder   text,
+  -- 発注先情報の拡張（顧客マスタと同項目：資本金・企業規模（従業員数）・コーポレートサイトURL）
+  capital       bigint,
+  company_scale text,
+  website       text,
   -- 論理削除用（projectsと同じ理由でソフトデリートに統一）
   deleted_at    timestamp
 );

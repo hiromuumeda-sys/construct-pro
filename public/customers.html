@@ -6,11 +6,11 @@
 <title>顧客マスタ - WIN WIN様デモ</title>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
-<link rel="stylesheet" href="/styles.css?v=78"/>
-<script src="/sidebar.js?v=78"></script>
-<script src="/auth.js?v=78"></script>
-<script src="/header.js?v=78"></script>
-<script src="/esc.js?v=78"></script>
+<link rel="stylesheet" href="/styles.css?v=79"/>
+<script src="/sidebar.js?v=79"></script>
+<script src="/auth.js?v=79"></script>
+<script src="/header.js?v=79"></script>
+<script src="/esc.js?v=79"></script>
 <style>
 body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
@@ -124,7 +124,7 @@ body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 <th class="px-lg py-4 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider">電話番号</th>
 <th class="px-lg py-4 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider">住所</th>
 <th class="px-lg py-4 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider text-right">資本金</th>
-<th class="px-lg py-4 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider">企業規模</th>
+<th class="px-lg py-4 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider">企業規模（従業員数）</th>
 <th class="px-lg py-4 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider">サイト</th>
 </tr>
 </thead>
@@ -184,7 +184,7 @@ body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 <input class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent tabular-numbers" id="modal-capital" type="number" placeholder="例：10000000"/>
 </div>
 <div>
-<label for="modal-company-scale" class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">企業規模</label>
+<label for="modal-company-scale" class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">企業規模（従業員数）</label>
 <input class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent" id="modal-company-scale" type="text" placeholder="例：従業員50名"/>
 </div>
 <div class="col-span-2">
@@ -250,7 +250,7 @@ body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 <input class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent tabular-numbers" name="capital" type="number" placeholder="例：10000000"/>
 </div>
 <div>
-<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">企業規模</label>
+<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">企業規模（従業員数）</label>
 <input class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent" name="company_scale" type="text" placeholder="例：従業員50名"/>
 </div>
 <div class="col-span-2">
@@ -444,6 +444,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 });
 </script>
-<script src="/notify.js?v=78"></script>
+<script src="/notify.js?v=79"></script>
 </body>
 </html>

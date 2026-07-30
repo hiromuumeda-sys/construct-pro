@@ -73,6 +73,10 @@ function ensureAux() {
       await createIfMissing('ALTER TABLE customers ADD COLUMN IF NOT EXISTS capital bigint');
       await createIfMissing('ALTER TABLE customers ADD COLUMN IF NOT EXISTS company_scale text');
       await createIfMissing('ALTER TABLE customers ADD COLUMN IF NOT EXISTS website text');
+      // 発注先情報の拡張（顧客マスタと同項目：資本金・企業規模（従業員数）・コーポレートサイトURL）
+      await createIfMissing('ALTER TABLE vendors ADD COLUMN IF NOT EXISTS capital bigint');
+      await createIfMissing('ALTER TABLE vendors ADD COLUMN IF NOT EXISTS company_scale text');
+      await createIfMissing('ALTER TABLE vendors ADD COLUMN IF NOT EXISTS website text');
       // 引き渡し月の変更検知用（変更のたびに更新し、直近変更を一覧でハイライトする）
       await createIfMissing('ALTER TABLE projects ADD COLUMN IF NOT EXISTS delivery_month_changed_at timestamp');
       // 引渡月変更による複製元→複製先の追跡用（議事録決定事項：複製元は「オーダー移行」ステータスで凍結）
@@ -688,24 +692,30 @@ app.post(
   '/api/vendors',
   authMiddleware,
   h(async (req, res) => {
-    const { company, dept, contact, email, phone, address, categories, bank_name, bank_branch, bank_type, bank_number, bank_holder } = req.body;
+    const { company, dept, contact, email, phone, address, categories, bank_name, bank_branch, bank_type, bank_number, bank_holder, capital, company_scale, website } = req.body;
     const row = await one('SELECT COALESCE(MAX(id::int),0) AS max FROM vendors');
     const newId = String(Number(row.max) + 1).padStart(3, '0');
-    await q('INSERT INTO vendors (id, company, dept, contact, email, phone, address, categories, bank_name, bank_branch, bank_type, bank_number, bank_holder) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)', [
-      newId,
-      company,
-      dept,
-      contact,
-      email,
-      phone,
-      address,
-      categories || '',
-      bank_name || '',
-      bank_branch || '',
-      bank_type || '',
-      bank_number || '',
-      bank_holder || '',
-    ]);
+    await q(
+      'INSERT INTO vendors (id, company, dept, contact, email, phone, address, categories, bank_name, bank_branch, bank_type, bank_number, bank_holder, capital, company_scale, website) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)',
+      [
+        newId,
+        company,
+        dept,
+        contact,
+        email,
+        phone,
+        address,
+        categories || '',
+        bank_name || '',
+        bank_branch || '',
+        bank_type || '',
+        bank_number || '',
+        bank_holder || '',
+        capital || null,
+        company_scale || null,
+        website || null,
+      ]
+    );
     await logAuditReq(req, 'CREATE', 'vendors', newId, { name: company, changes: [`新規登録（発注先: ${company || '-'}）`] });
     res.json({ id: newId, ...req.body });
   })
@@ -715,23 +725,29 @@ app.put(
   '/api/vendors/:id',
   authMiddleware,
   h(async (req, res) => {
-    const { company, dept, contact, email, phone, address, categories, bank_name, bank_branch, bank_type, bank_number, bank_holder } = req.body;
+    const { company, dept, contact, email, phone, address, categories, bank_name, bank_branch, bank_type, bank_number, bank_holder, capital, company_scale, website } = req.body;
     const before = await one('SELECT * FROM vendors WHERE id=$1', [req.params.id]);
-    await q('UPDATE vendors SET company=$1, dept=$2, contact=$3, email=$4, phone=$5, address=$6, categories=$7, bank_name=$8, bank_branch=$9, bank_type=$10, bank_number=$11, bank_holder=$12 WHERE id=$13', [
-      company,
-      dept,
-      contact,
-      email,
-      phone,
-      address,
-      categories ?? before?.categories ?? '',
-      bank_name ?? before?.bank_name ?? '',
-      bank_branch ?? before?.bank_branch ?? '',
-      bank_type ?? before?.bank_type ?? '',
-      bank_number ?? before?.bank_number ?? '',
-      bank_holder ?? before?.bank_holder ?? '',
-      req.params.id,
-    ]);
+    await q(
+      'UPDATE vendors SET company=$1, dept=$2, contact=$3, email=$4, phone=$5, address=$6, categories=$7, bank_name=$8, bank_branch=$9, bank_type=$10, bank_number=$11, bank_holder=$12, capital=$13, company_scale=$14, website=$15 WHERE id=$16',
+      [
+        company,
+        dept,
+        contact,
+        email,
+        phone,
+        address,
+        categories ?? before?.categories ?? '',
+        bank_name ?? before?.bank_name ?? '',
+        bank_branch ?? before?.bank_branch ?? '',
+        bank_type ?? before?.bank_type ?? '',
+        bank_number ?? before?.bank_number ?? '',
+        bank_holder ?? before?.bank_holder ?? '',
+        capital ?? before?.capital ?? null,
+        company_scale ?? before?.company_scale ?? null,
+        website ?? before?.website ?? null,
+        req.params.id,
+      ]
+    );
     await logAuditReq(req, 'UPDATE', 'vendors', req.params.id, { name: before?.company || company, changes: diffChanges('vendors', before, req.body) });
     res.json({ id: req.params.id, ...req.body });
   })
@@ -1564,8 +1580,8 @@ app.get(
       if (!o.paymentDate) return;
       const d = daysBetween(o.paymentDate);
       if (d === null) return;
-      if (d < 0) notifications.push({ type: 'payment', level: 'error', icon: 'error', title: '支払期日超過', message: `${o.vendor} への支払（${o.category}）が${Math.abs(d)}日超過しています`, date: o.paymentDate, link: '/payment.html', assignee: o.assignee || null });
-      else if (d <= 7) notifications.push({ type: 'payment', level: 'warning', icon: 'schedule', title: '支払期日接近', message: `${o.vendor} への支払（${o.category}）まであと${d}日です`, date: o.paymentDate, link: '/payment.html', assignee: o.assignee || null });
+      if (d < 0) notifications.push({ type: 'payment', level: 'error', icon: 'error', title: '支払期日超過', message: `${o.vendor} への支払（${o.category}）が${Math.abs(d)}日超過しています`, date: o.paymentDate, link: '/payment.html', keyword: o.vendor, assignee: o.assignee || null });
+      else if (d <= 7) notifications.push({ type: 'payment', level: 'warning', icon: 'schedule', title: '支払期日接近', message: `${o.vendor} への支払（${o.category}）まであと${d}日です`, date: o.paymentDate, link: '/payment.html', keyword: o.vendor, assignee: o.assignee || null });
     });
 
     // 案件・請求書数に比例したループ内SELECT（N+1）を避けるため、必要な集計を先に一括取得する
@@ -1587,13 +1603,13 @@ app.get(
       const d = daysBetween(inv.due_date);
       if (d === null) continue;
       const yen = '¥' + outstanding.toLocaleString();
-      if (d < 0) notifications.push({ type: 'receipt', level: 'error', icon: 'error', title: '入金期日超過（未入金）', message: `${project ? project.name : '案件'}（${inv.invoice_no}）の入金期日が${Math.abs(d)}日超過・未入金残 ${yen}`, date: inv.due_date, link: '/receipts.html' });
-      else if (d <= 7) notifications.push({ type: 'receipt', level: 'warning', icon: 'schedule', title: '入金期日接近', message: `${project ? project.name : '案件'}（${inv.invoice_no}）の入金期日まであと${d}日・未入金残 ${yen}`, date: inv.due_date, link: '/receipts.html' });
+      if (d < 0) notifications.push({ type: 'receipt', level: 'error', icon: 'error', title: '入金期日超過（未入金）', message: `${project ? project.name : '案件'}（${inv.invoice_no}）の入金期日が${Math.abs(d)}日超過・未入金残 ${yen}`, date: inv.due_date, link: '/receipts.html', keyword: project ? project.name : null });
+      else if (d <= 7) notifications.push({ type: 'receipt', level: 'warning', icon: 'schedule', title: '入金期日接近', message: `${project ? project.name : '案件'}（${inv.invoice_no}）の入金期日まであと${d}日・未入金残 ${yen}`, date: inv.due_date, link: '/receipts.html', keyword: project ? project.name : null });
     }
 
     const wonProjects = await q("SELECT * FROM projects WHERE deleted_at IS NULL AND status = '受注'");
     for (const p of wonProjects) {
-      if (!invoiceCountByProject.get(p.id)) notifications.push({ type: 'missing', level: 'info', icon: 'description', title: '請求書未発行', message: `${p.name} は受注済みですが請求書が未発行です`, date: null, link: '/projects.html' });
+      if (!invoiceCountByProject.get(p.id)) notifications.push({ type: 'missing', level: 'info', icon: 'description', title: '請求書未発行', message: `${p.name} は受注済みですが請求書が未発行です`, date: null, link: '/projects.html', keyword: p.name });
     }
 
     const undelivered = await q("SELECT * FROM orders WHERE status NOT IN ('発注完了', '支払済み') AND decided > 0");
@@ -1627,25 +1643,25 @@ app.get(
     for (const p of contractCheckProjects) {
       const d = daysBetween(p.startDate);
       if (d === null || d >= 0) continue; // 着工日が未到来の案件は対象外
-      if (!projectsWithContract.has(p.id)) notifications.push({ type: 'contract', level: 'error', icon: 'error', title: '契約書未締結', message: `${p.name} は着工日を${Math.abs(d)}日超過していますが契約書が未締結です`, date: p.startDate, link: '/projects.html' });
+      if (!projectsWithContract.has(p.id)) notifications.push({ type: 'contract', level: 'error', icon: 'error', title: '契約書未締結', message: `${p.name} は着工日を${Math.abs(d)}日超過していますが契約書が未締結です`, date: p.startDate, link: '/projects.html', keyword: p.name });
     }
 
     // デモ用テスト通知（20件）
     const demoNotifications = [
-      { level: 'error', icon: 'error', title: '入金期日超過（未入金）', message: '京都御所南マンション改修工事（WW-005）の入金期日が12日超過・未入金残 ¥5,400,000', date: '2026-06-07' },
-      { level: 'error', icon: 'error', title: '支払期日超過', message: 'なにわ建設株式会社 への支払（基礎工事）が8日超過しています', date: '2026-06-11' },
-      { level: 'error', icon: 'error', title: '入金期日超過（未入金）', message: '下鴨神社周辺戸建住宅リノベーション（WW-008）の入金期日が3日超過・未入金残 ¥12,000,000', date: '2026-06-16' },
-      { level: 'error', icon: 'error', title: '契約書未締結', message: '嵐山旅館客室改修工事 は受注済みですが契約書が未締結です', date: null },
-      { level: 'error', icon: 'error', title: '予算超過', message: '丹波黒豆工場改築工事 の外注原価が請負金額を超過しています（利益率 -22.1%）', date: null },
-      { level: 'warning', icon: 'schedule', title: '入金期日接近', message: '中京区三条通オフィスビル新築工事（WW-006）の入金期日まであと2日・未入金残 ¥4,800,000', date: '2026-06-21' },
-      { level: 'warning', icon: 'schedule', title: '支払期日接近', message: '京都冷熱工業所 への支払（空調設備工事）まであと4日です', date: '2026-06-23' },
-      { level: 'warning', icon: 'schedule', title: '支払期日接近', message: '播磨土木エンジニアリング への支払（土工事）まであと5日です', date: '2026-06-24' },
-      { level: 'warning', icon: 'event', title: '竣工予定日接近', message: '丹波黒豆工場改築工事 の竣工予定まであと7日です', date: '2026-06-30' },
-      { level: 'warning', icon: 'description', title: '見積回答期限', message: '福知山駅前商業施設新築 の見積回答期限が近づいています', date: '2026-06-25' },
+      { level: 'error', icon: 'error', title: '入金期日超過（未入金）', message: '京都御所南マンション改修工事（WW-005）の入金期日が12日超過・未入金残 ¥5,400,000', date: '2026-06-07', keyword: '京都御所南マンション改修工事' },
+      { level: 'error', icon: 'error', title: '支払期日超過', message: 'なにわ建設株式会社 への支払（基礎工事）が8日超過しています', date: '2026-06-11', keyword: 'なにわ建設株式会社' },
+      { level: 'error', icon: 'error', title: '入金期日超過（未入金）', message: '下鴨神社周辺戸建住宅リノベーション（WW-008）の入金期日が3日超過・未入金残 ¥12,000,000', date: '2026-06-16', keyword: '下鴨神社周辺戸建住宅リノベーション' },
+      { level: 'error', icon: 'error', title: '契約書未締結', message: '嵐山旅館客室改修工事 は受注済みですが契約書が未締結です', date: null, keyword: '嵐山旅館客室改修工事' },
+      { level: 'error', icon: 'error', title: '予算超過', message: '丹波黒豆工場改築工事 の外注原価が請負金額を超過しています（利益率 -22.1%）', date: null, keyword: '丹波黒豆工場改築工事' },
+      { level: 'warning', icon: 'schedule', title: '入金期日接近', message: '中京区三条通オフィスビル新築工事（WW-006）の入金期日まであと2日・未入金残 ¥4,800,000', date: '2026-06-21', keyword: '中京区三条通オフィスビル新築工事' },
+      { level: 'warning', icon: 'schedule', title: '支払期日接近', message: '京都冷熱工業所 への支払（空調設備工事）まであと4日です', date: '2026-06-23', keyword: '京都冷熱工業所' },
+      { level: 'warning', icon: 'schedule', title: '支払期日接近', message: '播磨土木エンジニアリング への支払（土工事）まであと5日です', date: '2026-06-24', keyword: '播磨土木エンジニアリング' },
+      { level: 'warning', icon: 'event', title: '竣工予定日接近', message: '丹波黒豆工場改築工事 の竣工予定まであと7日です', date: '2026-06-30', keyword: '丹波黒豆工場改築工事' },
+      { level: 'warning', icon: 'description', title: '見積回答期限', message: '福知山駅前商業施設新築 の見積回答期限が近づいています', date: '2026-06-25', keyword: '福知山駅前商業施設新築' },
       { level: 'warning', icon: 'inventory', title: '注文請書未回収', message: '関西電設工業 からの注文請書が未回収です（発注後14日経過）', date: null },
-      { level: 'warning', icon: 'savings', title: '入金予定確認', message: '長岡京医療施設増築工事 の中間金入金予定の確認をしてください', date: '2026-06-28' },
-      { level: 'info', icon: 'description', title: '請求書未発行', message: '南丹市庁舎耐震補強工事 は受注済みですが請求書が未発行です', date: null },
-      { level: 'info', icon: 'task_alt', title: '工事進捗報告', message: '烏丸御池メディカルモール内装工事 の月次進捗報告が未提出です', date: null },
+      { level: 'warning', icon: 'savings', title: '入金予定確認', message: '長岡京医療施設増築工事 の中間金入金予定の確認をしてください', date: '2026-06-28', keyword: '長岡京医療施設増築工事' },
+      { level: 'info', icon: 'description', title: '請求書未発行', message: '南丹市庁舎耐震補強工事 は受注済みですが請求書が未発行です', date: null, keyword: '南丹市庁舎耐震補強工事' },
+      { level: 'info', icon: 'task_alt', title: '工事進捗報告', message: '烏丸御池メディカルモール内装工事 の月次進捗報告が未提出です', date: null, keyword: '烏丸御池メディカルモール内装工事' },
       { level: 'info', icon: 'group', title: '協力業者登録', message: '新規協力業者「近畿鉄骨工業」の登録申請があります', date: null },
       { level: 'info', icon: 'receipt_long', title: '注文書未発行', message: '決定済みで注文書未発行の明細が3件あります', date: null },
       { level: 'info', icon: 'percent', title: '消費税率確認', message: '請求書WW-003 の税率設定をご確認ください', date: null },

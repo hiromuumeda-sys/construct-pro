@@ -6,11 +6,11 @@
 <title>発注先マスタ - WIN WIN様デモ</title>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
-<link rel="stylesheet" href="/styles.css?v=78"/>
-<script src="/sidebar.js?v=78"></script>
-<script src="/auth.js?v=78"></script>
-<script src="/header.js?v=78"></script>
-<script src="/esc.js?v=78"></script>
+<link rel="stylesheet" href="/styles.css?v=79"/>
+<script src="/sidebar.js?v=79"></script>
+<script src="/auth.js?v=79"></script>
+<script src="/header.js?v=79"></script>
+<script src="/esc.js?v=79"></script>
 <style>
 body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
@@ -123,6 +123,9 @@ body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 <th class="px-lg py-4 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider">メールアドレス</th>
 <th class="px-lg py-4 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider">電話番号</th>
 <th class="px-lg py-4 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider">所在地</th>
+<th class="px-lg py-4 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider text-right">資本金</th>
+<th class="px-lg py-4 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider">企業規模（従業員数）</th>
+<th class="px-lg py-4 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider">サイト</th>
 <th class="px-lg py-4 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider">対応工事区分</th>
 </tr>
 </thead>
@@ -175,6 +178,18 @@ body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 <div class="col-span-2">
 <label for="modal-address" class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">所在地</label>
 <input class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent" id="modal-address" type="text"/>
+</div>
+<div>
+<label for="modal-capital" class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">資本金</label>
+<input class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent tabular-numbers" id="modal-capital" type="number" placeholder="例：10000000"/>
+</div>
+<div>
+<label for="modal-company-scale" class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">企業規模（従業員数）</label>
+<input class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent" id="modal-company-scale" type="text" placeholder="例：従業員50名"/>
+</div>
+<div class="col-span-2">
+<label for="modal-website" class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">コーポレートサイト</label>
+<input class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent" id="modal-website" type="url" placeholder="https://..."/>
 </div>
 <div class="col-span-2">
 <label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">対応工事区分（タグ）</label>
@@ -244,6 +259,18 @@ body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 <div class="col-span-2">
 <label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">所在地</label>
 <input class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent" name="address" placeholder="大阪府..." type="text"/>
+</div>
+<div>
+<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">資本金</label>
+<input class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent tabular-numbers" name="capital" type="number" placeholder="例：10000000"/>
+</div>
+<div>
+<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">企業規模（従業員数）</label>
+<input class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent" name="company_scale" type="text" placeholder="例：従業員50名"/>
+</div>
+<div class="col-span-2">
+<label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">コーポレートサイト</label>
+<input class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-label-md px-md py-2 focus:ring-2 focus:ring-secondary/20 focus:border-transparent" name="website" type="url" placeholder="https://..."/>
 </div>
 <div class="col-span-2">
 <label class="block text-label-md font-label-md text-on-surface-variant uppercase tracking-wider font-bold mb-2">対応工事区分（タグ）</label>
@@ -370,6 +397,9 @@ function renderTable(vendors) {
       <td class="px-lg py-5 text-label-md font-label-md tabular-nums text-on-surface-variant">${escHtml(v.email)}</td>
       <td class="px-lg py-5 text-label-md font-label-md tabular-nums text-on-surface-variant">${escHtml(v.phone) || '-'}</td>
       <td class="px-lg py-5 text-label-md font-label-md text-on-surface-variant">${escHtml(v.address) || '-'}</td>
+      <td class="px-lg py-5 text-label-md font-label-md tabular-nums text-right text-on-surface-variant">${v.capital ? '¥' + Number(v.capital).toLocaleString() : '-'}</td>
+      <td class="px-lg py-5 text-label-md font-label-md text-on-surface-variant">${escHtml(v.company_scale) || '-'}</td>
+      <td class="px-lg py-5 text-label-md font-label-md" onclick="event.stopPropagation()">${v.website ? `<a href="${escHtml(v.website)}" target="_blank" rel="noopener noreferrer" class="text-secondary hover:underline">${escHtml(v.website)}</a>` : '-'}</td>
       <td class="px-lg py-5">${renderTagChips(v.categories)}</td>
     </tr>
   `
@@ -396,6 +426,9 @@ async function openEditModal(id) {
     document.getElementById('modal-email').value = v.email;
     document.getElementById('modal-phone').value = v.phone || '';
     document.getElementById('modal-address').value = v.address || '';
+    document.getElementById('modal-capital').value = v.capital || '';
+    document.getElementById('modal-company-scale').value = v.company_scale || '';
+    document.getElementById('modal-website').value = v.website || '';
     document.getElementById('modal-bank-name').value = v.bank_name || '';
     document.getElementById('modal-bank-branch').value = v.bank_branch || '';
     document.getElementById('modal-bank-type').value = v.bank_type || '';
@@ -428,6 +461,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.querySelector('[name="email"]').value = '';
     document.querySelector('[name="phone"]').value = '';
     document.querySelector('[name="address"]').value = '';
+    document.querySelector('[name="capital"]').value = '';
+    document.querySelector('[name="company_scale"]').value = '';
+    document.querySelector('[name="website"]').value = '';
     ['bank_name', 'bank_branch', 'bank_type', 'bank_number', 'bank_holder'].forEach(n => {
       const el = document.querySelector(`[name="${n}"]`);
       if (el) el.value = '';
@@ -451,6 +487,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     const email = document.getElementById('modal-email').value;
     const phone = document.getElementById('modal-phone').value;
     const address = document.getElementById('modal-address').value;
+    const capital = document.getElementById('modal-capital').value;
+    const company_scale = document.getElementById('modal-company-scale').value;
+    const website = document.getElementById('modal-website').value;
     const categories = tagState.edit.join(',');
     const bank_name = document.getElementById('modal-bank-name').value;
     const bank_branch = document.getElementById('modal-bank-branch').value;
@@ -462,7 +501,23 @@ document.addEventListener('DOMContentLoaded', async () => {
       await fetch(`/api/vendors/${editingId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ company, dept, contact, email, phone, address, categories, bank_name, bank_branch, bank_type, bank_number, bank_holder }),
+        body: JSON.stringify({
+          company,
+          dept,
+          contact,
+          email,
+          phone,
+          address,
+          categories,
+          bank_name,
+          bank_branch,
+          bank_type,
+          bank_number,
+          bank_holder,
+          capital: capital ? Number(capital) : null,
+          company_scale,
+          website,
+        }),
       });
       const vendorRes = await fetch('/api/vendors');
       window.appCache.vendors = await vendorRes.json();
@@ -495,6 +550,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     const email = document.querySelector('[name="email"]').value;
     const phone = document.querySelector('[name="phone"]').value;
     const address = document.querySelector('[name="address"]').value;
+    const capital = document.querySelector('[name="capital"]').value;
+    const company_scale = document.querySelector('[name="company_scale"]').value;
+    const website = document.querySelector('[name="website"]').value;
     const categories = tagState.reg.join(',');
     const bank_name = document.querySelector('[name="bank_name"]').value;
     const bank_branch = document.querySelector('[name="bank_branch"]').value;
@@ -508,7 +566,23 @@ document.addEventListener('DOMContentLoaded', async () => {
       await fetch('/api/vendors', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ company, dept, contact, email, phone, address, categories, bank_name, bank_branch, bank_type, bank_number, bank_holder }),
+        body: JSON.stringify({
+          company,
+          dept,
+          contact,
+          email,
+          phone,
+          address,
+          categories,
+          bank_name,
+          bank_branch,
+          bank_type,
+          bank_number,
+          bank_holder,
+          capital: capital ? Number(capital) : null,
+          company_scale,
+          website,
+        }),
       });
       document.querySelector('[name="company"]').value = '';
       document.querySelector('[name="dept"]').value = '';
@@ -516,6 +590,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       document.querySelector('[name="email"]').value = '';
       document.querySelector('[name="phone"]').value = '';
       document.querySelector('[name="address"]').value = '';
+      document.querySelector('[name="capital"]').value = '';
+      document.querySelector('[name="company_scale"]').value = '';
+      document.querySelector('[name="website"]').value = '';
       const vendorRes = await fetch('/api/vendors');
       window.appCache.vendors = await vendorRes.json();
       loadVendors();
@@ -533,5 +610,5 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 </script>
 
-<script src="/notify.js?v=78"></script>
+<script src="/notify.js?v=79"></script>
 </body></html>

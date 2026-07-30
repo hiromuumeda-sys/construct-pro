@@ -101,6 +101,8 @@ function renderNotif() {
       const rowBg = c ? '' : bg[n.level] || '';
       const titleColor = c ? 'text-on-surface' : colors[n.level] || 'text-on-surface';
       const iconColor = c ? 'text-on-surface-variant' : colors[n.level] || '';
+      // 遷移先の検索バーに対象レコードのキーワードを渡し、絞り込んだ状態で開けるようにする
+      const href = n.link ? n.link + (n.keyword ? '?q=' + encodeURIComponent(n.keyword) : '') : '';
       return `
       <div class="px-4 py-3 border-b border-outline-variant/30 flex gap-3 items-start ${rowBg}">
         <span class="material-symbols-outlined ${iconColor} text-[20px]">${n.icon}</span>
@@ -108,7 +110,7 @@ function renderNotif() {
           <p class="text-label-md font-bold ${titleColor}">${n.title}</p>
           <p class="text-body-sm text-on-surface-variant mt-0.5">${n.message}</p>
           ${n.date ? `<p class="text-label-sm text-on-surface-variant mt-1 tabular-numbers">${n.date}</p>` : ''}
-          ${n.link ? `<a href="${n.link}" class="inline-flex items-center gap-0.5 text-label-sm text-secondary hover:underline mt-1"><span class="material-symbols-outlined text-[14px]">open_in_new</span>詳細を見る</a>` : ''}
+          ${n.link ? `<a href="${escHtml(href)}" class="inline-flex items-center gap-0.5 text-label-sm text-secondary hover:underline mt-1"><span class="material-symbols-outlined text-[14px]">open_in_new</span>詳細を見る</a>` : ''}
         </div>
         ${
           c
