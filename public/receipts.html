@@ -181,7 +181,7 @@ body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 <th class="px-3 py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant text-right">未成工事受入金</th>
 <th class="px-3 py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant text-center w-24">ステータス</th>
 <th class="px-3 py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant text-center w-24">消し込み履歴</th>
-<th class="px-3 py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant w-56">備考</th>
+<th class="px-3 py-2 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant w-64">備考</th>
 </tr>
 </thead>
 <tbody class="divide-y divide-outline-variant/20" id="sales-table-body">
@@ -660,9 +660,9 @@ function renderSales() {
       <td class="px-3 py-2.5 text-center" onclick="event.stopPropagation()">
         <button class="material-symbols-outlined text-on-surface-variant hover:text-secondary hover:bg-secondary/10 rounded-full w-8 h-8" onclick="openHistoryModal(${s.id})" title="消し込み履歴" aria-label="消し込み履歴">receipt_long</button>
       </td>
-      <td class="px-3 py-2.5 whitespace-normal" onclick="event.stopPropagation()">
+      <td class="px-3 py-2.5 whitespace-normal min-w-[240px]" onclick="event.stopPropagation()">
         <input type="text" value="${escHtml(s.receipt_notes)}" placeholder="備考" aria-label="備考"
-          class="w-full bg-transparent border border-transparent hover:border-outline-variant focus:border-secondary focus:bg-surface-container-lowest rounded-lg text-label-md px-2 py-1 focus:ring-2 focus:ring-secondary/20 transition-all"
+          class="w-full min-w-[220px] bg-transparent border border-transparent hover:border-outline-variant focus:border-secondary focus:bg-surface-container-lowest rounded-lg text-label-md px-2 py-1 focus:ring-2 focus:ring-secondary/20 transition-all"
           onchange="updateReceiptNotes(${s.id}, this.value)"/>
       </td>
     </tr>
