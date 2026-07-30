@@ -147,18 +147,18 @@ body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
 <thead>
 <tr class="bg-surface-container-low sticky top-0 z-10">
 <th class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant text-center w-24">支払登録</th>
-<th class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant w-16">#</th>
-<th class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant w-32">案件ID</th>
-<th class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant w-56">工事名</th>
-<th class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant w-[10%]">工事区分</th>
-<th class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant w-[12%]">発注先</th>
-<th class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant text-right w-28">費用</th>
-<th class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant text-right w-28">残金</th>
-<th class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant w-24">支払期日</th>
-<th class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant w-28">支払銀行</th>
+<th class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant text-center w-16">#</th>
+<th class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant text-center w-32">案件ID</th>
+<th class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant text-center w-56">工事名</th>
+<th class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant text-center w-[10%]">工事区分</th>
+<th class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant text-center w-[12%]">発注先</th>
+<th class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant text-center w-28">費用</th>
+<th class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant text-center w-28">残金</th>
+<th class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant text-center w-24">支払期日</th>
+<th class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant text-center w-28">支払銀行</th>
 <th class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant text-center w-32">支払ステータス</th>
 <th class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant text-center w-24">支払履歴</th>
-<th class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant w-64">備考</th>
+<th class="px-3 py-1.5 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider border-b border-outline-variant text-center w-64">備考</th>
 </tr>
 </thead>
 <tbody class="divide-y divide-outline-variant/20" id="payment-table-body">
@@ -476,7 +476,7 @@ function renderPaymentRow(payment) {
       </td>
       <td class="px-3 py-1.5 whitespace-normal min-w-[240px]" onclick="event.stopPropagation()">
         <input type="text" value="${escHtml(payment.notes)}" placeholder="備考" aria-label="備考"
-          class="w-full min-w-[220px] bg-transparent border border-transparent hover:border-outline-variant focus:border-secondary focus:bg-surface-container-lowest rounded-lg text-label-md px-2 py-1 focus:ring-2 focus:ring-secondary/20 transition-all"
+          class="w-full min-w-[220px] appearance-none bg-transparent text-on-surface border border-transparent hover:border-outline-variant focus:border-secondary rounded-lg text-label-md px-2 py-1 focus:ring-2 focus:ring-secondary/20 focus:outline-none transition-all"
           onchange="updatePaymentNotes(${payment.id}, this.value)"/>
       </td>
     </tr>
